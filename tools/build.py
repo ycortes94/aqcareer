@@ -227,6 +227,28 @@ def build():
             ogimage=(SITE + p["cover"]) if p["cover"] else None,
             cur_blog=' aria-current="page"')))
 
+    # ---------- privacy ----------
+    pv = CFG.get("privacy") or {}
+    email = (pv.get("contact_email") or "").strip()
+    if email:
+        contact_sentence = (f'Email me at <a href="mailto:{html.escape(email)}">'
+                            f'{html.escape(email)}</a>.')
+    else:
+        contact_sentence = ('Use the contact form at the bottom of the '
+                            '<a href="../#connect">home page</a> and say what '
+                            'you need.')
+    try:
+        nice_updated = dt.date.fromisoformat(pv["updated"]).strftime("%B %-d, %Y")
+    except (KeyError, ValueError):
+        nice_updated = pv.get("updated", "")
+    privacy = fill(read(os.path.join(T, "privacy.html")),
+                   privacy_updated=nice_updated,
+                   privacy_contact_sentence=contact_sentence)
+    made.append(write("privacy/index.html", page(
+        content=privacy, title="Privacy | AQ Career Consulting",
+        desc="What this website collects, why, and how to opt out.",
+        canonical=f"{SITE}/privacy/", base="../")))
+
     # ---------- 404 ----------
     made.append(write("404.html", page(
         content=('  <section class="nf wrap">\n'
@@ -261,7 +283,8 @@ def build():
         f'<description>{html.escape(CFG["blog_tagline"])}</description>'
         f'<language>en-us</language>{items}</channel></rss>\n'))
 
-    urls = [(SITE + "/", "1.0"), (SITE + "/blog/", "0.8")] + \
+    urls = [(SITE + "/", "1.0"), (SITE + "/blog/", "0.8"),
+            (SITE + "/privacy/", "0.3")] + \
            [(f'{SITE}/post/{p["slug"]}/', "0.6") for p in posts]
     made.append(write("sitemap.xml",
         '<?xml version="1.0" encoding="UTF-8"?>\n'
