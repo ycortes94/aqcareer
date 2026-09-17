@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-form-endpoint="{{form_endpoint}}">
+<html lang="en" data-form-endpoint="{{form_endpoint}}"{{html_attrs}}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -17,9 +17,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{base}}assets/css/site.css?v={{css_v}}">
+{{extra_css}}
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="{{base}}feed.xml">
 </head>
 <body>
+{{layout_open}}
 <a class="skip" href="#main">Skip to content</a>
 
 <header>
@@ -70,6 +72,8 @@
   });
 })();
 </script>
+{{layout_close}}
+{{variant_layout}}
 {{analytics}}
 {{extra_js}}
 </body>
