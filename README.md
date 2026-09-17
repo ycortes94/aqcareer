@@ -106,14 +106,13 @@ directly, so the built HTML has to be in it.
 - **Forms need connecting** before launch, or inquiries are lost silently.
   Ten minutes of setup: [docs/FORMS.md](docs/FORMS.md). Until then they show
   a message pointing visitors to LinkedIn instead of failing quietly.
-- **Testimonial #3 is missing.** The Wix carousel had three; only two could
-  be recovered. The second has no attributed name and is labelled
-  "CLIENT STORY" — both need filling in from the Wix editor.
 - **Body font is a substitute.** The original uses Avenir LT, which Wix
   licenses and cannot be self-hosted. Mulish is used instead; the script
   (Mr De Haviland) and Lato are the originals.
 - **Subscriber list is still in Wix.** Export Wix Contacts to CSV before
   cancelling the Wix subscription — that data can't be recovered afterward.
+- Two of the three testimonials carry no name on the original Wix site
+  either — they show industry and level only. Faithful, not an omission.
 - One post title ends with a stray `"` carried over from Wix, in
   `content/posts.json`. Left as-is to stay faithful; safe to delete.
 - **Analytics is live** (Amplitude + Statsig, Session Replay on). A privacy
