@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-form-endpoint="">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/site.css">
+<link rel="stylesheet" href="assets/css/site.css?v=6e1219e6">
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="feed.xml">
 </head>
 <body>
@@ -48,13 +48,14 @@
     <div class="hero-grid">
       <div>
         <h1>Receive the 1st Career Disruptor Memo!</h1>
-        <form action="#" method="post" id="memo-form">
+        <form action="" method="post" id="memo-form" data-form="newsletter">
           <label class="field-label" for="memo-email">Email<span>*</span></label>
           <div class="subrow">
             <input class="line-input" id="memo-email" name="email" type="email" required autocomplete="email">
             <button class="btn-ghost" type="submit">Subscribe</button>
           </div>
           <label class="consent"><input type="checkbox" name="consent" value="yes" required> I want to subscribe to your mailing list.</label>
+          <div class="hp" aria-hidden="true"><label for="memo-website">Website</label><input id="memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         </form>
         <a class="btn-solid" href="#services">Learn how I can support you</a>
       </div>
@@ -146,13 +147,14 @@
     <div class="wrap">
       <h2 class="script-h">let's connect</h2>
       <p class="kicker">Take control of your future,<br>reach out today.</p>
-      <form class="contact" action="#" method="post">
+      <form class="contact" action="" method="post" data-form="contact">
         <div class="two">
           <div class="fgrp"><label class="fl" for="fn">First Name</label><input class="box" id="fn" name="first_name" type="text" autocomplete="given-name"></div>
           <div class="fgrp"><label class="fl" for="ln">Last Name</label><input class="box" id="ln" name="last_name" type="text" autocomplete="family-name"></div>
         </div>
         <div class="fgrp"><label class="fl" for="cem">Email</label><input class="box" id="cem" name="email" type="email" required autocomplete="email"></div>
         <div class="fgrp"><label class="fl" for="cmsg">Write a message</label><textarea class="box" id="cmsg" name="message"></textarea></div>
+        <div class="hp" aria-hidden="true"><label for="c-website">Website</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="submit" type="submit">Submit</button>
       </form>
     </div>
@@ -208,5 +210,6 @@
   show(0);
 })();
 </script>
+<script src="assets/js/forms.js?v=ee52a9f6"></script>
 </body>
 </html>
