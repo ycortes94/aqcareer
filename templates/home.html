@@ -2,7 +2,7 @@
     <div class="hero-grid">
       <div>
         <h1>Receive the 1st Career Disruptor Memo!</h1>
-        <form action="{{form_endpoint}}" method="post" id="memo-form" data-form="newsletter">
+        <form action="{{form_endpoint}}" method="post" id="memo-form" data-form="newsletter" class="{{form_privacy_class}}">
           <label class="field-label" for="memo-email">Email<span>*</span></label>
           <div class="subrow">
             <input class="line-input" id="memo-email" name="email" type="email" required autocomplete="email">
@@ -101,7 +101,7 @@
     <div class="wrap">
       <h2 class="script-h">let's connect</h2>
       <p class="kicker">Take control of your future,<br>reach out today.</p>
-      <form class="contact" action="{{form_endpoint}}" method="post" data-form="contact">
+      <form class="contact {{form_privacy_class}}" action="{{form_endpoint}}" method="post" data-form="contact">
         <div class="two">
           <div class="fgrp"><label class="fl" for="fn">First Name</label><input class="box" id="fn" name="first_name" type="text" autocomplete="given-name"></div>
           <div class="fgrp"><label class="fl" for="ln">Last Name</label><input class="box" id="ln" name="last_name" type="text" autocomplete="family-name"></div>
