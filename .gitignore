@@ -1,3 +1,7 @@
 .DS_Store
 *.pyc
 __pycache__/
+
+# Never commit exported contact or subscriber data — this repo is public.
+*.csv
+*.xlsx
