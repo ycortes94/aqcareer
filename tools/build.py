@@ -37,6 +37,18 @@ def asset_v(rel):
 
 CSS_V = asset_v("assets/css/site.css")
 JS_V = asset_v("assets/js/forms.js")
+AN_V = asset_v("assets/js/analytics.js")
+
+
+def analytics_snippet(base):
+    """Config blob + loader. Emits nothing when no keys are configured, so
+    the site ships no third-party scripts until analytics is switched on."""
+    cfg = CFG.get("analytics") or {}
+    if not (cfg.get("amplitude_api_key") or cfg.get("statsig_client_key")):
+        return ""
+    blob = json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")
+    return (f'<script>window.__AQ_ANALYTICS__={blob};</script>\n'
+            f'<script src="{base}assets/js/analytics.js?v={AN_V}"></script>')
 
 
 def read(p):
@@ -67,7 +79,7 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         ogtype=ogtype, ogimage=ogimage or f"{SITE}/assets/img/headshot.jpg",
         cur_home=cur_home, cur_blog=cur_blog, year=YEAR, extra_js=extra_js,
         form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
-        css_v=CSS_V,
+        css_v=CSS_V, analytics=analytics_snippet(base),
     )
 
 
