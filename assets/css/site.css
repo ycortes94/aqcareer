@@ -75,7 +75,7 @@ nav.main a:hover{background:#eef4f2}
 
 /* ---------- testimonials ---------- */
 .testi{position:relative;color:#fff;background:#0d0d0d;overflow:hidden}
-.testi .bg{position:absolute;inset:0;background:var(--testi-bg) center/cover no-repeat;opacity:.34}
+.testi .bg{position:absolute;inset:0;background:url("../img/testimonial-bg.jpg") center/cover no-repeat;opacity:.34}
 .testi .inner{position:relative;max-width:820px;margin:0 auto;padding:62px 70px 54px;text-align:center}
 .testi .slide{display:none}
 .testi .slide.on{display:block}
