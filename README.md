@@ -16,6 +16,7 @@ Hosted on GitHub Pages. Pushing to `main` redeploys it, usually within a minute.
 | Change the header or footer | Edit `templates/base.html`, then rebuild |
 | Change the site title/description | Edit `site.json`, then rebuild |
 | Connect the forms | See [docs/FORMS.md](docs/FORMS.md) |
+| Turn on analytics | See [docs/ANALYTICS.md](docs/ANALYTICS.md) |
 
 Rebuild with:
 
@@ -82,6 +83,7 @@ content/posts/*.html    post bodies (source of truth)
 content/posts/_TEMPLATE.html   starting point for a new post
 assets/css/site.css     all styles
 assets/js/forms.js      form submission
+assets/js/analytics.js  Amplitude + Statsig loader
 assets/img/             images
 assets/img/blog/        post images
 assets/img/logo-originals/   untrimmed partner logos, kept for re-cropping
@@ -89,6 +91,7 @@ tools/build.py          the build
 tools/form-endpoint.gs  the form handler (paste into Google Apps Script)
 tools/extract_wix.py    one-time Wix migration; kept for reference
 docs/FORMS.md           how to connect the forms
+docs/ANALYTICS.md       how to turn on analytics
 design/                 original design mockups, not part of the site
 ```
 
@@ -110,6 +113,9 @@ directly, so the built HTML has to be in it.
   cancelling the Wix subscription — that data can't be recovered afterward.
 - One post title ends with a stray `"` carried over from Wix, in
   `content/posts.json`. Left as-is to stay faithful; safe to delete.
+- **Analytics is wired but off** until keys are set, and there is **no privacy
+  page or consent banner** yet. Session Replay records sessions, which needs
+  disclosing. See [docs/ANALYTICS.md](docs/ANALYTICS.md).
 
 ## Domain
 

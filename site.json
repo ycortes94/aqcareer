@@ -2,5 +2,15 @@
   "url": "https://www.aqcareer.com",
   "description": "Alina Quintana, National Certified Counselor and Certified Career Counselor in Sacramento, partners with organizations to build career programs that expand opportunity, confidence, and choice.",
   "blog_tagline": "Notes on career mobility, culture, and building a working life on your own terms.",
-  "form_endpoint": ""
+  "form_endpoint": "",
+  "analytics": {
+    "amplitude_api_key": "",
+    "statsig_client_key": "",
+    "session_replay": {
+      "enabled": true,
+      "sample_rate": 1,
+      "mask_forms": true
+    },
+    "respect_dnt": true
+  }
 }
