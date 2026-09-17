@@ -32,9 +32,17 @@ keys that belong here are the client ones above.
 
 ## Which project
 
-Both keys must come from projects that are meant to hold this site's data.
-Check before pasting — a key from an unrelated or shared project silently
-mixes a personal website's visitor traffic into someone else's analytics.
+This site's data goes to:
+
+| | Project |
+|---|---|
+| Amplitude | **AQ Career Site** (project `630492`) |
+| Statsig | **Yosimy Test Project** |
+
+Check before pasting a key — one from an unrelated or shared project
+silently mixes this site's visitor traffic into someone else's analytics.
+The Statsig key currently configured is a `client-` key validated against
+Statsig's initialize endpoint.
 
 ## Session Replay
 
