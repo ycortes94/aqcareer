@@ -2,13 +2,14 @@
     <div class="hero-grid">
       <div>
         <h1>Receive the 1st Career Disruptor Memo!</h1>
-        <form action="{{newsletter_action}}" method="post" id="memo-form">
+        <form action="{{form_endpoint}}" method="post" id="memo-form" data-form="newsletter">
           <label class="field-label" for="memo-email">Email<span>*</span></label>
           <div class="subrow">
             <input class="line-input" id="memo-email" name="email" type="email" required autocomplete="email">
             <button class="btn-ghost" type="submit">Subscribe</button>
           </div>
           <label class="consent"><input type="checkbox" name="consent" value="yes" required> I want to subscribe to your mailing list.</label>
+          <div class="hp" aria-hidden="true"><label for="memo-website">Website</label><input id="memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         </form>
         <a class="btn-solid" href="#services">Learn how I can support you</a>
       </div>
@@ -100,13 +101,14 @@
     <div class="wrap">
       <h2 class="script-h">let's connect</h2>
       <p class="kicker">Take control of your future,<br>reach out today.</p>
-      <form class="contact" action="{{contact_action}}" method="post">
+      <form class="contact" action="{{form_endpoint}}" method="post" data-form="contact">
         <div class="two">
           <div class="fgrp"><label class="fl" for="fn">First Name</label><input class="box" id="fn" name="first_name" type="text" autocomplete="given-name"></div>
           <div class="fgrp"><label class="fl" for="ln">Last Name</label><input class="box" id="ln" name="last_name" type="text" autocomplete="family-name"></div>
         </div>
         <div class="fgrp"><label class="fl" for="cem">Email</label><input class="box" id="cem" name="email" type="email" required autocomplete="email"></div>
         <div class="fgrp"><label class="fl" for="cmsg">Write a message</label><textarea class="box" id="cmsg" name="message"></textarea></div>
+        <div class="hp" aria-hidden="true"><label for="c-website">Website</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="submit" type="submit">Submit</button>
       </form>
     </div>

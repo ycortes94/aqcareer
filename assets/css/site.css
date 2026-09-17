@@ -115,6 +115,19 @@ textarea.box{height:86px;resize:vertical}
 .submit{width:100%;background:var(--green-dark);color:#fff;border:0;font-family:var(--sans);font-size:13px;padding:12px;cursor:pointer;margin-top:6px}
 .submit:hover{background:var(--green-deep)}
 
+/* ---------- form status + spam honeypot ---------- */
+/* Honeypot: off-screen rather than display:none, so bots that check for
+   hidden fields still fill it in. Kept out of the tab order too. */
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.form-status{margin:14px 0 0;font-size:13px;line-height:1.6}
+.form-status a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.form-status.is-ok{color:var(--green-deep);font-weight:600}
+.form-status.is-error{color:#8a2b20}
+/* On the green "let's connect" panel the text sits on a dark ground. */
+.connect .form-status.is-ok{color:#fff}
+.connect .form-status.is-error{color:#ffe0dc}
+button[type="submit"][disabled]{opacity:.65;cursor:progress}
+
 /* ---------- footer ---------- */
 footer.site{background:var(--green-deep);color:#fff;padding:40px 0 26px;font-size:13px}
 footer.site .fg{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;align-items:center}

@@ -8,11 +8,11 @@ Reads  templates/  + content/  and writes index.html, blog/, post/<slug>/,
 generated files.
 """
 import datetime as dt
+import hashlib
 import html
 import json
 import os
 import re
-import shutil
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 T = os.path.join(ROOT, "templates")
@@ -23,6 +23,20 @@ with open(os.path.join(ROOT, "site.json"), encoding="utf-8") as f:
 
 SITE = CFG["url"].rstrip("/")
 YEAR = dt.date.today().year
+
+
+def asset_v(rel):
+    """Short content hash, appended to asset URLs so a change reaches
+    visitors instead of sitting in their browser cache."""
+    try:
+        with open(os.path.join(ROOT, rel), "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()[:8]
+    except OSError:
+        return "0"
+
+
+CSS_V = asset_v("assets/css/site.css")
+JS_V = asset_v("assets/js/forms.js")
 
 
 def read(p):
@@ -52,6 +66,8 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         desc=html.escape(desc, quote=True), canonical=canonical, base=base,
         ogtype=ogtype, ogimage=ogimage or f"{SITE}/assets/img/headshot.jpg",
         cur_home=cur_home, cur_blog=cur_blog, year=YEAR, extra_js=extra_js,
+        form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
+        css_v=CSS_V,
     )
 
 
@@ -110,6 +126,9 @@ def build():
     for p in posts:
         p["body"] = read(os.path.join(C, "posts", p["slug"] + ".html"))
         p["excerpt"] = excerpt(p["body"])
+        # Derived, not hand-maintained: a stale "words" in posts.json would
+        # only ever show a wrong reading time.
+        p["words"] = len(strip_tags(p["body"]).split())
         p["nice"] = nice_date(p["date"])
         p["mins"] = read_minutes(p["words"])
     posts.sort(key=lambda p: p["date"], reverse=True)
@@ -118,13 +137,15 @@ def build():
 
     # ---------- home ----------
     home = fill(read(os.path.join(T, "home.html")), base="",
-                newsletter_action=CFG["newsletter_action"],
-                contact_action=CFG["contact_action"])
+                form_endpoint=html.escape(CFG.get("form_endpoint", ""),
+                                          quote=True))
     made.append(write("index.html", page(
         content=home,
         title="Home | AQ Career Consulting",
         desc=CFG["description"], canonical=SITE + "/", base="",
-        cur_home=' aria-current="page"', extra_js=CAROUSEL_JS)))
+        cur_home=' aria-current="page"',
+        extra_js=CAROUSEL_JS +
+        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>')))
 
     # ---------- blog index ----------
     cards = []
