@@ -148,9 +148,15 @@ def build():
     made = []
 
     # ---------- home ----------
+    # Session Replay: mark the forms in the markup itself. Amplitude's
+    # remote privacy config overrides SDK selectors, so a config-only
+    # approach can be silently switched off server-side; a class can't be.
+    an = CFG.get("analytics") or {}
+    mask_forms = (an.get("session_replay") or {}).get("mask_forms", True)
     home = fill(read(os.path.join(T, "home.html")), base="",
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
-                                          quote=True))
+                                          quote=True),
+                form_privacy_class="amp-block" if mask_forms else "")
     made.append(write("index.html", page(
         content=home,
         title="Home | AQ Career Consulting",

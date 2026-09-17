@@ -52,23 +52,51 @@ it to e.g. `0.2` for a fifth of sessions if volume ever matters.
 ### What's masked
 
 This site's contact form collects a name, an email address, and a free-text
-message to a career counselor. That's exactly the kind of content that should
-never end up in a replay, so masking is layered:
+message to a career counselor. That content must never appear in a replay.
 
-1. **Amplitude masks all text inputs by default.** Typed characters are
-   replaced with asterisks in the recording. This is SDK behaviour, not
-   something this repo turns on — and nothing here ever adds `.amp-unmask`,
-   which is what would switch it off.
-2. **`mask_forms: true`** additionally passes both form blocks
-   (`#memo-form` and `form.contact`) as `maskSelector`, so the surrounding
-   text and the message textarea are masked too, not just the inputs.
+**Read this before trusting the SDK defaults.** Amplitude's Session Replay
+privacy settings are configured **per project in the Amplitude UI**, and the
+UI takes precedence over anything the SDK asks for. The docs are explicit:
+"the Session Replay settings page takes precedence". A `maskSelector` passed
+from this repo can therefore be overridden server-side without any change
+here.
 
-Setting `mask_forms: false` drops layer 2 only. Layer 1 still applies, so
-typed input stays masked either way.
+As checked on 2026-09-17, this project's remote config
+(`sr-client-cfg.amplitude.com/config/<key>?config_group=browser`) returned:
 
-To mask something else later, add `.amp-mask` to the element (masks its
-text) or `.amp-block` (replaces it with a blank placeholder of the same
-size).
+```json
+"sr_privacy_config": { "maskSelector": [], "blockSelector": [],
+                       "unmaskSelector": [], "defaultMaskLevel": "light" }
+```
+
+Mask levels, per Amplitude's documentation:
+
+| Level | Masks |
+|---|---|
+| `light` | only a subset of sensitive inputs — passwords, credit card numbers, telephone numbers, email addresses |
+| `medium` | all form fields and text inputs |
+| `conservative` | all text and all form fields, including HTML text and links |
+
+At `light`, the message textarea and the name fields would be recorded in
+the clear. So protection here does not rely on configuration:
+
+1. **`mask_forms: true`** (the default) makes the build add the
+   **`amp-block`** class to both `<form>` elements. `amp-block` is read from
+   the markup, so it replaces each form with a blank placeholder in the
+   recording and a remote config change cannot switch it off. Trade-off: the
+   form area shows as an empty box in replays. The analytics events
+   (form start / form submit) are unaffected, so conversion is still
+   measurable.
+2. `maskSelector` is still passed from the SDK as a secondary layer, for the
+   case where the remote config is later set to honour it.
+
+Setting `mask_forms: false` removes the class and the selectors, leaving the
+project's UI mask level as the only protection.
+
+**Also worth doing in the Amplitude UI:** set this project's mask level to
+`medium` or `conservative` under *Settings → Organizational Settings →
+Session Replay Settings*. That covers text elsewhere on the site, not just
+the two forms, and it's the setting that actually wins.
 
 ### Statsig and replay
 
