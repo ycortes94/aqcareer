@@ -17,6 +17,7 @@ Hosted on GitHub Pages. Pushing to `main` redeploys it, usually within a minute.
 | Change the site title/description | Edit `site.json`, then rebuild |
 | Connect the forms | See [docs/FORMS.md](docs/FORMS.md) |
 | Turn on analytics | See [docs/ANALYTICS.md](docs/ANALYTICS.md) |
+| Edit the privacy page | Edit `templates/privacy.html`, bump `privacy.updated` in `site.json`, rebuild |
 
 Rebuild with:
 
@@ -73,11 +74,13 @@ all update together.
 ```
 index.html              generated — home page
 blog/index.html         generated — post list
+privacy/index.html      generated — privacy page
 post/<slug>/index.html  generated — one per post
 404.html feed.xml sitemap.xml robots.txt   generated
 
 templates/base.html     shared shell: head, header, footer
 templates/home.html     home page content
+templates/privacy.html  privacy page content
 content/posts.json      post metadata, newest first
 content/posts/*.html    post bodies (source of truth)
 content/posts/_TEMPLATE.html   starting point for a new post
@@ -113,9 +116,13 @@ directly, so the built HTML has to be in it.
   cancelling the Wix subscription — that data can't be recovered afterward.
 - One post title ends with a stray `"` carried over from Wix, in
   `content/posts.json`. Left as-is to stay faithful; safe to delete.
-- **Analytics is wired but off** until keys are set, and there is **no privacy
-  page or consent banner** yet. Session Replay records sessions, which needs
-  disclosing. See [docs/ANALYTICS.md](docs/ANALYTICS.md).
+- **Analytics is live** (Amplitude + Statsig, Session Replay on). A privacy
+  page exists at `/privacy/`; there is still **no consent banner**, which
+  matters mainly for EU/UK visitors. See [docs/ANALYTICS.md](docs/ANALYTICS.md).
+- The privacy page has **not been reviewed by a lawyer** — it describes what
+  the code actually does, in plain language.
+- Set this project's Session Replay mask level to `medium` or `conservative`
+  in the Amplitude UI; the UI overrides the SDK and currently reads `light`.
 
 ## Domain
 

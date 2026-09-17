@@ -12,5 +12,9 @@
       "mask_forms": true
     },
     "respect_dnt": true
+  },
+  "privacy": {
+    "updated": "2026-09-17",
+    "contact_email": ""
   }
 }
