@@ -231,7 +231,10 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
 .aq-consent .yes:hover{background:var(--green-dark)}
 .aq-consent .no{background:#fff;color:#222;border:1px solid #9aa5a2}
 .aq-consent .no:hover{background:#f4f6f5}
-.aq-consent .more{font-size:12.5px;color:var(--green-deep);text-decoration:underline;text-underline-offset:2px}
+/* .more styled the policy link when it sat in the button row; the notice now
+   carries it inline in the body text instead, so both are covered here. */
+.aq-consent .more,.aq-consent .b a{color:var(--green-deep);text-decoration:underline;text-underline-offset:2px}
+.aq-consent .more{font-size:12.5px}
 .aq-consent :focus-visible{outline:2px solid var(--green-deep);outline-offset:2px}
 
 /* Standing opt-out: footer link on every page, panel on the privacy page. */
