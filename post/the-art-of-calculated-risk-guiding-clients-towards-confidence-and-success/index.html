@@ -92,16 +92,22 @@
 <header>
   <div class="wrap hdr">
     <a class="mark" href="../../#top"><span class="name">alina quintana</span><span class="sub">Career Consulting</span></a>
+    <!-- data-nav drives the nav_link_clicked event; the value is the stable
+         grouping key, so it stays put even if the link's wording changes.
+         The build checks both chromes carry it. -->
     <nav>
-      <a href="../../#ft-about">About</a>
-      <a href="../../#ft-services">Services</a>
-      <a href="../../blog/" aria-current="page">POV Blog</a>
+      <a href="../../#ft-about" data-nav="about">About</a>
+      <a href="../../#ft-services" data-nav="services">Services</a>
+      <a href="../../blog/" aria-current="page" data-nav="blog">POV Blog</a>
       <!-- A plain nav link like the other three, not a .btn: it gets the green
            box from aria-current when it is the section you are reading, the
            same as the rest. .nav-cta only marks it as the one link worth
            keeping on a phone, where the others are hidden and this header has
-           no burger. data-cta drives the cta_clicked event — leave it be. -->
-      <a class="nav-cta" href="../../#ft-connect" data-cta="primary">Connect</a>
+           no burger. data-cta drives the cta_clicked event — leave it be.
+           It carries data-nav as well, so a click here logs both: the CTA
+           event the experiment reads, and the nav event that accounts for
+           every item in the bar. Filter by one or the other, not both. -->
+      <a class="nav-cta" href="../../#ft-connect" data-cta="primary" data-nav="connect">Connect</a>
     </nav>
   </div>
 </header>
@@ -120,11 +126,14 @@
       <a href="https://www.instagram.com/alinaquintana_career" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2c3.2 0 3.6 0 4.85.07 1.17.05 1.8.25 2.23.42.55.21.95.47 1.36.88.41.41.67.81.88 1.36.17.42.37 1.06.42 2.23.06 1.25.07 1.64.07 4.84s-.01 3.6-.07 4.85c-.05 1.17-.25 1.8-.42 2.23-.21.55-.47.95-.88 1.36-.41.41-.81.67-1.36.88-.42.17-1.06.37-2.23.42-1.25.06-1.64.07-4.85.07s-3.6-.01-4.85-.07c-1.17-.05-1.8-.25-2.23-.42-.55-.21-.95-.47-1.36-.88-.41-.41-.67-.81-.88-1.36-.17-.42-.37-1.06-.42-2.23C2.21 15.6 2.2 15.2 2.2 12s.01-3.6.07-4.85c.05-1.17.25-1.8.42-2.23.21-.55.47-.95.88-1.36.41-.41.81-.67 1.36-.88.42-.17 1.06-.37 2.23-.42C8.4 2.21 8.8 2.2 12 2.2zm0 1.8c-3.15 0-3.5.01-4.73.07-.94.04-1.4.2-1.72.32-.35.14-.6.3-.86.56-.26.26-.42.51-.56.86-.13.33-.28.78-.32 1.72C3.75 8.76 3.74 9.1 3.74 12s.01 3.24.07 4.47c.04.94.2 1.4.32 1.72.14.35.3.6.56.86.26.26.51.42.86.56.33.13.78.28 1.72.32 1.23.06 1.58.07 4.73.07s3.5-.01 4.73-.07c.94-.04 1.4-.2 1.72-.32.35-.14.6-.3.86-.56.26-.26.42-.51.56-.86.13-.33.28-.78.32-1.72.06-1.23.07-1.58.07-4.47s-.01-3.24-.07-4.47c-.04-.94-.2-1.4-.32-1.72a2.3 2.3 0 00-.56-.86 2.3 2.3 0 00-.86-.56c-.33-.13-.78-.28-1.72-.32C15.5 4.01 15.15 4 12 4zm0 3.05A4.95 4.95 0 1112 17a4.95 4.95 0 010-9.9zm0 1.8a3.15 3.15 0 100 6.3 3.15 3.15 0 000-6.3zm5.2-2.1a1.16 1.16 0 110 2.32 1.16 1.16 0 010-2.32z"/></svg></a>
       <a href="https://www.tiktok.com/@alinaquintana_career" aria-label="TikTok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 2h-3v13.1a2.6 2.6 0 11-1.9-2.5V9.5A5.9 5.9 0 1016.5 15V8.7a6.6 6.6 0 003.9 1.3V7a3.9 3.9 0 01-3.9-3.9z"/></svg></a>
     </div>
+    <!-- data-nav drives the nav_link_clicked event; the value is the stable
+         grouping key, so it stays put even if the link's wording changes.
+         The build checks both chromes carry it. -->
     <nav class="main" id="mainnav">
-      <a href="../../">Home</a>
-      <a href="../../#services">Services &amp; Products</a>
-      <a href="../../blog/" aria-current="page">POV Blog</a>
-      <a href="../../#connect">Connect</a>
+      <a href="../../" data-nav="home">Home</a>
+      <a href="../../#services" data-nav="services">Services &amp; Products</a>
+      <a href="../../blog/" aria-current="page" data-nav="blog">POV Blog</a>
+      <a href="../../#connect" data-nav="connect">Connect</a>
     </nav>
     <button class="burger" aria-label="Menu" aria-expanded="false" aria-controls="mainnav">&#9776;</button>
   </div>
@@ -171,11 +180,11 @@
 <footer class="site site-chrome">
   <div class="wrap fg">
     <nav>
-      <a href="../../">Home</a>
-      <a href="../../#services">Services</a>
-      <a href="../../blog/">POV Blog</a>
-      <a href="../../#connect">Connect</a>
-      <a href="../../privacy/">Privacy</a>
+      <a href="../../" data-nav="home">Home</a>
+      <a href="../../#services" data-nav="services">Services</a>
+      <a href="../../blog/" data-nav="blog">POV Blog</a>
+      <a href="../../#connect" data-nav="connect">Connect</a>
+      <a href="../../privacy/" data-nav="privacy">Privacy</a>
       <!-- Revealed by analytics.js only when there is something to switch off. -->
       <button type="button" class="consent-link" data-aq-consent="open" data-aq-consent-ui hidden>Tracking choice</button>
       <a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a>
@@ -210,10 +219,10 @@
            heading outline. The nav carries its name in aria-label instead. -->
       <nav class="fcol fnav" aria-label="Explore">
         <p class="fh">Explore</p>
-        <a href="../../#ft-about">About</a>
-        <a href="../../#ft-services">Services</a>
-        <a href="../../blog/">POV Blog</a>
-        <a href="../../#ft-connect">Connect</a>
+        <a href="../../#ft-about" data-nav="about">About</a>
+        <a href="../../#ft-services" data-nav="services">Services</a>
+        <a href="../../blog/" data-nav="blog">POV Blog</a>
+        <a href="../../#ft-connect" data-nav="connect">Connect</a>
       </nav>
       <div class="fcol">
         <p class="fh">Follow along</p>
@@ -227,7 +236,7 @@
     <div class="fbot">
       <span>&copy; 2026 AQ Career Consulting. All rights reserved.</span>
       <div class="fmeta">
-        <a href="../../privacy/">Privacy</a>
+        <a href="../../privacy/" data-nav="privacy">Privacy</a>
         <!-- Revealed by analytics.js only when there is something to switch off.
              Mirrors the control footer, which also keeps it beside Privacy in
              the bottom bar: whichever layout wins, the standing opt-out is
@@ -240,7 +249,7 @@
 
 </div>
 <script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
-<script src="../../assets/js/analytics.js?v=ec8363e6"></script>
+<script src="../../assets/js/analytics.js?v=c7e954b4"></script>
 <script src="../../assets/js/likes.js?v=176ed59a"></script>
 </body>
 </html>

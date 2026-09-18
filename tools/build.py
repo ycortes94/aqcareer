@@ -359,6 +359,11 @@ SECTION_SPY_JS = """<script>
 SITE_WIDE = {
     "the tracking opt-out control": 'data-aq-consent="open"',
     "the script wordmark": '<span class="name">alina quintana</span>',
+    # Services is the one nav item both chromes have, so it is the one to
+    # check. A chrome without data-nav goes silent in nav_link_clicked while
+    # the other keeps reporting — the breakdown then reads as a design
+    # preference rather than a missing attribute.
+    "nav click tracking (data-nav)": 'data-nav="services"',
 }
 
 
