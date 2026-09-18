@@ -462,7 +462,19 @@
     state: readChoice,
     accept: function () { choose(GRANTED); },
     decline: function () { choose(DENIED); },
-    open: function () { ready(function () { openBanner(true); }); }
+    open: function () { ready(function () { openBanner(true); }); },
+    /* Forget the answer and reload, so the next paint is a genuine first
+       visit: no SDK loaded, and the dialog's first-visit wording ("Nothing has
+       loaded yet") is actually true. Reopening it in place instead would claim
+       that while Amplitude and Replay were already running. Lives here rather
+       than in a caller because STORE_KEY is versioned — bump it and this keeps
+       clearing the right thing. */
+    reset: function () {
+      try { window.localStorage.removeItem(STORE_KEY); } catch (err) {}
+      try { if (window.amplitude) window.amplitude.setOptOut(true); } catch (err) {}
+      try { if (window.statsigClient) window.statsigClient.shutdown(); } catch (err) {}
+      window.location.reload();
+    }
   };
 
   if (!NEEDS_CONSENT) {

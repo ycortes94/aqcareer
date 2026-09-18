@@ -230,6 +230,27 @@ readable from the page source or reachable by editing `data-home-design` in
 devtools — and because a pinned pageview logs nothing, someone doing it cannot
 disturb the experiment's results.
 
+### Getting the disclaimer back
+
+The panel also shows what this browser answered to the measurement disclaimer —
+accepted, declined, or not answered yet — with a **Reset it and show the
+disclaimer** button beneath it. The button is disabled when there is no answer
+stored, since there would be nothing to clear.
+
+Reset forgets the answer and reloads the page, so what you get is a genuine
+first visit: no SDK loaded, and the dialog's own "Nothing has loaded yet"
+wording is actually true. Reopening it in place instead — which is what the
+footer control does — would claim that while Amplitude and Session Replay were
+already running.
+
+It clears only the answer. Your Labs pin lives under a separate key, so
+resetting the disclaimer does not cost you the layout you were looking at.
+
+The work is `window.aqConsent.reset()` in `analytics.js`, not in the panel:
+`STORE_KEY` is versioned on purpose, so bumping it keeps the button clearing
+the right thing instead of silently clearing a key nobody uses any more. That
+same call is the way to do it from the console.
+
 **A pinned pageview records nothing.** `analytics.js` returns before it asks
 Statsig for an assignment — asking would log an exposure for a variant nobody
 was really bucketed into — and it logs no `home_viewed` or CTA events either.
