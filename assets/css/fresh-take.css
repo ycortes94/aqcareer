@@ -117,10 +117,20 @@ html[data-home-design="fresh_take"] body{
 #layout-fresh .plogos img:hover{filter:none;opacity:1}
 
 #layout-fresh .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-#layout-fresh .tcard{background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--r);padding:34px 32px}
+/* Column, so the attribution sits on the bottom edge: the quotes differ a lot
+   in length, and in equal-height cards it would otherwise float mid-card. */
+#layout-fresh .tcard{
+  background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--r);
+  padding:34px 32px;display:flex;flex-direction:column
+}
 #layout-fresh .tcard .qm{font-family:var(--serif);font-size:40px;line-height:.8;color:var(--green-mid);display:block;margin-bottom:6px}
+/* The three-paragraph testimonial takes the whole row: as a half-width card it
+   reads as a narrow column of text. */
+#layout-fresh .tcard.wide{grid-column:1/-1}
 #layout-fresh .tcard blockquote{margin:0 0 22px;font-size:15.5px;color:var(--ink)}
-#layout-fresh .tcard .attr{border-top:1px solid rgba(1,66,53,.12);padding-top:14px;font-size:13px;color:var(--muted)}
+#layout-fresh .tcard blockquote p{margin:0 0 14px}
+#layout-fresh .tcard blockquote p:last-child{margin-bottom:0}
+#layout-fresh .tcard .attr{margin-top:auto;border-top:1px solid rgba(1,66,53,.12);padding-top:14px;font-size:13px;color:var(--muted)}
 #layout-fresh .tcard .attr b{display:block;color:var(--ink);font-size:14px;font-weight:700;letter-spacing:.04em}
 
 #layout-fresh .memo{background:var(--sand)}
