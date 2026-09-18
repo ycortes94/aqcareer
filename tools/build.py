@@ -268,6 +268,89 @@ CAROUSEL_JS = """<script>
 })();
 </script>"""
 
+SECTION_SPY_JS = """<script>
+/* Section tracking for the fresh-take header: the link for whatever section
+   you are reading gets the same green box the current page's link gets.
+   Homepage only, because that is the only page carrying the ft- sections —
+   from the blog or a post those same links navigate here instead.
+
+   Scoped to the fresh-take nav and its ft- ids: both experiment arms live in
+   this one document, and the control arm keeps its own plain nav.
+
+   aria-current="location" is the in-page counterpart of the "page" value
+   stamped on POV Blog, and fresh-take.css highlights either. This only ever
+   adds and removes "location", so it can never clobber a real "page". */
+(function(){
+  var nav=document.querySelector('.ft .hdr nav');
+  if(!nav) return;
+  var marks=[].slice.call(nav.querySelectorAll('a[href*="#ft-"]')).map(function(a){
+    return {link:a, section:document.getElementById(a.getAttribute('href').split('#')[1])};
+  }).filter(function(m){ return m.section });
+  if(!marks.length) return;
+
+  // Where down the viewport the page counts as being "read", as a fraction.
+  // paint() measures against it and the observer below watches it, so the
+  // two cannot drift apart.
+  var LINE=0.4;
+
+  var queued=false;
+  function paint(){
+    queued=false;
+    // Nothing to light while this arm is the hidden one.
+    if(!nav.getClientRects().length) return;
+    /* Of the sections whose top has crossed the line, the lowest wins — the
+       one just entered — so a section keeps the highlight through the
+       unanchored stretches below it (partners, testimonials, the memo form)
+       instead of blinking off. Positions are measured live on every paint,
+       not cached in document order: the first paint can run while this arm is
+       still hidden, and every offset inside a display:none block reads 0. */
+    var line=window.innerHeight*LINE, cur=null, best=-Infinity;
+    marks.forEach(function(m){
+      var top=m.section.getBoundingClientRect().top;
+      if(top<=line && top>best){ best=top; cur=m }
+    });
+    marks.forEach(function(m){
+      if(m===cur) m.link.setAttribute('aria-current','location');
+      else if(m.link.getAttribute('aria-current')==='location') m.link.removeAttribute('aria-current');
+    });
+  }
+  /* Two paints per burst: one on the next frame so the highlight keeps up
+     while you scroll, and one shortly after the last trigger so the settled
+     geometry gets the last word. */
+  var tail;
+  function schedule(){
+    if(!queued){ queued=true; requestAnimationFrame(paint) }
+    clearTimeout(tail); tail=setTimeout(paint,120);
+  }
+  /* The observer, not the scroll event, is what makes this reliable. A
+     programmatic jump — an anchor click, a restored scroll position — does
+     not always emit a scroll event, and a missed event would strand the
+     highlight on the section just left. Crossing the line is itself an
+     intersection change, so this fires either way. rootMargin collapses the
+     root to a zero-height line at LINE, the very line paint() measures. */
+  if(window.IntersectionObserver){
+    var io=new IntersectionObserver(schedule,{
+      rootMargin:(-LINE*100)+'% 0px '+(-(1-LINE)*100)+'% 0px'
+    });
+    marks.forEach(function(m){ io.observe(m.section) });
+  }
+  // Keeps it smooth during an ordinary drag, and re-measures after reflows.
+  addEventListener('scroll',schedule,{passive:true});
+  addEventListener('resize',schedule);
+  addEventListener('load',schedule);
+  /* The arm is revealed asynchronously — by Labs inline, or by analytics.js
+     once Statsig answers — so the first paint can land while the nav is still
+     hidden, with no scroll afterwards to correct it. Repainting when <html>
+     flips covers that, and a visitor landing deep on a #ft- link, without
+     reaching into base.html's single __aqReveal slot. */
+  if(window.MutationObserver){
+    new MutationObserver(schedule).observe(document.documentElement,
+      {attributes:true, attributeFilter:['class','data-home-design']});
+  }
+  schedule();
+})();
+</script>"""
+
 
 # Anything that has to be on every page has to be in BOTH chromes: the
 # control one in base.html and the fresh-take one in the partials. Adding a
@@ -346,7 +429,7 @@ def build():
         variant_layout=variant,
         # No tag for labs.js on purpose: the inline gate in base.html injects
         # it, and only for a browser that has Labs switched on.
-        extra_js=CAROUSEL_JS +
+        extra_js=CAROUSEL_JS + SECTION_SPY_JS +
         f'\n<script src="assets/js/forms.js?v={JS_V}"></script>')))
 
     # ---------- blog index ----------
