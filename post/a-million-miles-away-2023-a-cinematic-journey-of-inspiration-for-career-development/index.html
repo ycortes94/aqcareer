@@ -33,7 +33,36 @@
     h.setAttribute('data-home-design', d==='fresh_take'?'fresh_take':'control');
     h.classList.remove('exp-pending');
   }
-  t=setTimeout(function(){reveal('control');},2000);
+  /* Labs: a layout pinned for development. Resolved here, inline, before
+     anything else loads, so the pinned layout paints first time with no
+     flash of the other one — and so it still works with measurement
+     declined or analytics.js blocked outright. window.__aqLabs tells
+     analytics.js to skip assignment and log nothing for this pageview. */
+  var labs=null;
+  try{
+    var KEY='aq_labs_v1', q=new URLSearchParams(location.search);
+    var wanted=q.get('design'), toggle=q.get('labs');
+    var st=null;
+    try{ st=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
+    /* enabled:false is an explicit off, kept rather than deleted so it can
+       outrank the dev default below — otherwise ?labs=0 would do nothing on
+       localhost, where you may well want to watch the real assignment run. */
+    if(toggle==='0'){ st={enabled:false}; }
+    else if(toggle==='1'){ st=st||{}; st.enabled=true; }
+    if(wanted==='control'||wanted==='fresh_take'){
+      st=st||{}; st.enabled=true; st.design=wanted;
+    }
+    if(st) localStorage.setItem(KEY,JSON.stringify(st));
+    /* On by default where development actually happens. Anywhere else it
+       stays off until ?labs=1, so a visitor never sees the panel. */
+    var dev=/^(localhost|127\.0\.0\.1|\[::1\]|0\.0\.0\.0)$/.test(location.hostname)
+            ||/\.local$/.test(location.hostname);
+    if(st&&st.enabled===false) labs=null;
+    else if((st&&st.enabled)||dev) labs={enabled:true,design:(st&&st.design)||null};
+  }catch(e){}
+  window.__aqLabs=labs;
+  if(labs&&labs.design) reveal(labs.design);
+  else t=setTimeout(function(){reveal('control');},2000);
   window.__aqReveal=reveal;
 })();
 </script>
@@ -129,7 +158,7 @@
 
 
 <script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
-<script src="../../assets/js/analytics.js?v=d6ee2541"></script>
+<script src="../../assets/js/analytics.js?v=f3b43454"></script>
 
 </body>
 </html>

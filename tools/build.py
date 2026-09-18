@@ -39,6 +39,7 @@ CSS_V = asset_v("assets/css/site.css")
 FT_CSS_V = asset_v("assets/css/fresh-take.css")
 JS_V = asset_v("assets/js/forms.js")
 AN_V = asset_v("assets/js/analytics.js")
+LABS_V = asset_v("assets/js/labs.js")
 
 
 def analytics_snippet(base):
@@ -208,7 +209,10 @@ def build():
         layout_close='</div>',
         variant_layout=variant,
         extra_js=CAROUSEL_JS +
-        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>')))
+        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>'
+        # Homepage only — it switches between the two homepage layouts, and
+        # renders nothing at all unless Labs is enabled for this browser.
+        f'\n<script src="assets/js/labs.js?v={LABS_V}"></script>')))
 
     # ---------- blog index ----------
     cards = []

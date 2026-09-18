@@ -191,6 +191,18 @@
   function applyHomeExperiment(client) {
     var html = document.documentElement;
     if (!html.classList.contains('home-exp')) return;
+
+    // Labs has pinned a layout for development (see assets/js/labs.js). Don't
+    // ask Statsig for an assignment — that would log an exposure for a variant
+    // nobody was really bucketed into — and log nothing else either. A pinned
+    // pageview is someone checking a layout, not experiment data.
+    var labs = window.__aqLabs;
+    if (labs && labs.design) {
+      revealHome(labs.design);
+      remapHash(labs.design);
+      return;
+    }
+
     var design = 'control';
     // Consent given part-way through a pageview: the page is already showing
     // control, so that is the design this visit saw. Report it as such rather
@@ -206,14 +218,29 @@
     revealHome(design);
     logEvent('home_viewed', { homepage_design: design });
     wireCtas(design);
-    if (design === 'fresh_take') {
-      var map = { services: 'ft-services', connect: 'ft-connect', about: 'ft-about', main: 'ft-main' };
-      var id = (window.location.hash || '').replace('#', '');
-      if (map[id]) {
-        var target = document.getElementById(map[id]);
-        if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView();
-      }
-    }
+    remapHash(design);
+  }
+
+  /* Every path that gives up on assignment lands on control — unless Labs has
+     pinned a layout, which outranks all of them: pinning has to work with
+     measurement declined, with a DNT signal, and with no keys configured,
+     since that is exactly when you want to look at a layout undisturbed. */
+  function revealFallback() {
+    var labs = window.__aqLabs;
+    var design = (labs && labs.design) || 'control';
+    revealHome(design);
+    remapHash(design);
+  }
+
+  // The variant's sections carry ft- prefixed ids, so a link written against
+  // the control's anchors has to be pointed at the equivalent section.
+  function remapHash(design) {
+    if (design !== 'fresh_take') return;
+    var map = { services: 'ft-services', connect: 'ft-connect', about: 'ft-about', main: 'ft-main' };
+    var id = (window.location.hash || '').replace('#', '');
+    if (!map[id]) return;
+    var target = document.getElementById(map[id]);
+    if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView();
   }
 
   function startStatsig() {
@@ -421,13 +448,13 @@
   /* ---------- go ---------- */
 
   if (document.documentElement.classList.contains('home-exp')) {
-    homeRevealTimer = setTimeout(function () { revealHome('control'); }, REVEAL_MS);
+    homeRevealTimer = setTimeout(revealFallback, REVEAL_MS);
   }
 
   ready(wireUi);
 
   if (signalOptOut() || !HAS_KEYS) {
-    revealHome('control');
+    revealFallback();
     return;
   }
 
@@ -447,9 +474,10 @@
   if (choice === GRANTED) {
     startTracking();
   } else {
-    // Declined, or not asked yet. Either way the homepage shows control, and
-    // it shows it now rather than after the reveal timeout.
-    revealHome('control');
+    // Declined, or not asked yet. Either way the homepage shows control (or
+    // whatever Labs pinned), and it shows it now rather than after the
+    // reveal timeout.
+    revealFallback();
     if (choice !== DENIED) ready(function () { openBanner(false); });
   }
 })();
