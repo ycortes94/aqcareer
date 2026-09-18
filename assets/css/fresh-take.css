@@ -109,16 +109,13 @@ html[data-home-design="fresh_take"] body{
 .ft .hero h1 em{font-style:italic;color:var(--ft-green)}
 .ft .hero .cta{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-top:32px}
 .ft .pt{position:relative}
-.ft .pt .block{position:absolute;inset:26px -22px -22px 26px;background:var(--ft-sand);border-radius:var(--ft-r)}
-/* height:auto matters. The markup carries width="650" height="748" so the
-   browser can reserve the space, but that height is a definite value, and
-   aspect-ratio only applies when one dimension is auto — so without this the
-   attribute won and the portrait rendered 748px tall instead of the 543.8px
-   the ratio asks for, overwhelming the hero. */
-.ft .pt img{
-  position:relative;width:100%;height:auto;aspect-ratio:4/4.6;object-fit:cover;
-  object-position:center 18%;border-radius:var(--ft-r)
-}
+/* The portrait is a circle on transparent corners, baked into the image, so
+   this box has to stay square: the 4/4.6 crop this rule used to carry sliced
+   the sides off the circle. No border-radius or object-fit either — the shape
+   is the artwork's, not the box's. height:auto still matters, so that the
+   width/height attributes reserve the right space without pinning the
+   rendered height to 1080px. */
+.ft .pt img{position:relative;width:100%;height:auto;aspect-ratio:1}
 
 .ft .band{background:var(--ft-green);color:#fff;padding:74px 0}
 .ft .band .q{
@@ -264,7 +261,6 @@ html[data-home-design="fresh_take"] body{
   .ft .memo-grid,
   .ft .connect-grid{grid-template-columns:1fr;gap:38px}
   .ft .pt{order:-1;max-width:400px}
-  .ft .pt .block{inset:20px -14px -14px 20px}
   .ft .plogos{grid-template-columns:repeat(2,1fr)}
   .ft section.pad{padding-block:60px}
   .ft .hero{padding-block:48px 60px}
@@ -378,9 +374,10 @@ html[data-home-design="fresh_take"] .pcard h2:first-child{margin-top:26px}
    so each rule has to out-specify its site.css counterpart — which the
    html[data-home-design="fresh_take"] prefix does on its own.
 
-   The look follows the homepage: Fraunces for headings, cream ground, the
-   sand offset block behind the cover image that the hero portrait uses, and
-   green for anything interactive. */
+   The look follows the homepage: Fraunces for headings, cream ground, a sand
+   offset block behind the cover image, and green for anything interactive.
+   (The hero portrait used to carry that same offset block; it does not any
+   more, now that its backdrop is a circle.) */
 
 html[data-home-design="fresh_take"]{
   --ft-post-line:rgba(1,66,53,.14);
