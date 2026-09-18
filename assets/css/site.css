@@ -194,6 +194,10 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
    choice is open, because nothing is being collected until it's made. */
 .aq-consent{position:fixed;z-index:200;left:0;right:0;bottom:0;display:flex;justify-content:center;
   padding:0 16px calc(16px + env(safe-area-inset-bottom,0px));pointer-events:none}
+/* closeBanner() hides the dialog with el.hidden, and the display:flex above is
+   an author rule, so it outranks the browser's own [hidden]{display:none} and
+   the dialog stayed on screen after answering it. Restore it explicitly. */
+.aq-consent[hidden]{display:none}
 .aq-consent .panel{pointer-events:auto;width:100%;max-width:700px;background:#fff;
   border:1px solid #d9e0de;border-top:3px solid var(--green-mid);
   box-shadow:0 12px 44px rgba(1,66,53,.2);padding:22px 24px 20px}
