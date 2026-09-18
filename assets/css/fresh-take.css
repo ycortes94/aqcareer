@@ -154,8 +154,10 @@ html[data-home-design="fresh_take"] body{
 #layout-fresh footer .mark .name{color:#fff}
 #layout-fresh footer .mark .sub{color:#a9cdc3}
 #layout-fresh .fnav{display:flex;flex-direction:column;gap:10px}
-#layout-fresh .fnav a{color:#dce9e5;text-decoration:none;font-size:14px}
-#layout-fresh .fnav a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+#layout-fresh .fnav a,
+#layout-fresh .fnav .consent-link{color:#dce9e5;text-decoration:none;font-size:14px;text-align:left}
+#layout-fresh .fnav a:hover,
+#layout-fresh .fnav .consent-link:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
 #layout-fresh .fsoc{display:flex;gap:14px}
 #layout-fresh .fsoc a{
   width:38px;height:38px;border:1px solid rgba(255,255,255,.3);border-radius:50%;

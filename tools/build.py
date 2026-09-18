@@ -139,7 +139,33 @@ CAROUSEL_JS = """<script>
 </script>"""
 
 
+# Anything that has to be on every page has to be in BOTH, because the
+# homepage experiment ships two complete layouts, each with its own header
+# and footer. Adding a site-wide feature to one of them is a silent bug:
+# whichever group a visitor lands in, they lose it.
+SITE_WIDE = {
+    "the tracking opt-out control": 'data-aq-consent="open"',
+    "the script wordmark": '<span class="name">alina quintana</span>',
+}
+
+
+def check_chrome():
+    """Fail the build rather than ship a layout missing a site-wide feature.
+
+    base.html covers the control homepage and every other page;
+    home-fresh-take.html is the variant's own chrome."""
+    for tpl in ("base.html", "home-fresh-take.html"):
+        src = read(os.path.join(T, tpl))
+        for label, needle in SITE_WIDE.items():
+            if needle not in src:
+                raise SystemExit(
+                    f"build aborted: templates/{tpl} is missing {label}.\n"
+                    f"  expected to find: {needle}\n"
+                    f"  Both homepage layouts need it — see docs/ANALYTICS.md.")
+
+
 def build():
+    check_chrome()
     posts = json.load(open(os.path.join(C, "posts.json"), encoding="utf-8"))
     for p in posts:
         p["body"] = read(os.path.join(C, "posts", p["slug"] + ".html"))
