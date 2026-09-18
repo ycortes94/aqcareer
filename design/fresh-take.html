@@ -39,9 +39,9 @@
   /* ---------- header ---------- */
   header{position:sticky;top:env(safe-area-inset-top,0px);z-index:60;background:rgba(250,247,242,.92);backdrop-filter:blur(8px);border-bottom:1px solid rgba(1,66,53,.09)}
   .hdr{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:16px}
-  .mark{text-decoration:none;line-height:1.05}
-  .mark b{display:block;font-family:var(--serif);font-size:19px;font-weight:500;color:var(--green);letter-spacing:.01em}
-  .mark span{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--green-mid)}
+  .mark{text-decoration:none;line-height:1;display:block}
+  .mark .name{display:block;font-family:var(--script);font-size:34px;color:var(--green);margin-bottom:-2px}
+  .mark .sub{display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--green)}
   nav{display:flex;gap:28px;align-items:center}
   nav a{color:var(--green);text-decoration:none;font-size:14px;font-weight:500}
   nav a:hover{text-decoration:underline;text-underline-offset:4px}
@@ -119,8 +119,8 @@
   /* ---------- footer ---------- */
   footer{background:var(--green);color:#fff;padding:56px 0 34px}
   .fgrid{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap;align-items:flex-start}
-  footer .mark b{color:#fff}
-  footer .mark span{color:#a9cdc3}
+  footer .mark .name{color:#fff}
+  footer .mark .sub{color:#a9cdc3}
   .fnav{display:flex;flex-direction:column;gap:10px}
   .fnav a{color:#dce9e5;text-decoration:none;font-size:14px}
   .fnav a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
@@ -146,7 +146,7 @@
 
 <header>
   <div class="wrap hdr">
-    <a class="mark" href="#top"><b>Alina Quintana</b><span>Career Consulting</span></a>
+    <a class="mark" href="#top"><span class="name">alina quintana</span><span class="sub">Career Consulting</span></a>
     <nav>
       <a href="#about">About</a>
       <a href="#services">Services</a>
@@ -304,7 +304,7 @@
   <div class="wrap">
     <div class="fgrid">
       <div>
-        <a class="mark" href="#top"><b>Alina Quintana</b><span>Career Consulting</span></a>
+        <a class="mark" href="#top"><span class="name">alina quintana</span><span class="sub">Career Consulting</span></a>
         <p style="color:#a9cdc3;font-size:14px;margin:14px 0 0;max-width:30ch">National Certified Counselor &amp; Certified Career Counselor. Sacramento, California.</p>
       </div>
       <div class="fnav">

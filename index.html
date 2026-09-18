@@ -16,9 +16,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/site.css?v=3ff57b8c">
+<link rel="stylesheet" href="assets/css/site.css?v=1d75cc37">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/fresh-take.css?v=7ddffc7d">
+<link rel="stylesheet" href="assets/css/fresh-take.css?v=dac5400c">
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="feed.xml">
 <noscript><style>html.exp-pending body{visibility:visible!important}</style></noscript>
 <script>
@@ -200,6 +200,8 @@
       <a href="blog/">POV Blog</a>
       <a href="#connect">Connect</a>
       <a href="privacy/">Privacy</a>
+      <!-- Revealed by analytics.js only when there is something to switch off. -->
+      <button type="button" class="consent-link" data-aq-consent="open" data-aq-consent-ui hidden>Tracking choice</button>
       <a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a>
     </nav>
     <span class="copy">&copy; 2026 AQ Career Consulting &middot; Sacramento, CA</span>
@@ -220,7 +222,7 @@
 <a class="skip" href="#ft-main">Skip to content</a>
 <header>
   <div class="wrap hdr">
-    <a class="mark" href="#top"><b>Alina Quintana</b><span>Career Consulting</span></a>
+    <a class="mark" href="#top"><span class="name">alina quintana</span><span class="sub">Career Consulting</span></a>
     <nav>
       <a href="#ft-about">About</a>
       <a href="#ft-services">Services</a>
@@ -380,7 +382,7 @@
   <div class="wrap">
     <div class="fgrid">
       <div>
-        <a class="mark" href="#top"><b>Alina Quintana</b><span>Career Consulting</span></a>
+        <a class="mark" href="#top"><span class="name">alina quintana</span><span class="sub">Career Consulting</span></a>
         <p style="color:#a9cdc3;font-size:14px;margin:14px 0 0;max-width:30ch">National Certified Counselor &amp; Certified Career Counselor. Sacramento, California.</p>
       </div>
       <div class="fnav">
@@ -389,6 +391,10 @@
         <a href="blog/">POV Blog</a>
         <a href="#ft-connect">Connect</a>
         <a href="privacy/">Privacy</a>
+        <!-- Revealed by analytics.js only when there is something to switch off.
+             Mirrors the control footer: whichever layout wins, the standing
+             opt-out is reachable from every page. -->
+        <button type="button" class="consent-link" data-aq-consent="open" data-aq-consent-ui hidden>Tracking choice</button>
       </div>
       <div class="fsoc">
         <a href="https://www.linkedin.com/in/alina-quintana/" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M4.98 3.5a2.5 2.5 0 11-.02 5 2.5 2.5 0 01.02-5zM3 9h4v12H3zM9 9h3.8v1.7h.05c.53-.95 1.83-1.95 3.77-1.95 4.03 0 4.78 2.5 4.78 5.75V21h-4v-5.6c0-1.34-.02-3.06-1.9-3.06-1.9 0-2.2 1.45-2.2 2.96V21H9z"/></svg></a>
@@ -404,8 +410,8 @@
 </footer>
 </div>
 
-<script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true};</script>
-<script src="assets/js/analytics.js?v=b4dbdbca"></script>
+<script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
+<script src="assets/js/analytics.js?v=d6ee2541"></script>
 <script>
 (function(){
   var root=document.querySelector('.testi'); if(!root) return;
