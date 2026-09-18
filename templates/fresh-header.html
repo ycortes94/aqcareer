@@ -5,16 +5,22 @@
 <header>
   <div class="wrap hdr">
     <a class="mark" href="{{base}}#top"><span class="name">alina quintana</span><span class="sub">Career Consulting</span></a>
+    <!-- data-nav drives the nav_link_clicked event; the value is the stable
+         grouping key, so it stays put even if the link's wording changes.
+         The build checks both chromes carry it. -->
     <nav>
-      <a href="{{base}}#ft-about">About</a>
-      <a href="{{base}}#ft-services">Services</a>
-      <a href="{{base}}blog/"{{cur_blog}}>POV Blog</a>
+      <a href="{{base}}#ft-about" data-nav="about">About</a>
+      <a href="{{base}}#ft-services" data-nav="services">Services</a>
+      <a href="{{base}}blog/"{{cur_blog}} data-nav="blog">POV Blog</a>
       <!-- A plain nav link like the other three, not a .btn: it gets the green
            box from aria-current when it is the section you are reading, the
            same as the rest. .nav-cta only marks it as the one link worth
            keeping on a phone, where the others are hidden and this header has
-           no burger. data-cta drives the cta_clicked event — leave it be. -->
-      <a class="nav-cta" href="{{base}}#ft-connect" data-cta="primary">Connect</a>
+           no burger. data-cta drives the cta_clicked event — leave it be.
+           It carries data-nav as well, so a click here logs both: the CTA
+           event the experiment reads, and the nav event that accounts for
+           every item in the bar. Filter by one or the other, not both. -->
+      <a class="nav-cta" href="{{base}}#ft-connect" data-cta="primary" data-nav="connect">Connect</a>
     </nav>
   </div>
 </header>

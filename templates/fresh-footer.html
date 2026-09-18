@@ -13,10 +13,10 @@
            heading outline. The nav carries its name in aria-label instead. -->
       <nav class="fcol fnav" aria-label="Explore">
         <p class="fh">Explore</p>
-        <a href="{{base}}#ft-about">About</a>
-        <a href="{{base}}#ft-services">Services</a>
-        <a href="{{base}}blog/">POV Blog</a>
-        <a href="{{base}}#ft-connect">Connect</a>
+        <a href="{{base}}#ft-about" data-nav="about">About</a>
+        <a href="{{base}}#ft-services" data-nav="services">Services</a>
+        <a href="{{base}}blog/" data-nav="blog">POV Blog</a>
+        <a href="{{base}}#ft-connect" data-nav="connect">Connect</a>
       </nav>
       <div class="fcol">
         <p class="fh">Follow along</p>
@@ -30,7 +30,7 @@
     <div class="fbot">
       <span>&copy; {{year}} AQ Career Consulting. All rights reserved.</span>
       <div class="fmeta">
-        <a href="{{base}}privacy/">Privacy</a>
+        <a href="{{base}}privacy/" data-nav="privacy">Privacy</a>
         <!-- Revealed by analytics.js only when there is something to switch off.
              Mirrors the control footer, which also keeps it beside Privacy in
              the bottom bar: whichever layout wins, the standing opt-out is
