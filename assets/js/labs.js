@@ -5,7 +5,11 @@
  * That makes the variant awkward to look at on purpose — you get whichever arm
  * you were bucketed into, and only after accepting measurement. This pins one.
  *
- * Enabling it (see templates/base.html, which resolves the pin inline):
+ * This file is not referenced by the built HTML. The inline gate in
+ * templates/base.html decides whether Labs is on and injects it if so, so a
+ * visitor downloads none of this and sees no trace of it in the page source.
+ *
+ * Enabling it (the same gate resolves the pin inline):
  *
  *   - automatic on localhost / 127.0.0.1 / *.local
  *   - ?labs=1  turns it on anywhere and remembers it for that browser

@@ -82,6 +82,9 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         desc=html.escape(desc, quote=True), canonical=canonical, base=base,
         ogtype=ogtype, ogimage=ogimage or f"{SITE}/assets/img/headshot.jpg",
         cur_home=cur_home, cur_blog=cur_blog, year=YEAR, extra_js=extra_js,
+        # Where the inline gate fetches the Labs panel from, if it decides to.
+        # Every page gets the path; only the homepage can ever act on it.
+        labs_src=f"{base}assets/js/labs.js?v={LABS_V}",
         form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
         css_v=CSS_V, analytics=analytics_snippet(base),
         html_attrs=html_attrs, extra_css=extra_css,
@@ -208,11 +211,10 @@ def build():
         layout_open='<div id="layout-control">',
         layout_close='</div>',
         variant_layout=variant,
+        # No tag for labs.js on purpose: the inline gate in base.html injects
+        # it, and only for a browser that has Labs switched on.
         extra_js=CAROUSEL_JS +
-        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>'
-        # Homepage only — it switches between the two homepage layouts, and
-        # renders nothing at all unless Labs is enabled for this browser.
-        f'\n<script src="assets/js/labs.js?v={LABS_V}"></script>')))
+        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>')))
 
     # ---------- blog index ----------
     cards = []
