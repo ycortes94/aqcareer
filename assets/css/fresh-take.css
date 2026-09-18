@@ -142,22 +142,32 @@ html[data-home-design="fresh_take"] body{
 .ft .plogos img{width:100%;max-width:165px;height:56px;object-fit:contain;filter:grayscale(1);opacity:.62;transition:filter .2s,opacity .2s}
 .ft .plogos img:hover{filter:none;opacity:1}
 
-.ft .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-/* Column, so the attribution sits on the bottom edge: the quotes differ a lot
-   in length, and in equal-height cards it would otherwise float mid-card. */
+/* Testimonials: this arm's own cards, shown one at a time. The slides carry
+   the same words as the control — build.py renders both arms from
+   content/testimonials.json — but the presentation is this layout's.
+   .arrow and .dots are global in site.css and drawn white for the control's
+   dark band, so both have to be restated for a light section. Padding on the
+   track leaves the arrows a gutter rather than sitting them on the card. */
+.ft .tcarousel{position:relative;padding-inline:52px}
+.ft .tcarousel .slide{display:none}
+.ft .tcarousel .slide.on{display:block}
 .ft .tcard{
   background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--ft-r);
   padding:34px 32px;display:flex;flex-direction:column
 }
 .ft .tcard .qm{font-family:var(--ft-serif);font-size:40px;line-height:.8;color:var(--ft-green-mid);display:block;margin-bottom:6px}
-/* The three-paragraph testimonial takes the whole row: as a half-width card it
-   reads as a narrow column of text. */
-.ft .tcard.wide{grid-column:1/-1}
 .ft .tcard blockquote{margin:0 0 22px;font-size:15.5px;color:var(--ft-ink)}
 .ft .tcard blockquote p{margin:0 0 14px}
 .ft .tcard blockquote p:last-child{margin-bottom:0}
 .ft .tcard .attr{margin-top:auto;border-top:1px solid rgba(1,66,53,.12);padding-top:14px;font-size:13px;color:var(--ft-muted)}
 .ft .tcard .attr b{display:block;color:var(--ft-ink);font-size:14px;font-weight:700;letter-spacing:.04em}
+.ft .tcarousel .arrow{color:var(--ft-green);font-size:30px;padding:8px}
+.ft .tcarousel .arrow:hover{opacity:.55}
+.ft .tcarousel .arrow.l{left:0}
+.ft .tcarousel .arrow.r{right:0}
+.ft .tcarousel .dots{margin-top:22px}
+.ft .tcarousel .dots button{background:rgba(1,66,53,.26)}
+.ft .tcarousel .dots button[aria-selected="true"]{background:var(--ft-green)}
 
 .ft .memo{background:var(--ft-sand)}
 .ft .memo-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
@@ -209,7 +219,6 @@ html[data-home-design="fresh_take"] body{
   .ft .hero-grid,
   .ft .about-grid,
   .ft .svc,
-  .ft .tgrid,
   .ft .memo-grid,
   .ft .connect-grid{grid-template-columns:1fr;gap:38px}
   .ft .pt{order:-1;max-width:400px}
@@ -218,6 +227,16 @@ html[data-home-design="fresh_take"] body{
   .ft section.pad{padding-block:60px}
   .ft .hero{padding-block:48px 60px}
   .ft .band{padding:56px 0}
+  /* No room for a gutter, so the arrows move onto the card and need a disc
+     behind them to stay legible over the quote. */
+  .ft .tcarousel{padding-inline:0}
+  .ft .tcarousel .arrow{
+    width:34px;height:34px;padding:0;font-size:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.94);box-shadow:0 1px 6px rgba(1,66,53,.22)
+  }
+  .ft .tcarousel .arrow.l{left:6px}
+  .ft .tcarousel .arrow.r{right:6px}
 }
 
 /* ---------- blog index ----------
