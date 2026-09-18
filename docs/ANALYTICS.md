@@ -105,15 +105,39 @@ The consent notice in `analytics.js` tells visitors "All sensitive text
 fields are masked", so both layers are load-bearing copy now, not just
 configuration. Weakening either one means rewriting that sentence.
 
-**Still unverified: network request bodies.** The same remote config returns
-`sr_logging_config.network.body.request: true` and `response: true`. DOM
-masking does not apply to network payloads, and `forms.js` submits via
-`fetch` rather than a native form POST, so the contact form's
-`first_name` / `last_name` / `email` / `message` values cross the wire as a
-URL-encoded body inside a request Session Replay instruments. Whether that
-body is actually retained for a cross-origin request has not been tested.
-Test before assuming either way: accept consent, submit the form with a
-sentinel string, and search the outbound Amplitude payloads for it.
+### Verified against live traffic, 2026-09-18
+
+The remote config returns `sr_logging_config.network.body.request: true` and
+`response: true`, which reads alarming: DOM masking does not apply to
+network payloads, and `forms.js` submits by `fetch` rather than a native
+POST, so the contact form's values cross the wire inside a request the SDK
+could instrument.
+
+Tested rather than assumed. Method: wrap `fetch`, `XMLHttpRequest.send` and
+`navigator.sendBeacon` *before* consent so the SDKs' own transport is
+captured, accept, then (a) fire URL-encoded POSTs carrying a sentinel to a
+same-origin and a cross-origin endpoint, and (b) type a second sentinel into
+the real contact form's name, email and message fields without submitting.
+Force a flush, then gunzip every outbound body and search it.
+
+Result, across 4 replay batches and ~13 KB of payload to `api-sr.amplitude.com`
+and `api2.amplitude.com`:
+
+| Checked | Found in payload |
+|---|---|
+| Sentinel in POST **body**, same-origin and cross-origin | no |
+| Sentinel **request URL** | no |
+| rrweb plugin/custom event types (where network capture would land) | no — only types 2 and 3, DOM snapshots |
+| Text typed into the contact form's name / email / message | no |
+| `form_start` / `form_submit` analytics events | yes, as intended |
+
+So this SDK build does not act on those network flags — no bodies, no URLs,
+nothing. Masking holds for the form fields as the consent notice claims, and
+conversion events still fire.
+
+Re-test if `plugin-session-replay-browser` is upgraded (pinned at 1.35.1) or
+if the network logging config changes, since a negative here is a fact about
+one SDK version, not a guarantee.
 
 ### Statsig and replay
 
