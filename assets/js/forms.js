@@ -90,7 +90,7 @@
           if (result && result.ok) {
             form.reset();
             say(form, MESSAGES[kind], 'ok');
-            logConversion(kind === 'contact' ? 'cta_clicked' : 'newsletter_subscribed');
+            logConversion(kind === 'contact' ? 'connect_form_submitted' : 'newsletter_subscribed');
           } else if (result && result.error === 'invalid_email') {
             say(form, MESSAGES.invalid_email, 'error');
           } else {
