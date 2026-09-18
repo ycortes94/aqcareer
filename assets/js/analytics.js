@@ -163,10 +163,38 @@
     return document.documentElement.getAttribute('data-page') || 'home';
   }
 
+  /* Both tools, every time. This used to log to Statsig alone, which is why
+     none of the hand-logged events below reached Amplitude — a session replay
+     showed its pageview and nothing else, however much the visitor clicked.
+     forms.js and likes.js already send to both; this was the odd one out.
+     Keep them paired: an event name that exists in only one tool is a trap
+     for whoever builds the chart. */
   function logEvent(name, metadata) {
+    var meta = metadata || {};
     try {
       if (window.statsigClient) {
-        window.statsigClient.logEvent(name, null, metadata || {});
+        window.statsigClient.logEvent(name, null, meta);
+      }
+    } catch (err) {}
+    try {
+      if (window.amplitude && typeof window.amplitude.track === 'function') {
+        window.amplitude.track(name, meta);
+      }
+    } catch (err) {}
+  }
+
+  /* Events queue for a second before upload, which is fine for a click that
+     stays on the page and not fine for one that leaves it. Best-effort: the
+     navigation can still win the race. */
+  function flushNow() {
+    try {
+      if (window.amplitude && typeof window.amplitude.flush === 'function') {
+        window.amplitude.flush();
+      }
+    } catch (err) {}
+    try {
+      if (window.statsigClient && typeof window.statsigClient.flush === 'function') {
+        window.statsigClient.flush();
       }
     } catch (err) {}
   }
@@ -201,6 +229,57 @@
     }
     bind('[data-cta="hero"]', 'hero_cta_clicked');
     bind('[data-cta="primary"]', 'cta_clicked');
+  }
+
+  /* ---------- nav clicks ----------
+     Amplitude's elementInteractions autocapture is off (see startAmplitude),
+     and the nav links are same-page anchors on the homepage, so clicking
+     About or Services fired nothing at all and the replay timeline showed
+     only the pageview. This logs one nav_link_clicked per click, carrying
+     which item it was.
+
+     Delegated from the document rather than bound per node, for three
+     reasons: it covers both chromes (the homepage ships each nav twice, one
+     hidden by CSS), it covers pages that never run the experiment — privacy,
+     404 — where wireCtas() is never reached, and it survives a nav rendered
+     or re-ordered later. */
+
+  // Rather than a second attribute to keep in sync in four templates.
+  function navLocation(el) {
+    if (el.closest('footer')) return 'footer';
+    if (el.closest('header')) return 'header';
+    return 'page';
+  }
+
+  function designNow() {
+    return revealedDesign ||
+           document.documentElement.getAttribute('data-home-design') || '';
+  }
+
+  function wireNav() {
+    document.addEventListener('click', function (ev) {
+      var link = ev.target.closest && ev.target.closest('[data-nav]');
+      if (!link) return;
+      // A pinned layout records nothing, the same as a pinned pageview —
+      // see applyDesignExperiment.
+      if (window.__aqLabs && window.__aqLabs.design) return;
+
+      var meta = {
+        // The stable one: rename the link's text and this still groups.
+        nav_item: link.getAttribute('data-nav') || '',
+        // What the visitor actually read on the button.
+        nav_label: (link.textContent || '').replace(/\s+/g, ' ').trim(),
+        nav_location: navLocation(link)
+      };
+      var design = designNow();
+      if (design) meta.homepage_design = design;
+      logEvent('nav_link_clicked', meta);
+
+      // An in-page anchor stays put; POV Blog, Privacy and any nav link
+      // followed from a post page leave the document.
+      var href = link.getAttribute('href') || '';
+      if (href.charAt(0) !== '#') flushNow();
+    });
   }
 
   function applyDesignExperiment(client) {
@@ -312,6 +391,9 @@
   function startTracking() {
     if (started) return;
     started = true;
+    // Bound here, not at load: with measurement declined there is no listener
+    // on the page at all.
+    wireNav();
     Promise.all([
       startAmplitude().catch(function (e) { console.warn('[analytics] amplitude:', e.message); }),
       startStatsig().catch(function (e) {
