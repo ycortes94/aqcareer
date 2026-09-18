@@ -7,9 +7,10 @@
  * Privacy notes, because this site's contact form collects a name, an email
  * and a free-text message to a career counselor:
  *
- *  - Amplitude Session Replay masks text inputs by default. On top of that,
- *    maskSelector covers both form blocks entirely, so surrounding text and
- *    the message textarea are masked too. We never add `.amp-unmask`.
+ *  - Session Replay masking is set per project in the Amplitude UI, and the
+ *    UI overrides anything the SDK asks for. So both <form> elements carry
+ *    the amp-block class in the markup, which a remote config cannot undo.
+ *    maskSelector below is a secondary layer. We never add `.amp-unmask`.
  *  - Statsig loads the bundle WITHOUT session replay, and its form_submit /
  *    input autocapture events are filtered out before they're logged.
  *  - Both are skipped entirely for visitors sending Do Not Track or Global
@@ -92,12 +93,84 @@
     });
   }
 
+  var HOME_EXP = 'homepage_fresh_take';
+  var HOME_PARAM = 'homepage_design';
+  var REVEAL_MS = 2500;
+  var homeRevealTimer = null;
+
+  function logEvent(name, metadata) {
+    try {
+      if (window.statsigClient) {
+        window.statsigClient.logEvent(name, null, metadata || {});
+      }
+    } catch (err) {}
+  }
+
+  function revealHome(design) {
+    var html = document.documentElement;
+    if (!html.classList.contains('home-exp')) return;
+    // The real reveal lives in an inline script in the page head, so that a
+    // blocked or failed analytics.js can't leave the page hidden. Defer to it.
+    if (typeof window.__aqReveal === 'function') {
+      window.__aqReveal(design);
+      return;
+    }
+    if (homeRevealTimer) {
+      clearTimeout(homeRevealTimer);
+      homeRevealTimer = null;
+    }
+    html.setAttribute('data-home-design', design === 'fresh_take' ? 'fresh_take' : 'control');
+    html.classList.remove('exp-pending');
+  }
+
+  function wireCtas(design) {
+    function bind(sel, eventName) {
+      var nodes = document.querySelectorAll(sel);
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].addEventListener('click', function () {
+          logEvent(eventName, { homepage_design: design });
+        });
+      }
+    }
+    bind('[data-cta="hero"]', 'hero_cta_clicked');
+    bind('[data-cta="primary"]', 'cta_clicked');
+  }
+
+  function applyHomeExperiment(client) {
+    var html = document.documentElement;
+    if (!html.classList.contains('home-exp')) return;
+    var design = 'control';
+    if (client && typeof client.getExperiment === 'function') {
+      var exp = client.getExperiment(HOME_EXP);
+      if (exp && typeof exp.get === 'function') {
+        design = exp.get(HOME_PARAM, 'control') || 'control';
+      }
+    }
+    revealHome(design);
+    logEvent('home_viewed', { homepage_design: design });
+    wireCtas(design);
+    if (design === 'fresh_take') {
+      var map = { services: 'ft-services', connect: 'ft-connect', about: 'ft-about', main: 'ft-main' };
+      var id = (window.location.hash || '').replace('#', '');
+      if (map[id]) {
+        var target = document.getElementById(map[id]);
+        if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView();
+      }
+    }
+  }
+
   function startStatsig() {
     var key = CFG.statsig_client_key;
-    if (!key) return Promise.resolve();
+    if (!key) {
+      applyHomeExperiment(null);
+      return Promise.resolve();
+    }
 
     return load(SRC.statsig).then(function () {
-      if (!window.Statsig) return;
+      if (!window.Statsig) {
+        applyHomeExperiment(null);
+        return;
+      }
       var StatsigClient = window.Statsig.StatsigClient;
       var runStatsigAutoCapture = window.Statsig.runStatsigAutoCapture;
 
@@ -115,15 +188,30 @@
       }
 
       window.statsigClient = client;   // available for gates/experiments later
-      return client.initializeAsync();
+      return client.initializeAsync().then(function () {
+        applyHomeExperiment(client);
+      });
     });
   }
 
-  if (optedOut()) return;
-  if (!CFG.amplitude_api_key && !CFG.statsig_client_key) return;
+  if (document.documentElement.classList.contains('home-exp')) {
+    homeRevealTimer = setTimeout(function () { revealHome('control'); }, REVEAL_MS);
+  }
+
+  if (optedOut()) {
+    revealHome('control');
+    return;
+  }
+  if (!CFG.amplitude_api_key && !CFG.statsig_client_key) {
+    revealHome('control');
+    return;
+  }
 
   Promise.all([
     startAmplitude().catch(function (e) { console.warn('[analytics] amplitude:', e.message); }),
-    startStatsig().catch(function (e) { console.warn('[analytics] statsig:', e.message); })
+    startStatsig().catch(function (e) {
+      console.warn('[analytics] statsig:', e.message);
+      applyHomeExperiment(null);
+    })
   ]);
 })();

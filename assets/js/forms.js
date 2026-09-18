@@ -47,6 +47,15 @@
     el.classList.toggle('is-ok', kind === 'ok');
   }
 
+  function logConversion(name) {
+    try {
+      if (window.statsigClient) window.statsigClient.logEvent(name);
+      if (window.amplitude && typeof window.amplitude.track === 'function') {
+        window.amplitude.track(name);
+      }
+    } catch (err) {}
+  }
+
   function wire(form) {
     var kind = form.getAttribute('data-form') === 'contact' ? 'contact' : 'newsletter';
     var button = form.querySelector('button[type="submit"]');
@@ -81,6 +90,7 @@
           if (result && result.ok) {
             form.reset();
             say(form, MESSAGES[kind], 'ok');
+            logConversion(kind === 'contact' ? 'cta_clicked' : 'newsletter_subscribed');
           } else if (result && result.error === 'invalid_email') {
             say(form, MESSAGES.invalid_email, 'error');
           } else {
