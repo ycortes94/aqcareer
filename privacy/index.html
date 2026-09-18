@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/css/site.css?v=3ff57b8c">
+<link rel="stylesheet" href="../assets/css/site.css?v=1d75cc37">
 
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="../feed.xml">
 <noscript><style>html.exp-pending body{visibility:visible!important}</style></noscript>
@@ -78,8 +78,9 @@
 
     <ul>
       <li>If you fill in a form, I receive what you typed so I can reply to you.</li>
-      <li>The site measures how it's used — pages viewed, where visitors arrive
-          from, what gets clicked.</li>
+      <li>The site can measure how it's used — pages viewed, where visitors
+          arrive from, what gets clicked — but only if you accept that when
+          asked. Decline and nothing is loaded.</li>
       <li>I don't sell your information, and I don't use it for advertising.</li>
     </ul>
 
@@ -100,7 +101,8 @@
     <h2>How the site measures usage</h2>
 
     <p>This site uses two analytics services, <strong>Amplitude</strong> and
-    <strong>Statsig</strong>. Between them they record:</p>
+    <strong>Statsig</strong>. Neither one loads unless you accept it first. If
+    you do, between them they record:</p>
 
     <ul>
       <li>which pages you view, and in what order</li>
@@ -119,8 +121,8 @@
 
     <h2>Session recording</h2>
 
-    <p>Amplitude's Session Replay is enabled. It records enough to replay your
-    visit afterwards as a reconstruction of the page: which pages you saw,
+    <p>Amplitude's Session Replay is part of what you're accepting or declining
+    above. If it's on, it records enough to replay your visit afterwards as a reconstruction of the page: which pages you saw,
     where you moved your cursor, what you clicked, how far you scrolled.</p>
 
     <p>Two things it is not: it isn't a video of your screen, and it has no
@@ -133,9 +135,15 @@
 
     <h2>Cookies and browser storage</h2>
 
-    <p>The analytics services above store a small amount of data in your
-    browser, using cookies and local storage, to recognise repeat visits. There
-    are no advertising cookies on this site.</p>
+    <p>If you accept measurement, the analytics services above store a small
+    amount of data in your browser, using cookies and local storage, to
+    recognise repeat visits. There are no advertising cookies on this site.</p>
+
+    <p>One thing is stored either way: your answer to the question about
+    measurement, kept in this site's local storage so you're not asked on
+    every page. Declining stores the word "denied" and a date, nothing more.
+    Clearing this site's data in your browser removes it, and you'll be asked
+    again next time.</p>
 
     <p>Two other companies see your IP address simply because of how the site
     is built, which is normal for any website:</p>
@@ -148,10 +156,27 @@
 
     <h2>Your choices</h2>
 
-    <p><strong>Turn it all off.</strong> If your browser sends a Global Privacy
-    Control or Do Not Track signal, no analytics and no session recording load
-    at all — nothing is collected and no scripts run. Most browsers offer this
-    in their privacy settings, and some privacy extensions send it for you.</p>
+    <p><strong>Nothing loads until you say so.</strong> On your first visit the
+    site asks before loading either analytics service. Decline and no analytics
+    script is fetched at all, on that visit or any later one. Your answer is
+    remembered in your own browser's storage — it isn't sent anywhere, and it's
+    per browser and per device, so you'll be asked again somewhere new.</p>
+
+    <div class="consent-panel" data-aq-consent-ui hidden>
+      <p class="state"><b>Measurement on this browser</b>
+      <span data-aq-consent-status></span></p>
+      <div class="row">
+        <button type="button" data-aq-consent="accept">Accept measurement</button>
+        <button type="button" data-aq-consent="decline">Turn it off</button>
+      </div>
+    </div>
+
+    <p><strong>Turn it all off at the browser level.</strong> If your browser
+    sends a Global Privacy Control or Do Not Track signal, no analytics and no
+    session recording load at all, and you're never asked — nothing is collected
+    and no scripts run. Most browsers offer this in their privacy settings, and
+    some privacy extensions send it for you. That signal overrides the buttons
+    above.</p>
 
     <p><strong>Block storage.</strong> Blocking cookies and site data for this
     site in your browser settings also prevents the identifier being stored.</p>
@@ -192,6 +217,8 @@
       <a href="../blog/">POV Blog</a>
       <a href="../#connect">Connect</a>
       <a href="../privacy/">Privacy</a>
+      <!-- Revealed by analytics.js only when there is something to switch off. -->
+      <button type="button" class="consent-link" data-aq-consent="open" data-aq-consent-ui hidden>Tracking choice</button>
       <a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a>
     </nav>
     <span class="copy">&copy; 2026 AQ Career Consulting &middot; Sacramento, CA</span>
@@ -209,8 +236,8 @@
 </script>
 
 
-<script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true};</script>
-<script src="../assets/js/analytics.js?v=b4dbdbca"></script>
+<script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
+<script src="../assets/js/analytics.js?v=d6ee2541"></script>
 
 </body>
 </html>

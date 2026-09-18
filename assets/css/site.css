@@ -189,6 +189,45 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
 .post-nav a{color:var(--green-deep);text-decoration:none;font-weight:600}
 .post-nav a:hover{text-decoration:underline;text-underline-offset:3px}
 
+/* ---------- consent disclaimer ----------
+   Fixed to the bottom and non-blocking: the site is readable while the
+   choice is open, because nothing is being collected until it's made. */
+.aq-consent{position:fixed;z-index:200;left:0;right:0;bottom:0;display:flex;justify-content:center;
+  padding:0 16px calc(16px + env(safe-area-inset-bottom,0px));pointer-events:none}
+.aq-consent .panel{pointer-events:auto;width:100%;max-width:700px;background:#fff;
+  border:1px solid #d9e0de;border-top:3px solid var(--green-mid);
+  box-shadow:0 12px 44px rgba(1,66,53,.2);padding:22px 24px 20px}
+.aq-consent .t{font-size:15px;font-weight:700;margin:0 0 10px;color:var(--green-deep)}
+.aq-consent .b{font-size:13.5px;line-height:1.65;color:#333;margin:0 0 12px}
+.aq-consent .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:16px}
+.aq-consent .yes,.aq-consent .no{font-family:var(--sans);font-size:13px;padding:11px 22px;cursor:pointer}
+.aq-consent .yes{background:var(--green-mid);color:#fff;border:0}
+.aq-consent .yes:hover{background:var(--green-dark)}
+.aq-consent .no{background:#fff;color:#222;border:1px solid #9aa5a2}
+.aq-consent .no:hover{background:#f4f6f5}
+.aq-consent .more{font-size:12.5px;color:var(--green-deep);text-decoration:underline;text-underline-offset:2px}
+.aq-consent :focus-visible{outline:2px solid var(--green-deep);outline-offset:2px}
+
+/* Standing opt-out: footer link on every page, panel on the privacy page. */
+.consent-link{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px}
+.consent-panel{border:1px solid #e2e2e2;border-left:3px solid var(--green-mid);padding:20px 22px;margin:22px 0}
+.consent-panel .state{font-size:14px;margin:0 0 14px}
+.consent-panel .state b{display:block;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--green-mid);font-weight:600;margin-bottom:6px}
+.consent-panel .row{display:flex;flex-wrap:wrap;gap:12px}
+.consent-panel button{font-family:var(--sans);font-size:13px;padding:10px 20px;cursor:pointer;
+  background:#fff;color:#222;border:1px solid #9aa5a2}
+.consent-panel button:hover:not(:disabled){background:#f4f6f5}
+.consent-panel button:disabled{opacity:.45;cursor:default}
+
+@media (max-width:560px){
+  .aq-consent{padding:0 0 env(safe-area-inset-bottom,0px)}
+  .aq-consent .panel{border-left:0;border-right:0;border-bottom:0}
+  .aq-consent .row{gap:10px}
+  .aq-consent .yes,.aq-consent .no{flex:1 1 100%}
+}
+
 /* ---------- 404 ---------- */
 .nf{text-align:center;padding-block:90px 110px}
 .nf .script-h{font-size:64px;color:var(--green-mid)}
