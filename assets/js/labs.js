@@ -1,0 +1,154 @@
+/* Statsig Labs — a development-only switch for the homepage experiment.
+ *
+ * Why this exists: both homepage layouts ship in the same document, and which
+ * one you see is decided by the `homepage_fresh_take` experiment in Statsig.
+ * That makes the variant awkward to look at on purpose — you get whichever arm
+ * you were bucketed into, and only after accepting measurement. This pins one.
+ *
+ * Enabling it (see templates/base.html, which resolves the pin inline):
+ *
+ *   - automatic on localhost / 127.0.0.1 / *.local
+ *   - ?labs=1  turns it on anywhere and remembers it for that browser
+ *   - ?labs=0  turns it off again and forgets the pin
+ *   - ?design=fresh_take / ?design=control  pins a layout straight from a URL,
+ *     which is the shareable form: send someone a link to one arm.
+ *
+ * It is off for everyone else, so a visitor never sees the panel.
+ *
+ * It deliberately records nothing. A pinned pageview is not experiment data:
+ * analytics.js skips asking Statsig for an assignment (asking would log an
+ * exposure for a variant nobody was really bucketed into) and logs no events.
+ * So use it to look at layouts, never to test whether tracking fires.
+ */
+(function () {
+  'use strict';
+
+  var LABS = window.__aqLabs;
+  if (!LABS || !LABS.enabled) return;
+
+  var KEY = 'aq_labs_v1';
+  var HIDE_KEY = 'aq_labs_hidden';
+  var DESIGNS = [
+    { id: 'control', label: 'Control' },
+    { id: 'fresh_take', label: 'Fresh take' }
+  ];
+
+  function store(patch) {
+    try {
+      var st = JSON.parse(window.localStorage.getItem(KEY) || 'null') || {};
+      for (var k in patch) {
+        if (patch[k] === null) delete st[k]; else st[k] = patch[k];
+      }
+      st.enabled = true;
+      window.localStorage.setItem(KEY, JSON.stringify(st));
+    } catch (err) {}
+  }
+
+  function current() {
+    return document.documentElement.getAttribute('data-home-design') || 'control';
+  }
+
+  /* Both layouts are already in the DOM and CSS decides which is shown, so
+     switching is an attribute flip — no reload, no rebuild. */
+  function pin(design) {
+    store({ design: design });
+    document.documentElement.setAttribute('data-home-design', design);
+    document.documentElement.classList.remove('exp-pending');
+    LABS.design = design;
+    render();
+  }
+
+  function unpin() {
+    store({ design: null });
+    LABS.design = null;
+    render();
+  }
+
+  var css =
+    '.aq-labs{position:fixed;z-index:300;left:14px;bottom:14px;' +
+      'font:500 12px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;' +
+      'color:#16211d;-webkit-font-smoothing:antialiased}' +
+    '.aq-labs *{box-sizing:border-box}' +
+    '.aq-labs button{font:inherit;cursor:pointer;margin:0}' +
+    '.aq-labs .tab{display:flex;align-items:center;gap:7px;background:#16211d;color:#fff;' +
+      'border:0;border-radius:999px;padding:9px 15px;box-shadow:0 2px 10px rgba(0,0,0,.28)}' +
+    '.aq-labs .dot{width:7px;height:7px;border-radius:50%;background:#7ee0c2;flex:none}' +
+    '.aq-labs .dot.off{background:#8a9a94}' +
+    '.aq-labs .panel{width:232px;background:#fff;border:1px solid rgba(1,66,53,.16);' +
+      'border-radius:10px;padding:13px;box-shadow:0 8px 30px rgba(0,0,0,.2)}' +
+    '.aq-labs .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}' +
+    '.aq-labs .ttl{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;color:#4c5b56}' +
+    '.aq-labs .x{background:none;border:0;color:#4c5b56;font-size:15px;line-height:1;padding:0 2px}' +
+    '.aq-labs .seg{display:flex;border:1px solid rgba(1,66,53,.2);border-radius:7px;overflow:hidden}' +
+    '.aq-labs .seg button{flex:1;background:#fff;border:0;padding:8px 6px;color:#16211d}' +
+    '.aq-labs .seg button+button{border-left:1px solid rgba(1,66,53,.2)}' +
+    '.aq-labs .seg button[aria-pressed="true"]{background:#014235;color:#fff;font-weight:700}' +
+    '.aq-labs .note{margin:10px 0 0;font-size:11px;line-height:1.5;color:#4c5b56}' +
+    '.aq-labs .note code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px}' +
+    '.aq-labs .live{background:none;border:0;padding:0;margin-top:9px;color:#014235;' +
+      'text-decoration:underline;font-size:11px}' +
+    '@media print{.aq-labs{display:none}}';
+
+  var root = document.createElement('div');
+  root.className = 'aq-labs';
+
+  function render() {
+    var pinned = !!LABS.design;
+    var hidden = false;
+    try { hidden = window.sessionStorage.getItem(HIDE_KEY) === '1'; } catch (err) {}
+
+    if (hidden) {
+      root.innerHTML =
+        '<button type="button" class="tab" data-act="show">' +
+          '<span class="dot' + (pinned ? '' : ' off') + '"></span>Labs</button>';
+      return;
+    }
+
+    var seg = DESIGNS.map(function (d) {
+      var on = pinned && LABS.design === d.id;
+      return '<button type="button" data-act="pin" data-design="' + d.id + '"' +
+             ' aria-pressed="' + (on ? 'true' : 'false') + '">' + d.label + '</button>';
+    }).join('');
+
+    root.innerHTML =
+      '<div class="panel" role="group" aria-label="Statsig Labs: homepage layout">' +
+        '<div class="hd"><span class="ttl">Statsig Labs</span>' +
+          '<button type="button" class="x" data-act="hide" aria-label="Hide Labs panel"' +
+          ' title="Hide for this tab">&times;</button></div>' +
+        '<div class="seg">' + seg + '</div>' +
+        (pinned
+          ? '<p class="note">Pinned to <strong>' + LABS.design + '</strong>. ' +
+            'Nothing is being recorded for this pageview.</p>' +
+            '<button type="button" class="live" data-act="unpin">Use the real experiment</button>'
+          : '<p class="note">Not pinned — showing <strong>' + current() + '</strong> from the ' +
+            'experiment. Pick a layout to pin it.</p>') +
+        '<p class="note">Off with <code>?labs=0</code></p>' +
+      '</div>';
+  }
+
+  root.addEventListener('click', function (ev) {
+    var btn = ev.target.closest ? ev.target.closest('[data-act]') : null;
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    if (act === 'pin') pin(btn.getAttribute('data-design'));
+    else if (act === 'unpin') unpin();
+    else if (act === 'hide' || act === 'show') {
+      try { window.sessionStorage.setItem(HIDE_KEY, act === 'hide' ? '1' : '0'); } catch (err) {}
+      render();
+    }
+  });
+
+  function mount() {
+    var style = document.createElement('style');
+    style.textContent = css;
+    document.head.appendChild(style);
+    render();
+    document.body.appendChild(root);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mount);
+  } else {
+    mount();
+  }
+})();

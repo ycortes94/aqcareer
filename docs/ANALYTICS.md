@@ -190,6 +190,43 @@ is already showing control, so `analytics.js` reports `control` as the design
 for that view rather than swapping the layout under the reader. The next
 pageview buckets normally.
 
+## Statsig Labs (switching layouts by hand)
+
+Both homepage layouts ship in the same document, and Statsig decides which one
+you see — so checking the variant normally means hoping you were bucketed into
+it, and accepting measurement first. Labs pins one instead.
+
+It appears as a small **Statsig Labs** panel at the bottom-left of the
+homepage, with a Control / Fresh take switch. Switching is instant: both
+layouts are already in the DOM and CSS decides which is shown, so there is no
+reload and nothing to rebuild.
+
+Turning it on:
+
+| | |
+|---|---|
+| `localhost`, `127.0.0.1`, `*.local` | on automatically |
+| `?labs=1` | on anywhere, remembered for that browser |
+| `?labs=0` | off again, also remembered — this beats the automatic on, so it works on localhost too |
+| `?design=fresh_take` / `?design=control` | pins a layout straight from the URL |
+
+`?design=` is the shareable form: send someone a link to one arm and that is
+what they get. The pin is resolved by the inline script in `templates/base.html`
+before anything else loads, so the pinned layout paints first time with no
+flash of the other one, and it works with measurement declined, with a DNT
+signal, or with `analytics.js` blocked outright — which is exactly when you
+want to look at a layout undisturbed.
+
+Everywhere else it stays off, so a visitor never sees the panel. The script
+(`assets/js/labs.js`) is only included on the homepage and returns immediately
+unless Labs is enabled.
+
+**A pinned pageview records nothing.** `analytics.js` returns before it asks
+Statsig for an assignment — asking would log an exposure for a variant nobody
+was really bucketed into — and it logs no `home_viewed` or CTA events either.
+So Labs is for looking at layouts, never for checking that tracking fires. To
+test tracking, turn Labs off with `?labs=0` and let the real assignment run.
+
 ## Do Not Track / Global Privacy Control
 
 With `respect_dnt: true` (the default), visitors whose browser sends Global
