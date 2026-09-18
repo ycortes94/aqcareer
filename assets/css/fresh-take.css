@@ -78,8 +78,13 @@ html[data-home-design="fresh_take"] body{
 #layout-fresh .hero .cta{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-top:32px}
 #layout-fresh .pt{position:relative}
 #layout-fresh .pt .block{position:absolute;inset:26px -22px -22px 26px;background:var(--sand);border-radius:var(--r)}
+/* height:auto matters. The markup carries width="650" height="748" so the
+   browser can reserve the space, but that height is a definite value, and
+   aspect-ratio only applies when one dimension is auto — so without this the
+   attribute won and the portrait rendered 748px tall instead of the 543.8px
+   the ratio asks for, overwhelming the hero. */
 #layout-fresh .pt img{
-  position:relative;width:100%;aspect-ratio:4/4.6;object-fit:cover;
+  position:relative;width:100%;height:auto;aspect-ratio:4/4.6;object-fit:cover;
   object-position:center 18%;border-radius:var(--r)
 }
 
