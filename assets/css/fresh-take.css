@@ -126,9 +126,32 @@ html[data-home-design="fresh_take"] body{
 #layout-fresh .plogos img{width:100%;max-width:165px;height:56px;object-fit:contain;filter:grayscale(1);opacity:.62;transition:filter .2s,opacity .2s}
 #layout-fresh .plogos img:hover{filter:none;opacity:1}
 
-/* The testimonial carousel is the shared one from templates/testimonials.html,
-   so it takes its look from .testi in site.css rather than being restyled
-   here — that is the point of showing it the way the default site does. */
+/* Testimonials: this arm's own cards, shown one at a time. The slides carry
+   the same words as the control — build.py renders both arms from
+   content/testimonials.json — but the presentation is this layout's.
+   .arrow and .dots are global in site.css and drawn white for the control's
+   dark band, so both have to be restated for a light section. Padding on the
+   track leaves the arrows a gutter rather than sitting them on the card. */
+#layout-fresh .tcarousel{position:relative;padding-inline:52px}
+#layout-fresh .tcarousel .slide{display:none}
+#layout-fresh .tcarousel .slide.on{display:block}
+#layout-fresh .tcard{
+  background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--r);
+  padding:34px 32px;display:flex;flex-direction:column
+}
+#layout-fresh .tcard .qm{font-family:var(--serif);font-size:40px;line-height:.8;color:var(--green-mid);display:block;margin-bottom:6px}
+#layout-fresh .tcard blockquote{margin:0 0 22px;font-size:15.5px;color:var(--ink)}
+#layout-fresh .tcard blockquote p{margin:0 0 14px}
+#layout-fresh .tcard blockquote p:last-child{margin-bottom:0}
+#layout-fresh .tcard .attr{margin-top:auto;border-top:1px solid rgba(1,66,53,.12);padding-top:14px;font-size:13px;color:var(--muted)}
+#layout-fresh .tcard .attr b{display:block;color:var(--ink);font-size:14px;font-weight:700;letter-spacing:.04em}
+#layout-fresh .tcarousel .arrow{color:var(--green);font-size:30px;padding:8px}
+#layout-fresh .tcarousel .arrow:hover{opacity:.55}
+#layout-fresh .tcarousel .arrow.l{left:0}
+#layout-fresh .tcarousel .arrow.r{right:0}
+#layout-fresh .tcarousel .dots{margin-top:22px}
+#layout-fresh .tcarousel .dots button{background:rgba(1,66,53,.26)}
+#layout-fresh .tcarousel .dots button[aria-selected="true"]{background:var(--green)}
 
 #layout-fresh .memo{background:var(--sand)}
 #layout-fresh .memo-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
@@ -188,4 +211,14 @@ html[data-home-design="fresh_take"] body{
   #layout-fresh section.pad{padding-block:60px}
   #layout-fresh .hero{padding-block:48px 60px}
   #layout-fresh .band{padding:56px 0}
+  /* No room for a gutter, so the arrows move onto the card and need a disc
+     behind them to stay legible over the quote. */
+  #layout-fresh .tcarousel{padding-inline:0}
+  #layout-fresh .tcarousel .arrow{
+    width:34px;height:34px;padding:0;font-size:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,.94);box-shadow:0 1px 6px rgba(1,66,53,.22)
+  }
+  #layout-fresh .tcarousel .arrow.l{left:6px}
+  #layout-fresh .tcarousel .arrow.r{right:6px}
 }
