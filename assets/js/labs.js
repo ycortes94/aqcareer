@@ -64,8 +64,14 @@
     render();
   }
 
+  /* z-index sits BELOW the consent dialog's 200 on purpose. Both are fixed to
+     the bottom of the viewport, and under about 970px wide the dialog's button
+     row reaches across into this panel — where, sitting on top, it swallowed
+     the click on "Accept measurement". Consent has to win that overlap. The
+     dialog's own container is pointer-events:none with only its white panel
+     clickable, so this panel stays usable everywhere the panel isn't. */
   var css =
-    '.aq-labs{position:fixed;z-index:300;left:14px;bottom:14px;' +
+    '.aq-labs{position:fixed;z-index:150;left:14px;bottom:14px;' +
       'font:500 12px/1.45 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;' +
       'color:#16211d;-webkit-font-smoothing:antialiased}' +
     '.aq-labs *{box-sizing:border-box}' +
@@ -138,12 +144,36 @@
     }
   });
 
+  /* Dropping below the dialog keeps it clickable, but on a narrow window the
+     dialog is opaque and would simply bury this panel. So step aside while it
+     is open — there is nothing to pin until the reader has answered it. */
+  function consentOpen() {
+    var el = document.querySelector('.aq-consent');
+    return !!(el && !el.hidden);
+  }
+
+  function syncToConsent() {
+    root.style.display = consentOpen() ? 'none' : '';
+  }
+
+  function watchConsent() {
+    if (typeof window.MutationObserver !== 'function') return;
+    // analytics.js builds the dialog lazily, so watch for it being added as
+    // well as for it being shown and hidden again.
+    new window.MutationObserver(syncToConsent).observe(document.body, {
+      childList: true, subtree: true,
+      attributes: true, attributeFilter: ['hidden']
+    });
+  }
+
   function mount() {
     var style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);
     render();
     document.body.appendChild(root);
+    syncToConsent();
+    watchConsent();
   }
 
   if (document.readyState === 'loading') {
