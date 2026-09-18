@@ -261,11 +261,80 @@ downloads, web vitals), these are logged by hand. Every one carries
 | `home_viewed` | homepage, once assigned | |
 | `blog_viewed` | blog index, once assigned | |
 | `post_viewed` | post page, once assigned | `post` (the slug) |
+| `nav_link_clicked` | any nav link, `[data-nav]` | `nav_item`, `nav_label`, `nav_location` |
 | `hero_cta_clicked` | `[data-cta="hero"]` | |
 | `cta_clicked` | `[data-cta="primary"]` | |
 | `connect_form_submitted` | contact form, on success | |
 | `newsletter_subscribed` | memo form, on success | |
 | `post_liked` / `post_unliked` | the like button | `post` (the slug) |
+
+**All of them go to both tools.** `logEvent()` in `analytics.js` sent to
+Statsig alone until 2026-09-18, which is why none of the rows above reached
+Amplitude: a session replay showed its `[Amplitude] Page Viewed` and nothing
+else, however much the visitor clicked. `forms.js` and `likes.js` already
+sent to both. Keep them paired — an event name that exists in only one tool
+is a trap for whoever builds the chart.
+
+### Nav clicks
+
+Amplitude's `elementInteractions` autocapture is **off** (see
+`startAmplitude()`), and most nav links are same-page anchors, so clicking
+**About** or **Services** on the homepage produced no event at all.
+`nav_link_clicked` fills that gap. It carries:
+
+| Property | Example | Notes |
+|---|---|---|
+| `nav_item` | `about` | The `data-nav` value. Stable — the grouping key to chart. |
+| `nav_label` | `Services & Products` | The visible text. Reads well, but changes when the wording does. |
+| `nav_location` | `header` / `footer` | Derived from the nearest `<header>`/`<footer>`, not a second attribute to keep in sync. |
+| `homepage_design` | `fresh_take` | Omitted on pages outside the experiment — privacy, 404 — rather than guessed. |
+
+Only site navigation carries `data-nav`: home, about, services, blog,
+connect, privacy. Social and external links are left out.
+
+**`about` only exists in the fresh-take chrome** — the control homepage has no
+About section, so an empty `about` count for `homepage_design: control` is the
+design, not a bug. `services` is in both, which is why that's the one
+`SITE_WIDE` in `tools/build.py` checks for: a chrome that loses `data-nav`
+goes silent while the other keeps reporting, and the breakdown then reads as a
+design preference rather than a missing attribute.
+
+Two things to know before charting it:
+
+- **The fresh-take Connect link logs twice** — `cta_clicked` and
+  `nav_link_clicked`. It is one link wearing both hats: `data-cta` for the
+  experiment's CTA analysis, `data-nav` so the nav breakdown accounts for
+  every item in the bar. Filter by one event or the other, never sum them.
+- **A pinned Labs layout logs nothing**, the same as a pinned pageview. Turn
+  Labs off with `?labs=0` to watch nav events fire.
+
+The handler is delegated from `document`, not bound per link, so it covers
+both chromes (the homepage ships each nav twice, one hidden by CSS) and pages
+that never run the experiment, where `wireCtas()` is never reached. It is
+attached from `startTracking()`, so a visitor who declined has no listener on
+the page at all.
+
+Links that leave the document — POV Blog, Privacy, any nav link followed from
+a post page — get a `flush()` on both SDKs, because an event queued a moment
+before unload is an event that may never be sent. Best-effort: the navigation
+can still win the race, so expect nav clicks that navigate away to undercount
+slightly against ones that stay put.
+
+#### Verified, 2026-09-18
+
+Served the built site locally, accepted the disclaimer, then clicked nav links
+in both chromes and wrapped `amplitude.track` / `statsigClient.logEvent` to
+watch the calls.
+
+| Checked | Result |
+|---|---|
+| `nav_link_clicked` fires on header and footer links in both chromes | yes |
+| Reaches **both** Amplitude and Statsig | yes |
+| Properties correct (`nav_item`, `nav_label`, `nav_location`, `homepage_design`) | yes |
+| Amplitude accepts it | `code: 200`, "Event tracked successfully" |
+| Event carries `[Amplitude] Session Replay ID` — so it lands on the replay timeline | yes |
+| Fires on the privacy page, which never runs the experiment | yes, with `homepage_design` absent |
+| Suppressed while a Labs layout is pinned | yes |
 
 ### Likes
 
@@ -422,7 +491,7 @@ same call is the way to do it from the console.
 **A pinned pageview records nothing.** `analytics.js` returns before it asks
 Statsig for an assignment — asking would log an exposure for a variant nobody
 was really bucketed into — and it logs no `home_viewed`, `blog_viewed`,
-`post_viewed` or CTA events either. A like still saves, since that is local state rather than
+`post_viewed`, `nav_link_clicked` or CTA events either. A like still saves, since that is local state rather than
 experiment data, but logs nothing.
 So Labs is for looking at layouts, never for checking that tracking fires. To
 test tracking, turn Labs off with `?labs=0` and let the real assignment run.
