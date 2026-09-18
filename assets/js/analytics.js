@@ -127,6 +127,13 @@
       }
 
       window.amplitude.init(key, {
+        // Declining calls setOptOut(true), which Amplitude persists in its own
+        // AMP_<key> cookie. Nothing else ever clears it, so without this an
+        // accept that follows a decline would init an SDK that silently drops
+        // every event — and skips the page-view plugin entirely. Consent is
+        // held in localStorage and we only reach here having been granted, so
+        // state that outright rather than inheriting a stale cookie.
+        optOut: false,
         autocapture: {
           attribution: true,
           pageViews: true,
