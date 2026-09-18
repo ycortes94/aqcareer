@@ -96,7 +96,16 @@
     </div>
   </section>
 
+  <!-- No visible heading, matching the control: its testimonial section
+       carries only the accessible label. -->
+  <section class="pad wrap" aria-label="Client testimonials">
+    <div class="tcarousel" data-carousel>
+      <button class="arrow l" aria-label="Previous testimonial" data-step="-1">&#8249;</button>
+      <button class="arrow r" aria-label="Next testimonial" data-step="1">&#8250;</button>
 {{testimonials}}
+      <div class="dots" role="tablist" aria-label="Choose testimonial"></div>
+    </div>
+  </section>
 
   <section class="memo pad">
     <div class="wrap memo-grid">

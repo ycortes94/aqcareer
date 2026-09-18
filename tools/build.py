@@ -115,12 +115,53 @@ def read_minutes(words):
     return max(1, round(words / 225))
 
 
+def testimonial_slides(style):
+    """Render the testimonials as carousel slides.
+
+    One source, two looks. The arms present testimonials differently — the
+    control on a dark full-bleed band, the variant as its own light cards — but
+    the words have to match, and keeping two copies of them is what let the
+    variant sit on two abridged quotes while the control had three in full.
+    """
+    items = json.load(open(os.path.join(C, "testimonials.json"),
+                           encoding="utf-8"))
+    out = []
+    for n, t in enumerate(items):
+        on = " on" if n == 0 else ""
+        body = "\n".join(f"          <p>{html.escape(p)}</p>"
+                         for p in t["paragraphs"])
+        who = html.escape(t["name"]) if t["name"] else ""
+        industry, level = html.escape(t["industry"]), html.escape(t["level"])
+        if style == "band":
+            head = (f'        <div class="who">{who}</div>\n' if who else "")
+            out.append(
+                f'      <div class="slide{on}">\n{head}'
+                f'        <div class="meta">{industry}</div>\n'
+                f'        <div class="meta">{level}</div>\n'
+                f'        <hr>\n'
+                f'        <blockquote>\n{body}\n        </blockquote>\n'
+                f'      </div>')
+        else:   # "card" — the variant's own treatment, one card per slide
+            attr = (f'<b>{who}</b>' if who else "") + \
+                   f'{industry} &middot; {level}'
+            out.append(
+                f'      <div class="slide{on}">\n'
+                f'        <div class="tcard">\n'
+                f'          <span class="qm">&ldquo;</span>\n'
+                f'          <blockquote>\n{body}\n          </blockquote>\n'
+                f'          <div class="attr">{attr}</div>\n'
+                f'        </div>\n'
+                f'      </div>')
+    return "\n".join(out)
+
+
 CAROUSEL_JS = """<script>
-/* Every .testi on the page, not just the first: the homepage carries both
-   experiment layouts in one document, so each arm has its own carousel and
-   each needs its own state. */
+/* Every carousel on the page, not just the first: the homepage carries both
+   experiment layouts in one document, so each arm has its own and each needs
+   its own state. Keyed off data-carousel rather than a class, because the two
+   arms deliberately look nothing alike. */
 (function(){
-  [].forEach.call(document.querySelectorAll('.testi'), function(root){
+  [].forEach.call(document.querySelectorAll('[data-carousel]'), function(root){
     var slides=[].slice.call(root.querySelectorAll('.slide'));
     var dots=root.querySelector('.dots');
     if(slides.length<2){ if(dots) dots.remove();
@@ -193,18 +234,14 @@ def build():
     # approach can be silently switched off server-side; a class can't be.
     an = CFG.get("analytics") or {}
     mask_forms = (an.get("session_replay") or {}).get("mask_forms", True)
-    # One carousel, injected into both arms. They each had their own copy of
-    # these testimonials and the copies drifted — the variant was still showing
-    # two abridged quotes long after the control gained a third in full.
-    testimonials = read(os.path.join(T, "testimonials.html"))
     home = fill(read(os.path.join(T, "home.html")), base="",
-                testimonials=testimonials,
+                testimonials=testimonial_slides("band"),
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
                 form_privacy_class="amp-block" if mask_forms else "")
     variant = fill(read(os.path.join(T, "home-fresh-take.html")), base="",
                    year=YEAR,
-                   testimonials=testimonials,
+                   testimonials=testimonial_slides("card"),
                    form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                              quote=True),
                    form_privacy_class="amp-block" if mask_forms else "")
