@@ -55,12 +55,17 @@ html[data-home-design="fresh_take"] body{
   border-bottom:1px solid rgba(1,66,53,.09)
 }
 #layout-fresh .hdr{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:16px}
-#layout-fresh .mark{text-decoration:none;line-height:1.05}
-#layout-fresh .mark b{
-  display:block;font-family:var(--serif);font-size:19px;font-weight:500;
-  color:var(--green);letter-spacing:.01em
+/* The wordmark is the same script lockup as the rest of the site, not a
+   variant-specific treatment — the brand shouldn't change between A and B. */
+#layout-fresh .mark{text-decoration:none;line-height:1;display:block}
+#layout-fresh .mark .name{
+  display:block;font-family:var(--script);font-size:34px;color:var(--green);
+  margin-bottom:-2px
 }
-#layout-fresh .mark span{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--green-mid)}
+#layout-fresh .mark .sub{
+  display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--green)
+}
 #layout-fresh nav{display:flex;gap:28px;align-items:center}
 #layout-fresh nav a{color:var(--green);text-decoration:none;font-size:14px;font-weight:500}
 #layout-fresh nav a:hover{text-decoration:underline;text-underline-offset:4px}
@@ -156,11 +161,13 @@ html[data-home-design="fresh_take"] body{
 
 #layout-fresh footer{background:var(--green);color:#fff;padding:56px 0 34px}
 #layout-fresh .fgrid{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap;align-items:flex-start}
-#layout-fresh footer .mark b{color:#fff}
-#layout-fresh footer .mark span{color:#a9cdc3}
+#layout-fresh footer .mark .name{color:#fff}
+#layout-fresh footer .mark .sub{color:#a9cdc3}
 #layout-fresh .fnav{display:flex;flex-direction:column;gap:10px}
-#layout-fresh .fnav a{color:#dce9e5;text-decoration:none;font-size:14px}
-#layout-fresh .fnav a:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+#layout-fresh .fnav a,
+#layout-fresh .fnav .consent-link{color:#dce9e5;text-decoration:none;font-size:14px;text-align:left}
+#layout-fresh .fnav a:hover,
+#layout-fresh .fnav .consent-link:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
 #layout-fresh .fsoc{display:flex;gap:14px}
 #layout-fresh .fsoc a{
   width:38px;height:38px;border:1px solid rgba(255,255,255,.3);border-radius:50%;

@@ -2,6 +2,8 @@
 
 Amplitude and Statsig are wired in but **switched off** until keys are set.
 With no keys in `site.json`, the build emits no third-party scripts at all.
+With keys set, they still load only for a visitor who has accepted the
+[consent disclaimer](#consent).
 
 ## Turning it on
 
@@ -12,7 +14,8 @@ Put the two client keys in `site.json`:
   "amplitude_api_key": "<Amplitude API key>",
   "statsig_client_key": "client-…",
   "session_replay": { "enabled": true, "sample_rate": 1, "mask_forms": true },
-  "respect_dnt": true
+  "respect_dnt": true,
+  "consent": { "required": true, "policy_url": "/privacy/" }
 }
 ```
 
@@ -109,27 +112,102 @@ Statsig's autocapture also has form and input events filtered out before
 logging (`eventFilterFunc` in `assets/js/analytics.js`), so field names and
 typed content from those two forms don't reach Statsig either.
 
+## Consent
+
+`consent.required` defaults to **true**: on a first visit, neither SDK is
+fetched. A disclaimer appears at the bottom of the page and the visitor
+chooses.
+
+| | What happens |
+|---|---|
+| **Accept measurement** | Amplitude and Statsig load immediately, no reload |
+| **No thanks** | Nothing is fetched, on this visit or any later one |
+| Closed without choosing | Same as declining for that visit; asked again next time |
+
+The answer is stored in `localStorage` under **`aq_consent_v1`** as
+`{"state":"granted"\|"denied","at":"<ISO date>"}`. Not a cookie — declining
+shouldn't create something that gets sent to a server on every request. It's
+per browser and per device. If what the site collects ever changes
+materially, **bump the key** (`aq_consent_v2`) and everyone is asked again
+instead of being held to a stale answer.
+
+Precedence, highest first:
+
+1. **GPC / DNT** (`respect_dnt`) — no scripts, and no banner either; there's
+   nothing to ask. The privacy page says so rather than showing buttons.
+2. **No keys configured** — nothing to consent to.
+3. **Stored choice.**
+4. **Not asked yet** — banner, nothing loaded.
+
+Setting `consent.required: false` restores load-on-arrival, with GPC/DNT as
+the only gate. Only reasonable if legal advice says a banner isn't needed.
+
+### Changing the answer later
+
+- A **Tracking choice** button in the footer of every page reopens the
+  banner. It's `hidden` in the markup and revealed by `analytics.js`, so it
+  never appears when there's nothing to switch off.
+- The privacy page has a panel showing the current state with both buttons.
+- `window.aqConsent` exposes `state()`, `accept()`, `decline()`, `open()`.
+
+Both are driven by `data-aq-consent="accept|decline|open"` attributes and a
+single delegated click handler, so a link can be added anywhere in the
+markup without touching the JS.
+
+**The homepage ships two complete layouts**, each with its own header and
+footer: `templates/base.html` (the control, and every other page on the site)
+and `templates/home-fresh-take.html` (the variant). A site-wide feature has
+to be in **both**, or half of the traffic silently loses it — which is how
+the variant first shipped without the opt-out link.
+
+`tools/build.py` now refuses to build if either layout is missing one, via
+the `SITE_WIDE` dict in `check_chrome()`. Add to that dict when something
+else has to hold across both:
+
+```
+build aborted: templates/home-fresh-take.html is missing the tracking
+opt-out control.
+```
+
+The banner itself is exempt — `analytics.js` injects it into `<body>` from
+outside either layout, so it appears in both without duplication.
+
+**Withdrawing reloads the page.** By then Session Replay is already
+recording; `amplitude.setOptOut(true)` and `statsigClient.shutdown()` are
+called first, but a reload is the only way to be certain nothing further is
+captured.
+
+### Effect on the homepage experiment
+
+A visitor who hasn't accepted never loads Statsig, so they can't be bucketed
+and always see the **control** homepage. That means the `homepage_fresh_take`
+experiment only ever sees consenting traffic — expect it to run slower than
+raw visitor numbers suggest, and read its result as applying to that
+population.
+
+Accepting part-way through a pageview is handled without a flicker: the page
+is already showing control, so `analytics.js` reports `control` as the design
+for that view rather than swapping the layout under the reader. The next
+pageview buckets normally.
+
 ## Do Not Track / Global Privacy Control
 
 With `respect_dnt: true` (the default), visitors whose browser sends Global
 Privacy Control or Do Not Track get **no analytics scripts loaded at all** —
-not loaded-then-disabled. Set it to `false` to track everyone.
+not loaded-then-disabled, and not even asked. Set it to `false` to fall back
+to the consent banner for those visitors.
 
-## Still needed: a privacy notice
+## Disclosure
 
-Session Replay records how visitors move through the site. Amplitude's own
-guidance is that you must disclose that recording in a privacy policy, and
-collect consent where local law requires it. There is **no privacy page on
-this site yet**, and no consent banner.
+Both pieces Amplitude's guidance asks for are in place: the recording is
+disclosed on `/privacy/`, and consent is collected before anything loads.
 
-Worth deciding deliberately:
-
-- A short privacy page covering analytics, replay, and what the forms collect
-  is the minimum, and is quick to add.
-- A consent banner is a separate question. It's generally required before
-  loading analytics for EU/UK visitors; her blog could plausibly reach them.
-  A US-only audience is a weaker case, and honouring GPC (above) already
-  covers California's opt-out signal.
+What this does **not** settle is whether the banner is legally required for
+this site — that depends on where her visitors are, and it's a question for
+someone qualified to answer. EU/UK visitors generally need prior consent, and
+Session Replay at `sample_rate: 1` is the strongest reason to assume they
+might arrive. A US-only audience would be a weaker case, where honouring GPC
+alone might have been enough.
 
 ## Versions
 
@@ -151,13 +229,18 @@ configuration.
 
 ## Checking it works
 
-Open the live site, then in the browser console:
+Open the live site, **accept the disclaimer**, then in the browser console:
 
 ```js
+window.aqConsent.state()  // "granted"
 window.amplitude          // object
 window.sessionReplay      // object, when replay is enabled
 window.statsigClient      // object
 ```
+
+All three are `undefined` before accepting — that's the gate working, not a
+broken key. To get the banner back: `localStorage.removeItem('aq_consent_v1')`
+and reload.
 
 Events should appear in Amplitude within a minute or two. In Amplitude,
 Session Replay sits alongside the event stream for the same user.
