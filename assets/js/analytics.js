@@ -349,12 +349,13 @@
               startTracking() runs only from choose(GRANTED), so no SDK is
               fetched before the click. Don't move tracking earlier without
               rewriting this line.
-           2. "All sensitive text fields are masked" holds because build.py
-              puts amp-block on both <form> elements, blanking them in
-              replays, and every text input on this site sits inside one of
-              those two forms. Add an input outside them and the sentence
-              stops being true — the Amplitude project's own mask level is
-              "light", which does not cover free text. */
+           2. "All sensitive text fields are masked" rests on two layers.
+              The project's remote mask level is "medium" (all form fields
+              and text inputs) as checked on 2026-09-18, and build.py also
+              puts amp-block on both <form> elements, which blanks them in
+              replays and cannot be switched off from the Amplitude UI.
+              Either alone would cover the forms; together they also cover
+              an input added outside them. */
         '<p class="b" id="aq-consent-body">We use analytics and session replay ' +
           'tools to observe real-time website interactions (such as clicks, ' +
           'scrolling, and browsing paths). This helps us improve our career ' +
