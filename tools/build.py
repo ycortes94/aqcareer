@@ -197,30 +197,74 @@ def like_count(slug, counts):
             f'data-likes="{n}">{HEART_SVG}<span class="n">{n}</span></span>')
 
 
+def testimonial_slides(style):
+    """Render the testimonials as carousel slides.
+
+    One source, two looks. The arms present testimonials differently — the
+    control on a dark full-bleed band, the variant as its own light cards — but
+    the words have to match, and keeping two copies of them is what let the
+    variant sit on two abridged quotes while the control had three in full.
+    """
+    items = json.load(open(os.path.join(C, "testimonials.json"),
+                           encoding="utf-8"))
+    out = []
+    for n, t in enumerate(items):
+        on = " on" if n == 0 else ""
+        body = "\n".join(f"          <p>{html.escape(p)}</p>"
+                         for p in t["paragraphs"])
+        who = html.escape(t["name"]) if t["name"] else ""
+        industry, level = html.escape(t["industry"]), html.escape(t["level"])
+        if style == "band":
+            head = (f'        <div class="who">{who}</div>\n' if who else "")
+            out.append(
+                f'      <div class="slide{on}">\n{head}'
+                f'        <div class="meta">{industry}</div>\n'
+                f'        <div class="meta">{level}</div>\n'
+                f'        <hr>\n'
+                f'        <blockquote>\n{body}\n        </blockquote>\n'
+                f'      </div>')
+        else:   # "card" — the variant's own treatment, one card per slide
+            attr = (f'<b>{who}</b>' if who else "") + \
+                   f'{industry} &middot; {level}'
+            out.append(
+                f'      <div class="slide{on}">\n'
+                f'        <div class="tcard">\n'
+                f'          <span class="qm">&ldquo;</span>\n'
+                f'          <blockquote>\n{body}\n          </blockquote>\n'
+                f'          <div class="attr">{attr}</div>\n'
+                f'        </div>\n'
+                f'      </div>')
+    return "\n".join(out)
+
 CAROUSEL_JS = """<script>
+/* Every carousel on the page, not just the first: the homepage carries both
+   experiment layouts in one document, so each arm has its own and each needs
+   its own state. Keyed off data-carousel rather than a class, because the two
+   arms deliberately look nothing alike. */
 (function(){
-  var root=document.querySelector('.testi'); if(!root) return;
-  var slides=[].slice.call(root.querySelectorAll('.slide'));
-  var dots=root.querySelector('.dots');
-  if(slides.length<2){ if(dots) dots.remove();
-    [].forEach.call(root.querySelectorAll('.arrow'),function(a){a.remove()}); return; }
-  var i=0, buttons=[];
-  slides.forEach(function(_,k){
-    var b=document.createElement('button');
-    b.setAttribute('role','tab');
-    b.setAttribute('aria-label','Testimonial '+(k+1));
-    b.addEventListener('click',function(){show(k)});
-    dots.appendChild(b); buttons.push(b);
+  [].forEach.call(document.querySelectorAll('[data-carousel]'), function(root){
+    var slides=[].slice.call(root.querySelectorAll('.slide'));
+    var dots=root.querySelector('.dots');
+    if(slides.length<2){ if(dots) dots.remove();
+      [].forEach.call(root.querySelectorAll('.arrow'),function(a){a.remove()}); return; }
+    var i=0, buttons=[];
+    slides.forEach(function(_,k){
+      var b=document.createElement('button');
+      b.setAttribute('role','tab');
+      b.setAttribute('aria-label','Testimonial '+(k+1));
+      b.addEventListener('click',function(){show(k)});
+      dots.appendChild(b); buttons.push(b);
+    });
+    function show(k){
+      i=(k+slides.length)%slides.length;
+      slides.forEach(function(s,n){ s.classList.toggle('on', n===i) });
+      buttons.forEach(function(b,n){ b.setAttribute('aria-selected', n===i?'true':'false') });
+    }
+    [].forEach.call(root.querySelectorAll('.arrow'),function(a){
+      a.addEventListener('click',function(){ show(i+parseInt(a.dataset.step,10)) });
+    });
+    show(0);
   });
-  function show(k){
-    i=(k+slides.length)%slides.length;
-    slides.forEach(function(s,n){ s.classList.toggle('on', n===i) });
-    buttons.forEach(function(b,n){ b.setAttribute('aria-selected', n===i?'true':'false') });
-  }
-  [].forEach.call(root.querySelectorAll('.arrow'),function(a){
-    a.addEventListener('click',function(){ show(i+parseInt(a.dataset.step,10)) });
-  });
-  show(0);
 })();
 </script>"""
 
@@ -278,6 +322,7 @@ def build():
     an = CFG.get("analytics") or {}
     mask_forms = (an.get("session_replay") or {}).get("mask_forms", True)
     home = fill(read(os.path.join(T, "home.html")), base="",
+                testimonials=testimonial_slides("band"),
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
                 form_privacy_class="amp-block" if mask_forms else "")
@@ -285,6 +330,7 @@ def build():
     variant = fill(read(os.path.join(T, "home-fresh-take.html")), base="",
                    year=YEAR,
                    fresh_header=ft_header, fresh_footer=ft_footer,
+                   testimonials=testimonial_slides("card"),
                    form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                              quote=True),
                    form_privacy_class="amp-block" if mask_forms else "")
