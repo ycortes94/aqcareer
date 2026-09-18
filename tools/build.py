@@ -116,29 +116,33 @@ def read_minutes(words):
 
 
 CAROUSEL_JS = """<script>
+/* Every .testi on the page, not just the first: the homepage carries both
+   experiment layouts in one document, so each arm has its own carousel and
+   each needs its own state. */
 (function(){
-  var root=document.querySelector('.testi'); if(!root) return;
-  var slides=[].slice.call(root.querySelectorAll('.slide'));
-  var dots=root.querySelector('.dots');
-  if(slides.length<2){ if(dots) dots.remove();
-    [].forEach.call(root.querySelectorAll('.arrow'),function(a){a.remove()}); return; }
-  var i=0, buttons=[];
-  slides.forEach(function(_,k){
-    var b=document.createElement('button');
-    b.setAttribute('role','tab');
-    b.setAttribute('aria-label','Testimonial '+(k+1));
-    b.addEventListener('click',function(){show(k)});
-    dots.appendChild(b); buttons.push(b);
+  [].forEach.call(document.querySelectorAll('.testi'), function(root){
+    var slides=[].slice.call(root.querySelectorAll('.slide'));
+    var dots=root.querySelector('.dots');
+    if(slides.length<2){ if(dots) dots.remove();
+      [].forEach.call(root.querySelectorAll('.arrow'),function(a){a.remove()}); return; }
+    var i=0, buttons=[];
+    slides.forEach(function(_,k){
+      var b=document.createElement('button');
+      b.setAttribute('role','tab');
+      b.setAttribute('aria-label','Testimonial '+(k+1));
+      b.addEventListener('click',function(){show(k)});
+      dots.appendChild(b); buttons.push(b);
+    });
+    function show(k){
+      i=(k+slides.length)%slides.length;
+      slides.forEach(function(s,n){ s.classList.toggle('on', n===i) });
+      buttons.forEach(function(b,n){ b.setAttribute('aria-selected', n===i?'true':'false') });
+    }
+    [].forEach.call(root.querySelectorAll('.arrow'),function(a){
+      a.addEventListener('click',function(){ show(i+parseInt(a.dataset.step,10)) });
+    });
+    show(0);
   });
-  function show(k){
-    i=(k+slides.length)%slides.length;
-    slides.forEach(function(s,n){ s.classList.toggle('on', n===i) });
-    buttons.forEach(function(b,n){ b.setAttribute('aria-selected', n===i?'true':'false') });
-  }
-  [].forEach.call(root.querySelectorAll('.arrow'),function(a){
-    a.addEventListener('click',function(){ show(i+parseInt(a.dataset.step,10)) });
-  });
-  show(0);
 })();
 </script>"""
 
@@ -189,12 +193,18 @@ def build():
     # approach can be silently switched off server-side; a class can't be.
     an = CFG.get("analytics") or {}
     mask_forms = (an.get("session_replay") or {}).get("mask_forms", True)
+    # One carousel, injected into both arms. They each had their own copy of
+    # these testimonials and the copies drifted — the variant was still showing
+    # two abridged quotes long after the control gained a third in full.
+    testimonials = read(os.path.join(T, "testimonials.html"))
     home = fill(read(os.path.join(T, "home.html")), base="",
+                testimonials=testimonials,
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
                 form_privacy_class="amp-block" if mask_forms else "")
     variant = fill(read(os.path.join(T, "home-fresh-take.html")), base="",
                    year=YEAR,
+                   testimonials=testimonials,
                    form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                              quote=True),
                    form_privacy_class="amp-block" if mask_forms else "")
