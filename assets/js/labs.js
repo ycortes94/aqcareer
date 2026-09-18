@@ -72,7 +72,7 @@
   /* z-index sits BELOW the consent dialog's 200 on purpose. Both are fixed to
      the bottom of the viewport, and under about 970px wide the dialog's button
      row reaches across into this panel — where, sitting on top, it swallowed
-     the click on "Accept measurement". Consent has to win that overlap. The
+     the click on "Accept". Consent has to win that overlap. The
      dialog's own container is pointer-events:none with only its white panel
      clickable, so this panel stays usable everywhere the panel isn't. */
   var css =
