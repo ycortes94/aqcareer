@@ -217,9 +217,18 @@ flash of the other one, and it works with measurement declined, with a DNT
 signal, or with `analytics.js` blocked outright — which is exactly when you
 want to look at a layout undisturbed.
 
-Everywhere else it stays off, so a visitor never sees the panel. The script
-(`assets/js/labs.js`) is only included on the homepage and returns immediately
-unless Labs is enabled.
+Everywhere else it stays off, so a visitor never sees the panel — and there is
+nothing in the page for them to find. No `<script>` tag for `labs.js` is built
+into the HTML; the inline gate injects it, and only for a browser that has Labs
+switched on. An ordinary visit downloads none of it and its markup carries no
+reference to it.
+
+It is invisible rather than secret, though: anyone who works out `?labs=1` can
+switch it on for their own browser. That reveals nothing they couldn't already
+get — both layouts ship in the homepage HTML either way, so the variant is
+readable from the page source or reachable by editing `data-home-design` in
+devtools — and because a pinned pageview logs nothing, someone doing it cannot
+disturb the experiment's results.
 
 **A pinned pageview records nothing.** `analytics.js` returns before it asks
 Statsig for an assignment — asking would log an exposure for a variant nobody

@@ -65,6 +65,14 @@
   if(labs&&labs.design) reveal(labs.design);
   else t=setTimeout(function(){reveal('control');},2000);
   window.__aqReveal=reveal;
+  /* Fetch the panel only when Labs is actually on. An ordinary visit carries
+     no reference to it and downloads none of it, so the switch is not just
+     invisible to visitors — it isn't in the page they receive at all. */
+  if(labs){
+    var ls=document.createElement('script');
+    ls.src='assets/js/labs.js?v=2c1183b9'; ls.async=true;
+    document.head.appendChild(ls);
+  }
 })();
 </script>
 </head>
@@ -468,6 +476,5 @@
 })();
 </script>
 <script src="assets/js/forms.js?v=cad00055"></script>
-<script src="assets/js/labs.js?v=516501d4"></script>
 </body>
 </html>
