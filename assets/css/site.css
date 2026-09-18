@@ -14,12 +14,34 @@
 *{box-sizing:border-box}
 body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased}
 
-/* Homepage experiment: hold paint until Statsig assigns a group, then
-   show only the matching layout. Fallback is the current (control) site. */
+/* Fresh-take experiment: hold paint until Statsig assigns a group, then
+   show only the matching layout. Fallback is the current (control) site.
+
+   The homepage ships both layouts whole, one wrapper each. A post page
+   instead ships one article between two sets of chrome, because duplicating
+   the article to give each design its own copy would put every post's text
+   in the page twice. So the switch has two halves: whole layouts, and
+   chrome. Pages that carry neither (the blog index, privacy, 404) are
+   unaffected by any of this and stay on the control design. */
 html.home-exp.exp-pending body{visibility:hidden}
-#layout-fresh{display:none}
+#layout-fresh,.ft-chrome{display:none}
 html[data-home-design="fresh_take"] #layout-control{display:none}
 html[data-home-design="fresh_take"] #layout-fresh{display:block}
+html[data-home-design="fresh_take"] .site-chrome{display:none}
+/* display:contents, not block: the fresh-take header is sticky, and a sticky
+   element travels only within its own parent's box. Inside a wrapper div that
+   is exactly header-height it would have nowhere to go and would scroll away,
+   where the control header and the variant homepage's both stay put. With no
+   box of its own the wrapper leaves the header parented to <body>, and the
+   .ft class on it still passes the variant's type and colour down. */
+html[data-home-design="fresh_take"] .ft-chrome{display:contents}
+/* Fresh-take-only furniture inside the shared article — the like bar. */
+.ft-only{display:none}
+html[data-home-design="fresh_take"] .ft-only{display:block}
+/* Same trap as .aq-consent below: the rule above is an author rule and would
+   otherwise outrank the browser's [hidden]{display:none}, showing the like
+   bar before likes.js has decided it can work at all. */
+html[data-home-design="fresh_take"] .ft-only[hidden]{display:none}
 img{max-width:100%;display:block}
 a{color:inherit}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}

@@ -13,6 +13,8 @@ Hosted on GitHub Pages. Pushing to `main` redeploys it, usually within a minute.
 | Change a blog post | Edit `content/posts/<slug>.html`, then rebuild |
 | Add a blog post | See below |
 | Change colors, type, spacing | Edit `assets/css/site.css` — no rebuild needed |
+| Change the fresh-take variant | Edit `assets/css/fresh-take.css`, or its templates, then rebuild — see [docs/ANALYTICS.md](docs/ANALYTICS.md) |
+| Refresh the like counts on the blog | Nothing — a weekly GitHub Action does it, once its two Amplitude secrets are set. See [docs/ANALYTICS.md](docs/ANALYTICS.md#the-numbers-on-the-blog-index) |
 | Change the header or footer | Edit `templates/base.html`, then rebuild |
 | Change the site title/description | Edit `site.json`, then rebuild |
 | Connect the forms | See [docs/FORMS.md](docs/FORMS.md) |
@@ -80,17 +82,25 @@ post/<slug>/index.html  generated — one per post
 
 templates/base.html     shared shell: head, header, footer
 templates/home.html     home page content
+templates/home-fresh-take.html   the fresh-take homepage (experiment variant)
+templates/fresh-header.html      fresh-take header, shared by the variant
+templates/fresh-footer.html      fresh-take footer, shared by the variant
 templates/privacy.html  privacy page content
 content/posts.json      post metadata, newest first
+content/likes.json      like counts shown on the blog index (generated)
 content/posts/*.html    post bodies (source of truth)
 content/posts/_TEMPLATE.html   starting point for a new post
 assets/css/site.css     all styles
+assets/css/fresh-take.css        styles for the fresh-take variant
 assets/js/forms.js      form submission
+assets/js/likes.js      the like button on fresh-take post pages
 assets/js/analytics.js  Amplitude + Statsig loader
 assets/img/             images
 assets/img/blog/        post images
 assets/img/logo-originals/   untrimmed partner logos, kept for re-cropping
 tools/build.py          the build
+tools/refresh_likes.py  pulls like counts from Amplitude into content/likes.json
+.github/workflows/refresh-likes.yml   runs that weekly and commits the result
 tools/form-endpoint.gs  the form handler (paste into Google Apps Script)
 tools/extract_wix.py    one-time Wix migration; kept for reference
 docs/FORMS.md           how to connect the forms

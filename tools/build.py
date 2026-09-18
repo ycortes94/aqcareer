@@ -40,6 +40,15 @@ FT_CSS_V = asset_v("assets/css/fresh-take.css")
 JS_V = asset_v("assets/js/forms.js")
 AN_V = asset_v("assets/js/analytics.js")
 LABS_V = asset_v("assets/js/labs.js")
+LIKES_V = asset_v("assets/js/likes.js")
+
+# Fraunces is the variant's heading face and is only fetched by pages that
+# ship the fresh-take layout.
+FT_HEAD = (
+    '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,'
+    'wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">\n'
+    '<link rel="stylesheet" href="{base}assets/css/fresh-take.css?v={v}">'
+)
 
 
 def analytics_snippet(base):
@@ -72,10 +81,22 @@ def fill(tpl, **kw):
     return re.sub(r"\{\{[a-z_]+\}\}", "", tpl)   # blank any unused token
 
 
+def fresh_chrome(base, cur_blog=""):
+    """The fresh-take header and footer, as a (header, footer) pair.
+
+    One source for both layouts that use them: the variant homepage, where
+    they sit inside #layout-fresh, and the post page, where each is wrapped
+    in its own .ft block around the shared article."""
+    def part(name):
+        return fill(read(os.path.join(T, name)), base=base, year=YEAR,
+                    cur_blog=cur_blog)
+    return part("fresh-header.html"), part("fresh-footer.html")
+
+
 def page(*, content, title, desc, canonical, base, ogtype="website",
          ogimage=None, cur_home="", cur_blog="", extra_js="",
          html_attrs="", extra_css="", layout_open="", layout_close="",
-         variant_layout=""):
+         variant_layout="", chrome_top=""):
     return fill(
         read(os.path.join(T, "base.html")),
         content=content, title=html.escape(title, quote=True),
@@ -83,13 +104,14 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         ogtype=ogtype, ogimage=ogimage or f"{SITE}/assets/img/headshot.jpg",
         cur_home=cur_home, cur_blog=cur_blog, year=YEAR, extra_js=extra_js,
         # Where the inline gate fetches the Labs panel from, if it decides to.
-        # Every page gets the path; only the homepage can ever act on it.
+        # Every page gets the path; only a page that ships both designs — the
+        # homepage, the blog index and the post pages — can ever act on it.
         labs_src=f"{base}assets/js/labs.js?v={LABS_V}",
         form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
         css_v=CSS_V, analytics=analytics_snippet(base),
         html_attrs=html_attrs, extra_css=extra_css,
         layout_open=layout_open, layout_close=layout_close,
-        variant_layout=variant_layout,
+        variant_layout=variant_layout, chrome_top=chrome_top,
     )
 
 
@@ -113,6 +135,66 @@ def nice_date(iso):
 
 def read_minutes(words):
     return max(1, round(words / 225))
+
+
+HEART_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4l-1.3-1.2C6 '
+             '14.9 3 12.2 3 8.9 3 6.2 5.1 4 7.8 4c1.5 0 3 .7 3.9 1.9l.3.4.3-.4C13.2 4.7 '
+             '14.7 4 16.2 4 18.9 4 21 6.2 21 8.9c0 3.3-3 6-7.7 10.3L12 20.4z" '
+             'stroke-linejoin="round"/></svg>')
+
+# The like bar, at the foot of the fresh-take post page. .ft-only keeps it out
+# of the control design, which the experiment leaves exactly as it was; hidden
+# keeps it out of the page until likes.js can make it work. Which post was
+# liked comes from data-post on <html>, so the button carries no slug of its
+# own. See assets/js/likes.js for what a like actually is here.
+LIKE_BAR = f"""  <div class="ft-only ft-like" data-like-bar hidden>
+    <button class="ft-like-btn" type="button" data-like aria-pressed="false">
+      {HEART_SVG}
+      <span class="ft-like-label">Like this post</span>
+    </button>
+    <p class="ft-like-note">Kept in this browser. No account, nothing shared.</p>
+  </div>
+"""
+
+
+def like_counts(slugs):
+    """Published like totals, from content/likes.json.
+
+    Hand-maintained: there is no server to keep a live tally, so the numbers
+    are exported from Amplitude and committed — see docs/ANALYTICS.md. A
+    missing file means every post shows zero, which is also what a brand new
+    site would show, so it isn't an error."""
+    path = os.path.join(C, "likes.json")
+    try:
+        data = json.loads(read(path))
+    except OSError:
+        return {}
+    except json.JSONDecodeError as err:
+        raise SystemExit(f"build aborted: content/likes.json is not valid "
+                         f"JSON — {err}")
+    if not isinstance(data, dict):
+        raise SystemExit("build aborted: content/likes.json should be an "
+                         'object of "<slug>": <count>.')
+    for slug, n in data.items():
+        if not isinstance(n, int) or isinstance(n, bool) or n < 0:
+            raise SystemExit(f'build aborted: like count for "{slug}" is '
+                             f"{n!r}; it has to be a whole number, 0 or more.")
+        if slug not in slugs:
+            # Not fatal — a post may have been renamed or removed — but a
+            # typo here is otherwise invisible, showing zero forever.
+            print(f'  warning: content/likes.json has "{slug}", which is not '
+                  f"a post")
+    return data
+
+
+def like_count(slug, counts):
+    """The like tally on a blog index card.
+
+    The number is rendered by the build, so it is there with no JavaScript
+    at all; likes.js only adds this visitor's own like on top of it."""
+    n = counts.get(slug, 0)
+    return (f'<span class="ft-only ft-card-likes" data-like-count="{slug}" '
+            f'data-likes="{n}">{HEART_SVG}<span class="n">{n}</span></span>')
 
 
 CAROUSEL_JS = """<script>
@@ -143,10 +225,10 @@ CAROUSEL_JS = """<script>
 </script>"""
 
 
-# Anything that has to be on every page has to be in BOTH, because the
-# homepage experiment ships two complete layouts, each with its own header
-# and footer. Adding a site-wide feature to one of them is a silent bug:
-# whichever group a visitor lands in, they lose it.
+# Anything that has to be on every page has to be in BOTH chromes: the
+# control one in base.html and the fresh-take one in the partials. Adding a
+# site-wide feature to one of them is a silent bug — whichever group a
+# visitor lands in, they lose it.
 SITE_WIDE = {
     "the tracking opt-out control": 'data-aq-consent="open"',
     "the script wordmark": '<span class="name">alina quintana</span>',
@@ -156,16 +238,22 @@ SITE_WIDE = {
 def check_chrome():
     """Fail the build rather than ship a layout missing a site-wide feature.
 
-    base.html covers the control homepage and every other page;
-    home-fresh-take.html is the variant's own chrome."""
-    for tpl in ("base.html", "home-fresh-take.html"):
-        src = read(os.path.join(T, tpl))
+    base.html covers the control layout and every page that has no variant;
+    the fresh-take partials cover the variant homepage, blog index and post
+    page, which all include them. Checked assembled, not as template source, so an
+    include that silently stops being included is caught too."""
+    header, footer = fresh_chrome(base="")
+    sources = {
+        "templates/base.html": read(os.path.join(T, "base.html")),
+        "the fresh-take chrome": header + footer,
+    }
+    for name, src in sources.items():
         for label, needle in SITE_WIDE.items():
             if needle not in src:
                 raise SystemExit(
-                    f"build aborted: templates/{tpl} is missing {label}.\n"
+                    f"build aborted: {name} is missing {label}.\n"
                     f"  expected to find: {needle}\n"
-                    f"  Both homepage layouts need it — see docs/ANALYTICS.md.")
+                    f"  Every layout needs it — see docs/ANALYTICS.md.")
 
 
 def build():
@@ -193,8 +281,10 @@ def build():
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
                 form_privacy_class="amp-block" if mask_forms else "")
+    ft_header, ft_footer = fresh_chrome(base="")
     variant = fill(read(os.path.join(T, "home-fresh-take.html")), base="",
                    year=YEAR,
+                   fresh_header=ft_header, fresh_footer=ft_footer,
                    form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                              quote=True),
                    form_privacy_class="amp-block" if mask_forms else "")
@@ -203,11 +293,8 @@ def build():
         title="Home | AQ Career Consulting",
         desc=CFG["description"], canonical=SITE + "/", base="",
         cur_home=' aria-current="page"',
-        html_attrs=' class="home-exp exp-pending"',
-        extra_css=(
-            '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">\n'
-            f'<link rel="stylesheet" href="assets/css/fresh-take.css?v={FT_CSS_V}">'
-        ),
+        html_attrs=' class="home-exp exp-pending" data-page="home"',
+        extra_css=FT_HEAD.format(base="", v=FT_CSS_V),
         layout_open='<div id="layout-control">',
         layout_close='</div>',
         variant_layout=variant,
@@ -217,6 +304,7 @@ def build():
         f'\n<script src="assets/js/forms.js?v={JS_V}"></script>')))
 
     # ---------- blog index ----------
+    counts = like_counts({p["slug"] for p in posts})
     cards = []
     for p in posts:
         thumb = (f'<div class="thumb"><img src="../{p["cover"].lstrip("/")}" '
@@ -226,19 +314,33 @@ def build():
             f'{("        " + thumb) if thumb else ""}\n'
             f'        <h2>{html.escape(p["title"])}</h2>\n'
             f'        <p class="excerpt">{html.escape(p["excerpt"])}</p>\n'
-            f'        <div class="pmeta">{p["nice"]} &middot; {p["mins"]} min read</div>\n'
+            f'        <div class="pmeta"><span>{p["nice"]} &middot; {p["mins"]} min read</span>'
+            f'{like_count(p["slug"], counts)}</div>\n'
             f'      </a>')
     blog = ('  <section class="blog-head wrap">\n'
             '    <h1 class="script-h">POV Blog</h1>\n'
             f'    <p>{html.escape(CFG["blog_tagline"])}</p>\n'
             '  </section>\n\n'
             '  <div class="posts wrap">\n' + "\n".join(cards) + "\n  </div>\n")
+    # Both designs, the same way the post pages do it: one set of cards
+    # between two sets of chrome, restyled by CSS rather than duplicated.
+    bh, bf = fresh_chrome(base="../", cur_blog=' aria-current="page"')
     made.append(write("blog/index.html", page(
         content=blog, title="POV Blog | AQ Career Consulting",
         desc=CFG["blog_tagline"], canonical=f"{SITE}/blog/", base="../",
-        cur_blog=' aria-current="page"')))
+        cur_blog=' aria-current="page"',
+        html_attrs=' class="home-exp exp-pending" data-page="blog"',
+        extra_css=FT_HEAD.format(base="../", v=FT_CSS_V),
+        chrome_top=f'<div class="ft ft-chrome">\n{bh}\n</div>',
+        variant_layout=f'<div class="ft ft-chrome">\n{bf}\n</div>',
+        extra_js=f'<script src="../assets/js/likes.js?v={LIKES_V}"></script>')))
 
     # ---------- posts ----------
+    # Every post sits at the same depth, so one fill of the fresh-take chrome
+    # serves all of them.
+    ph, pf = fresh_chrome(base="../../", cur_blog=' aria-current="page"')
+    post_chrome_top = f'<div class="ft ft-chrome">\n{ph}\n</div>'
+    post_chrome_bottom = f'<div class="ft ft-chrome">\n{pf}\n</div>'
     for n, p in enumerate(posts):
         body = p["body"].replace('src="/assets/', 'src="../../assets/')
         cover = (f'  <div class="post-cover wrap">'
@@ -269,14 +371,24 @@ def build():
             '  </div>\n' + cover +
             f'  <div class="post-body post">\n{body}  </div>\n'
             '  </article>\n'
+            + LIKE_BAR +
             f'  <nav class="post-nav post">{"".join(links)}</nav>\n'
             f'  <script type="application/ld+json">{ld}</script>\n')
+        # The post page carries both designs, like the homepage — but with one
+        # copy of the article between two sets of chrome rather than two whole
+        # layouts, so a post's text isn't in the page twice. data-post names
+        # the post for the like button and for post_viewed.
         made.append(write(f'post/{p["slug"]}/index.html', page(
             content=content, title=f'{p["title"]} | AQ Career Consulting',
             desc=p["excerpt"], canonical=f'{SITE}/post/{p["slug"]}/',
             base="../../", ogtype="article",
             ogimage=(SITE + p["cover"]) if p["cover"] else None,
-            cur_blog=' aria-current="page"')))
+            cur_blog=' aria-current="page"',
+            html_attrs=(' class="home-exp exp-pending"'
+                        f' data-page="post" data-post="{html.escape(p["slug"], quote=True)}"'),
+            extra_css=FT_HEAD.format(base="../../", v=FT_CSS_V),
+            chrome_top=post_chrome_top, variant_layout=post_chrome_bottom,
+            extra_js=f'<script src="../../assets/js/likes.js?v={LIKES_V}"></script>')))
 
     # ---------- privacy ----------
     pv = CFG.get("privacy") or {}

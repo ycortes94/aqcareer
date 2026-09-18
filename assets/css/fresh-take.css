@@ -1,5 +1,33 @@
-/* Homepage "Fresh Take" experiment variant.
-   Scoped to #layout-fresh so it cannot restyle the control homepage. */
+/* "Fresh Take" experiment variant — the homepage layout, plus the chrome and
+   content styling for the blog index and the post page.
+
+   The rules are scoped to .ft, the class on every block of fresh-take
+   markup, so they cannot restyle the control layout sitting beside them.
+   The homepage variant is one .ft block holding a whole document; the blog
+   index and a post page have two — the header and the footer — because what
+   sits between them is a single copy shared by both designs. That shared
+   content is styled off html[data-home-design="fresh_take"] instead; see the
+   blog and post sections lower down.
+
+   The palette is --ft- prefixed and lives on :root because both of those
+   need it. Unprefixed names would collide with site.css's own --ink, --sans,
+   --maxw and --script, which the control layout is still using on the same
+   page. */
+
+:root{
+  --ft-green:#014235;
+  --ft-green-mid:#4a9183;
+  --ft-green-soft:#e4ede9;
+  --ft-cream:#faf7f2;
+  --ft-sand:#efe7da;
+  --ft-ink:#16211d;
+  --ft-muted:#4c5b56;
+  --ft-sans:"Mulish","Avenir Next",system-ui,sans-serif;
+  --ft-serif:"Fraunces",Georgia,serif;
+  --ft-script:"Mr De Haviland",cursive;
+  --ft-maxw:1140px;
+  --ft-r:3px;
+}
 
 html[data-home-design="fresh_take"] body{
   background:#faf7f2;
@@ -7,199 +35,385 @@ html[data-home-design="fresh_take"] body{
   font-weight:350;
 }
 
-#layout-fresh{
-  --green:#014235;
-  --green-mid:#4a9183;
-  --green-soft:#e4ede9;
-  --cream:#faf7f2;
-  --sand:#efe7da;
-  --ink:#16211d;
-  --muted:#4c5b56;
-  --sans:"Mulish","Avenir Next",system-ui,sans-serif;
-  --serif:"Fraunces",Georgia,serif;
-  --script:"Mr De Haviland",cursive;
-  --maxw:1140px;
-  --r:3px;
-  background:var(--cream);
-  color:var(--ink);
-  font-family:var(--sans);
+.ft{
+  background:var(--ft-cream);
+  color:var(--ft-ink);
+  font-family:var(--ft-sans);
   font-weight:350;
   line-height:1.65;
 }
-#layout-fresh img{max-width:100%;display:block}
-#layout-fresh h1,#layout-fresh h2,#layout-fresh h3{
-  font-family:var(--serif);font-weight:400;line-height:1.1;margin:0;letter-spacing:-.01em
+.ft img{max-width:100%;display:block}
+.ft h1,.ft h2,.ft h3{
+  font-family:var(--ft-serif);font-weight:400;line-height:1.1;margin:0;letter-spacing:-.01em
 }
-#layout-fresh .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-#layout-fresh .eyebrow{
-  font-family:var(--sans);font-size:11.5px;font-weight:600;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--green-mid)
+.ft .wrap{max-width:var(--ft-maxw);margin:0 auto;padding:0 24px}
+.ft .eyebrow{
+  font-family:var(--ft-sans);font-size:11.5px;font-weight:600;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ft-green-mid)
 }
-#layout-fresh .lede{font-size:17px;color:var(--muted);max-width:52ch}
+.ft .lede{font-size:17px;color:var(--ft-muted);max-width:52ch}
 
-#layout-fresh .btn{
-  display:inline-flex;align-items:center;gap:9px;background:var(--green);color:#fff;
+.ft .btn{
+  display:inline-flex;align-items:center;gap:9px;background:var(--ft-green);color:#fff;
   text-decoration:none;font-size:14px;font-weight:600;letter-spacing:.01em;padding:14px 26px;
-  border:0;border-radius:var(--r);cursor:pointer;transition:background .15s
+  border:0;border-radius:var(--ft-r);cursor:pointer;transition:background .15s
 }
-#layout-fresh .btn:hover{background:#012d24}
-#layout-fresh .btn-text{
-  display:inline-flex;align-items:center;gap:8px;color:var(--green);text-decoration:none;
+.ft .btn:hover{background:#012d24}
+.ft .btn-text{
+  display:inline-flex;align-items:center;gap:8px;color:var(--ft-green);text-decoration:none;
   font-size:14px;font-weight:600;border-bottom:1px solid rgba(1,66,53,.3);padding-bottom:2px
 }
-#layout-fresh .btn-text:hover{border-color:var(--green)}
+.ft .btn-text:hover{border-color:var(--ft-green)}
 
-#layout-fresh header{
+.ft header{
   position:sticky;top:env(safe-area-inset-top,0px);z-index:60;
   background:rgba(250,247,242,.92);backdrop-filter:blur(8px);
   border-bottom:1px solid rgba(1,66,53,.09)
 }
-#layout-fresh .hdr{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:16px}
+.ft .hdr{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-block:16px}
 /* The wordmark is the same script lockup as the rest of the site, not a
    variant-specific treatment — the brand shouldn't change between A and B. */
-#layout-fresh .mark{text-decoration:none;line-height:1;display:block}
-#layout-fresh .mark .name{
-  display:block;font-family:var(--script);font-size:34px;color:var(--green);
+.ft .mark{text-decoration:none;line-height:1;display:block}
+.ft .mark .name{
+  display:block;font-family:var(--ft-script);font-size:34px;color:var(--ft-green);
   margin-bottom:-2px
 }
-#layout-fresh .mark .sub{
+.ft .mark .sub{
   display:block;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;
-  color:var(--green)
+  color:var(--ft-green)
 }
-#layout-fresh nav{display:flex;gap:28px;align-items:center}
-#layout-fresh nav a{color:var(--green);text-decoration:none;font-size:14px;font-weight:500}
-#layout-fresh nav a:hover{text-decoration:underline;text-underline-offset:4px}
-#layout-fresh nav .btn{font-size:13px;padding:10px 20px}
+.ft nav{display:flex;gap:28px;align-items:center}
+.ft nav a{color:var(--ft-green);text-decoration:none;font-size:14px;font-weight:500}
+.ft nav a:hover{text-decoration:underline;text-underline-offset:4px}
+.ft nav .btn{font-size:13px;padding:10px 20px}
 
-#layout-fresh .hero{padding-block:70px 84px}
-#layout-fresh .hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:64px;align-items:center}
-#layout-fresh .hero h1{font-size:clamp(38px,4.6vw,60px);margin:18px 0 22px}
-#layout-fresh .hero h1 em{font-style:italic;color:var(--green)}
-#layout-fresh .hero .cta{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-top:32px}
-#layout-fresh .pt{position:relative}
-#layout-fresh .pt .block{position:absolute;inset:26px -22px -22px 26px;background:var(--sand);border-radius:var(--r)}
+.ft .hero{padding-block:70px 84px}
+.ft .hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:64px;align-items:center}
+.ft .hero h1{font-size:clamp(38px,4.6vw,60px);margin:18px 0 22px}
+.ft .hero h1 em{font-style:italic;color:var(--ft-green)}
+.ft .hero .cta{display:flex;gap:26px;align-items:center;flex-wrap:wrap;margin-top:32px}
+.ft .pt{position:relative}
+.ft .pt .block{position:absolute;inset:26px -22px -22px 26px;background:var(--ft-sand);border-radius:var(--ft-r)}
 /* height:auto matters. The markup carries width="650" height="748" so the
    browser can reserve the space, but that height is a definite value, and
    aspect-ratio only applies when one dimension is auto — so without this the
    attribute won and the portrait rendered 748px tall instead of the 543.8px
    the ratio asks for, overwhelming the hero. */
-#layout-fresh .pt img{
+.ft .pt img{
   position:relative;width:100%;height:auto;aspect-ratio:4/4.6;object-fit:cover;
-  object-position:center 18%;border-radius:var(--r)
+  object-position:center 18%;border-radius:var(--ft-r)
 }
 
-#layout-fresh .band{background:var(--green);color:#fff;padding:74px 0}
-#layout-fresh .band .q{
-  font-family:var(--serif);font-style:italic;font-size:clamp(25px,3vw,38px);
+.ft .band{background:var(--ft-green);color:#fff;padding:74px 0}
+.ft .band .q{
+  font-family:var(--ft-serif);font-style:italic;font-size:clamp(25px,3vw,38px);
   line-height:1.35;text-align:center;max-width:22ch;margin:0 auto
 }
-#layout-fresh .band .sig{
-  font-family:var(--script);font-size:46px;text-align:center;color:#a9cdc3;margin-top:18px;line-height:1
+.ft .band .sig{
+  font-family:var(--ft-script);font-size:46px;text-align:center;color:#a9cdc3;margin-top:18px;line-height:1
 }
 
-#layout-fresh section.pad{padding-block:84px}
-#layout-fresh .sec-head{max-width:640px;margin-bottom:44px}
-#layout-fresh .sec-head h2{font-size:clamp(28px,3.2vw,40px);margin:12px 0 14px}
+.ft section.pad{padding-block:84px}
+.ft .sec-head{max-width:640px;margin-bottom:44px}
+.ft .sec-head h2{font-size:clamp(28px,3.2vw,40px);margin:12px 0 14px}
 
-#layout-fresh .about-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:58px;align-items:center}
-#layout-fresh .about-grid img{border-radius:var(--r);aspect-ratio:4/3.2;object-fit:cover}
-#layout-fresh .about-body h2{font-size:clamp(26px,3vw,34px);margin:12px 0 20px}
-#layout-fresh .about-body p{font-size:16.5px;color:var(--muted);margin:0 0 16px}
-#layout-fresh .about-body p strong{color:var(--ink);font-weight:600}
+.ft .about-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:58px;align-items:center}
+.ft .about-grid img{border-radius:var(--ft-r);aspect-ratio:4/3.2;object-fit:cover}
+.ft .about-body h2{font-size:clamp(26px,3vw,34px);margin:12px 0 20px}
+.ft .about-body p{font-size:16.5px;color:var(--ft-muted);margin:0 0 16px}
+.ft .about-body p strong{color:var(--ft-ink);font-weight:600}
 
-#layout-fresh .svc{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-#layout-fresh .card{
-  background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--r);
+.ft .svc{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ft .card{
+  background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--ft-r);
   padding:32px 30px 34px;display:flex;flex-direction:column
 }
-#layout-fresh .card .num{font-family:var(--serif);font-size:13px;font-weight:600;color:var(--green-mid);letter-spacing:.12em;margin-bottom:16px}
-#layout-fresh .card h3{font-size:23px;margin-bottom:12px}
-#layout-fresh .card p{font-size:15px;color:var(--muted);margin:0}
-#layout-fresh .pill{
-  display:inline-block;align-self:flex-start;background:var(--green-soft);color:var(--green);
+.ft .card .num{font-family:var(--ft-serif);font-size:13px;font-weight:600;color:var(--ft-green-mid);letter-spacing:.12em;margin-bottom:16px}
+.ft .card h3{font-size:23px;margin-bottom:12px}
+.ft .card p{font-size:15px;color:var(--ft-muted);margin:0}
+.ft .pill{
+  display:inline-block;align-self:flex-start;background:var(--ft-green-soft);color:var(--ft-green);
   font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   padding:5px 11px;border-radius:99px;margin-bottom:14px
 }
 
-#layout-fresh .partners{background:#fff;border-top:1px solid rgba(1,66,53,.08);border-bottom:1px solid rgba(1,66,53,.08)}
-#layout-fresh .plogos{display:grid;grid-template-columns:repeat(4,1fr);gap:38px 30px;align-items:center;justify-items:center;margin-top:34px}
-#layout-fresh .plogos img{width:100%;max-width:165px;height:56px;object-fit:contain;filter:grayscale(1);opacity:.62;transition:filter .2s,opacity .2s}
-#layout-fresh .plogos img:hover{filter:none;opacity:1}
+.ft .partners{background:#fff;border-top:1px solid rgba(1,66,53,.08);border-bottom:1px solid rgba(1,66,53,.08)}
+.ft .plogos{display:grid;grid-template-columns:repeat(4,1fr);gap:38px 30px;align-items:center;justify-items:center;margin-top:34px}
+.ft .plogos img{width:100%;max-width:165px;height:56px;object-fit:contain;filter:grayscale(1);opacity:.62;transition:filter .2s,opacity .2s}
+.ft .plogos img:hover{filter:none;opacity:1}
 
-#layout-fresh .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ft .tgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 /* Column, so the attribution sits on the bottom edge: the quotes differ a lot
    in length, and in equal-height cards it would otherwise float mid-card. */
-#layout-fresh .tcard{
-  background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--r);
+.ft .tcard{
+  background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--ft-r);
   padding:34px 32px;display:flex;flex-direction:column
 }
-#layout-fresh .tcard .qm{font-family:var(--serif);font-size:40px;line-height:.8;color:var(--green-mid);display:block;margin-bottom:6px}
+.ft .tcard .qm{font-family:var(--ft-serif);font-size:40px;line-height:.8;color:var(--ft-green-mid);display:block;margin-bottom:6px}
 /* The three-paragraph testimonial takes the whole row: as a half-width card it
    reads as a narrow column of text. */
-#layout-fresh .tcard.wide{grid-column:1/-1}
-#layout-fresh .tcard blockquote{margin:0 0 22px;font-size:15.5px;color:var(--ink)}
-#layout-fresh .tcard blockquote p{margin:0 0 14px}
-#layout-fresh .tcard blockquote p:last-child{margin-bottom:0}
-#layout-fresh .tcard .attr{margin-top:auto;border-top:1px solid rgba(1,66,53,.12);padding-top:14px;font-size:13px;color:var(--muted)}
-#layout-fresh .tcard .attr b{display:block;color:var(--ink);font-size:14px;font-weight:700;letter-spacing:.04em}
+.ft .tcard.wide{grid-column:1/-1}
+.ft .tcard blockquote{margin:0 0 22px;font-size:15.5px;color:var(--ft-ink)}
+.ft .tcard blockquote p{margin:0 0 14px}
+.ft .tcard blockquote p:last-child{margin-bottom:0}
+.ft .tcard .attr{margin-top:auto;border-top:1px solid rgba(1,66,53,.12);padding-top:14px;font-size:13px;color:var(--ft-muted)}
+.ft .tcard .attr b{display:block;color:var(--ft-ink);font-size:14px;font-weight:700;letter-spacing:.04em}
 
-#layout-fresh .memo{background:var(--sand)}
-#layout-fresh .memo-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
-#layout-fresh .memo h2{font-size:clamp(26px,3vw,36px);margin:12px 0 12px}
-#layout-fresh .memo p{color:var(--muted);font-size:16px;margin:0}
-#layout-fresh .memo form{background:#fff;border-radius:var(--r);padding:28px}
-#layout-fresh .lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-#layout-fresh .inp{
-  width:100%;border:1px solid rgba(1,66,53,.25);border-radius:var(--r);background:#fff;
-  font:inherit;font-size:15px;padding:12px 13px;color:var(--ink)
+.ft .memo{background:var(--ft-sand)}
+.ft .memo-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.ft .memo h2{font-size:clamp(26px,3vw,36px);margin:12px 0 12px}
+.ft .memo p{color:var(--ft-muted);font-size:16px;margin:0}
+.ft .memo form{background:#fff;border-radius:var(--ft-r);padding:28px}
+.ft .lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ft-muted);margin-bottom:7px}
+.ft .inp{
+  width:100%;border:1px solid rgba(1,66,53,.25);border-radius:var(--ft-r);background:#fff;
+  font:inherit;font-size:15px;padding:12px 13px;color:var(--ft-ink)
 }
-#layout-fresh .inp:focus{outline:2px solid var(--green-mid);outline-offset:1px;border-color:var(--green)}
-#layout-fresh .check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);margin:14px 0 18px}
-#layout-fresh .check input{width:16px;height:16px;margin-top:2px;accent-color:var(--green)}
+.ft .inp:focus{outline:2px solid var(--ft-green-mid);outline-offset:1px;border-color:var(--ft-green)}
+.ft .check{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ft-muted);margin:14px 0 18px}
+.ft .check input{width:16px;height:16px;margin-top:2px;accent-color:var(--ft-green)}
 
-#layout-fresh .connect-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:58px;align-items:start}
-#layout-fresh .fr{margin-bottom:18px}
-#layout-fresh .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-#layout-fresh textarea.inp{height:118px;resize:vertical}
-#layout-fresh .alt{margin-top:26px;font-size:15px;color:var(--muted)}
-#layout-fresh .alt a{color:var(--green);font-weight:600}
+.ft .connect-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:58px;align-items:start}
+.ft .fr{margin-bottom:18px}
+.ft .two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.ft textarea.inp{height:118px;resize:vertical}
+.ft .alt{margin-top:26px;font-size:15px;color:var(--ft-muted)}
+.ft .alt a{color:var(--ft-green);font-weight:600}
 
-#layout-fresh footer{background:var(--green);color:#fff;padding:56px 0 34px}
-#layout-fresh .fgrid{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap;align-items:flex-start}
-#layout-fresh footer .mark .name{color:#fff}
-#layout-fresh footer .mark .sub{color:#a9cdc3}
-#layout-fresh .fnav{display:flex;flex-direction:column;gap:10px}
-#layout-fresh .fnav a,
-#layout-fresh .fnav .consent-link{color:#dce9e5;text-decoration:none;font-size:14px;text-align:left}
-#layout-fresh .fnav a:hover,
-#layout-fresh .fnav .consent-link:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
-#layout-fresh .fsoc{display:flex;gap:14px}
-#layout-fresh .fsoc a{
+.ft footer{background:var(--ft-green);color:#fff;padding:56px 0 34px}
+.ft .fgrid{display:flex;justify-content:space-between;gap:36px;flex-wrap:wrap;align-items:flex-start}
+.ft footer .mark .name{color:#fff}
+.ft footer .mark .sub{color:#a9cdc3}
+.ft .fnav{display:flex;flex-direction:column;gap:10px}
+.ft .fnav a,
+.ft .fnav .consent-link{color:#dce9e5;text-decoration:none;font-size:14px;text-align:left}
+.ft .fnav a:hover,
+.ft .fnav .consent-link:hover{color:#fff;text-decoration:underline;text-underline-offset:3px}
+.ft .fsoc{display:flex;gap:14px}
+.ft .fsoc a{
   width:38px;height:38px;border:1px solid rgba(255,255,255,.3);border-radius:50%;
   display:grid;place-items:center;color:#fff
 }
-#layout-fresh .fsoc a:hover{background:rgba(255,255,255,.12)}
-#layout-fresh .fsoc svg{width:17px;height:17px;fill:currentColor}
-#layout-fresh .fbot{
+.ft .fsoc a:hover{background:rgba(255,255,255,.12)}
+.ft .fsoc svg{width:17px;height:17px;fill:currentColor}
+.ft .fbot{
   margin-top:40px;padding-top:20px;border-top:1px solid rgba(255,255,255,.16);
   font-size:12.5px;color:#a9cdc3;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap
 }
 
-#layout-fresh .form-status.is-ok{color:var(--green);font-weight:600}
-#layout-fresh .form-status.is-error{color:#8a2b20}
+.ft .form-status.is-ok{color:var(--ft-green);font-weight:600}
+.ft .form-status.is-error{color:#8a2b20}
 
 @media (max-width:900px){
-  #layout-fresh nav a:not(.btn){display:none}
-  #layout-fresh .hero-grid,
-  #layout-fresh .about-grid,
-  #layout-fresh .svc,
-  #layout-fresh .tgrid,
-  #layout-fresh .memo-grid,
-  #layout-fresh .connect-grid{grid-template-columns:1fr;gap:38px}
-  #layout-fresh .pt{order:-1;max-width:400px}
-  #layout-fresh .pt .block{inset:20px -14px -14px 20px}
-  #layout-fresh .plogos{grid-template-columns:repeat(2,1fr)}
-  #layout-fresh section.pad{padding-block:60px}
-  #layout-fresh .hero{padding-block:48px 60px}
-  #layout-fresh .band{padding:56px 0}
+  .ft nav a:not(.btn){display:none}
+  .ft .hero-grid,
+  .ft .about-grid,
+  .ft .svc,
+  .ft .tgrid,
+  .ft .memo-grid,
+  .ft .connect-grid{grid-template-columns:1fr;gap:38px}
+  .ft .pt{order:-1;max-width:400px}
+  .ft .pt .block{inset:20px -14px -14px 20px}
+  .ft .plogos{grid-template-columns:repeat(2,1fr)}
+  .ft section.pad{padding-block:60px}
+  .ft .hero{padding-block:48px 60px}
+  .ft .band{padding:56px 0}
+}
+
+/* ---------- blog index ----------
+
+   Same shape as the post page below: one set of cards, restyled here for the
+   fresh-take arm rather than duplicated. The cards become the homepage's
+   bordered white card, and the script "POV Blog" becomes a Fraunces heading —
+   the script face stays where it belongs, on the wordmark. */
+
+html[data-home-design="fresh_take"] .blog-head{
+  padding-block:64px 0;text-align:center;max-width:var(--ft-maxw);margin:0 auto
+}
+html[data-home-design="fresh_take"] .blog-head .script-h{
+  font-family:var(--ft-serif);font-weight:400;font-size:clamp(34px,4.6vw,54px);
+  line-height:1.1;letter-spacing:-.01em;color:var(--ft-ink)
+}
+html[data-home-design="fresh_take"] .blog-head p{
+  font-size:17px;color:var(--ft-muted);max-width:56ch;margin:16px auto 0
+}
+html[data-home-design="fresh_take"] .posts{
+  max-width:var(--ft-maxw);margin:0 auto;padding-block:40px 84px;gap:24px
+}
+/* The covers are a mixed bag — a book jacket, a square logo, wide photos,
+   portraits. object-fit:cover fills the card evenly but crops whatever
+   doesn't fit the 3:2 box, which beheaded the portraits and cut the BetterHelp
+   logo in half. contain shows each one whole and pads the difference with the
+   page's own cream, so the grid still lines up. */
+html[data-home-design="fresh_take"] .pcard .thumb{
+  background:var(--ft-cream);border-bottom:1px solid rgba(1,66,53,.08)
+}
+html[data-home-design="fresh_take"] .pcard .thumb img{
+  object-fit:contain
+}
+/* Nothing to enlarge on hover once the whole image is already in view; the
+   card's own border and shadow carry the hover instead. */
+html[data-home-design="fresh_take"] .pcard:hover .thumb img{transform:none}
+
+html[data-home-design="fresh_take"] .pcard{
+  background:#fff;border:1px solid rgba(1,66,53,.1);border-radius:var(--ft-r);
+  overflow:hidden;transition:border-color .15s,box-shadow .15s
+}
+html[data-home-design="fresh_take"] .pcard:hover{
+  border-color:rgba(1,66,53,.3);box-shadow:0 6px 22px rgba(1,66,53,.07)
+}
+html[data-home-design="fresh_take"] .pcard h2{
+  font-family:var(--ft-serif);font-weight:400;font-size:21px;line-height:1.25;
+  letter-spacing:-.01em;color:var(--ft-ink);margin:22px 24px 10px
+}
+html[data-home-design="fresh_take"] .pcard:hover h2{color:var(--ft-green)}
+html[data-home-design="fresh_take"] .pcard .excerpt{
+  font-size:14.5px;line-height:1.7;color:var(--ft-muted);margin:0 24px
+}
+/* margin-top:auto against the card's own flex column, so the date sits on the
+   bottom edge whatever the excerpt's length — the cards are a grid row and
+   share a height. */
+html[data-home-design="fresh_take"] .pcard .pmeta{
+  margin:18px 24px 22px 24px;margin-top:auto;padding-top:16px;
+  border-top:1px solid rgba(1,66,53,.12);
+  font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ft-green-mid);
+  display:flex;align-items:center;justify-content:space-between;gap:12px
+}
+/* The like tally. Prefixed for the same reason .ft-like is: it has to
+   out-specify the display:block that .ft-only reveals it with. */
+html[data-home-design="fresh_take"] .ft-card-likes{
+  display:inline-flex;align-items:center;gap:5px;flex:none;letter-spacing:.04em
+}
+html[data-home-design="fresh_take"] .ft-card-likes svg{
+  width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8
+}
+html[data-home-design="fresh_take"] .ft-card-likes.is-liked{color:var(--ft-green)}
+html[data-home-design="fresh_take"] .ft-card-likes.is-liked svg{fill:currentColor}
+/* A card with no cover image keeps its top edge tidy. */
+html[data-home-design="fresh_take"] .pcard h2:first-child{margin-top:26px}
+
+@media (max-width:900px){
+  html[data-home-design="fresh_take"] .blog-head{padding-block:44px 0}
+  html[data-home-design="fresh_take"] .posts{padding-block:30px 60px}
+}
+
+/* ---------- post page ----------
+
+   One article, two designs. The control post page is what site.css already
+   styles; everything below is the fresh-take treatment of that same markup,
+   so each rule has to out-specify its site.css counterpart — which the
+   html[data-home-design="fresh_take"] prefix does on its own.
+
+   The look follows the homepage: Fraunces for headings, cream ground, the
+   sand offset block behind the cover image that the hero portrait uses, and
+   green for anything interactive. */
+
+html[data-home-design="fresh_take"]{
+  --ft-post-line:rgba(1,66,53,.14);
+}
+html[data-home-design="fresh_take"] .post{max-width:720px;padding:0 24px}
+
+html[data-home-design="fresh_take"] .post-head{
+  padding-block:60px 0;text-align:left
+}
+html[data-home-design="fresh_take"] .post-head .pmeta{
+  font-family:var(--ft-sans);font-size:11.5px;font-weight:600;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ft-green-mid)
+}
+html[data-home-design="fresh_take"] .post-head h1{
+  font-family:var(--ft-serif);font-weight:400;font-size:clamp(32px,4.4vw,50px);
+  line-height:1.1;letter-spacing:-.01em;color:var(--ft-ink);margin:16px 0 20px
+}
+html[data-home-design="fresh_take"] .post-head .byline{
+  font-size:14px;color:var(--ft-muted);border-top:1px solid var(--ft-post-line);
+  padding-top:16px
+}
+
+/* The hero portrait's treatment: a sand rectangle offset behind the image.
+   .post-cover is a .wrap, so the block is inset rather than bled off the
+   page edge — at full width the offset would sit under the scrollbar. */
+html[data-home-design="fresh_take"] .post-cover{
+  position:relative;margin:40px auto 0;max-width:var(--ft-maxw)
+}
+html[data-home-design="fresh_take"] .post-cover::before{
+  content:"";position:absolute;inset:auto 8px -18px 46px;height:60%;
+  background:var(--ft-sand);border-radius:var(--ft-r)
+}
+html[data-home-design="fresh_take"] .post-cover img{
+  position:relative;border-radius:var(--ft-r);aspect-ratio:16/8.4
+}
+
+html[data-home-design="fresh_take"] .post-body{
+  padding-block:40px 20px;font-size:17px;line-height:1.8;color:var(--ft-ink);
+  font-weight:350
+}
+html[data-home-design="fresh_take"] .post-body h2,
+html[data-home-design="fresh_take"] .post-body h3{
+  font-family:var(--ft-serif);font-weight:400;letter-spacing:-.01em;color:var(--ft-ink)
+}
+html[data-home-design="fresh_take"] .post-body h2{font-size:28px;margin:44px 0 14px}
+html[data-home-design="fresh_take"] .post-body h3{font-size:22px;margin:34px 0 12px}
+html[data-home-design="fresh_take"] .post-body a{
+  color:var(--ft-green);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-thickness:1px
+}
+html[data-home-design="fresh_take"] .post-body figure img{border-radius:var(--ft-r)}
+html[data-home-design="fresh_take"] .post-body figcaption{
+  font-size:13px;color:var(--ft-muted);margin-top:10px;text-align:left
+}
+/* The pull quote the post template uses, given the homepage's treatment of
+   one: serif italic on the sand ground, no rule down the side. */
+html[data-home-design="fresh_take"] .post-body blockquote{
+  margin:32px 0;padding:26px 28px;border-left:0;border-radius:var(--ft-r);
+  background:var(--ft-sand);font-family:var(--ft-serif);font-style:italic;
+  font-size:21px;line-height:1.4;color:var(--ft-green)
+}
+html[data-home-design="fresh_take"] .post-body blockquote p:last-child{margin-bottom:0}
+
+/* ---------- likes ----------
+   Hidden until likes.js takes over, so the control is never dead: without
+   JavaScript there is nothing to click, the same way the footer's tracking
+   choice stays out of the markup's way until it can do something. */
+/* Prefixed to out-specify the .ft-only display:block that reveals it. */
+html[data-home-design="fresh_take"] .ft-like{
+  max-width:720px;margin:0 auto;padding:26px 24px 4px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap
+}
+.ft-like-btn{
+  display:inline-flex;align-items:center;gap:10px;background:#fff;
+  border:1px solid rgba(1,66,53,.25);border-radius:999px;padding:11px 20px;
+  font:inherit;font-family:var(--ft-sans);font-size:14px;font-weight:600;
+  color:var(--ft-green);cursor:pointer;transition:background .15s,border-color .15s
+}
+.ft-like-btn:hover{background:var(--ft-green-soft);border-color:var(--ft-green)}
+.ft-like-btn:focus-visible{outline:2px solid var(--ft-green-mid);outline-offset:2px}
+.ft-like-btn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7}
+.ft-like-btn[aria-pressed="true"]{background:var(--ft-green);border-color:var(--ft-green);color:#fff}
+.ft-like-btn[aria-pressed="true"] svg{fill:currentColor;stroke:currentColor}
+/* A short pulse on the press, skipped for a reader who asked for less motion. */
+@media (prefers-reduced-motion:no-preference){
+  .ft-like-btn.is-beating svg{animation:ft-beat .42s ease-out}
+}
+@keyframes ft-beat{
+  0%{transform:scale(1)} 35%{transform:scale(1.32)} 70%{transform:scale(.94)} 100%{transform:scale(1)}
+}
+.ft-like-note{font-size:12.5px;color:var(--ft-muted);margin:0}
+
+html[data-home-design="fresh_take"] .post-nav{
+  max-width:720px;padding:22px 24px 72px;margin-top:24px;
+  border-top:1px solid var(--ft-post-line);
+  font-family:var(--ft-sans);font-size:14px
+}
+html[data-home-design="fresh_take"] .post-nav a{
+  color:var(--ft-green);font-weight:600;text-decoration:none
+}
+html[data-home-design="fresh_take"] .post-nav a:hover{
+  text-decoration:underline;text-underline-offset:3px
+}
+
+@media (max-width:900px){
+  html[data-home-design="fresh_take"] .post-head{padding-block:40px 0}
+  html[data-home-design="fresh_take"] .post-body{font-size:16.5px}
+  html[data-home-design="fresh_take"] .post-cover::before{inset:auto 6px -12px 26px}
 }
