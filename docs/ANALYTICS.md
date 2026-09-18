@@ -154,19 +154,24 @@ Both are driven by `data-aq-consent="accept|decline|open"` attributes and a
 single delegated click handler, so a link can be added anywhere in the
 markup without touching the JS.
 
-**The homepage ships two complete layouts**, each with its own header and
-footer: `templates/base.html` (the control, and every other page on the site)
-and `templates/home-fresh-take.html` (the variant). A site-wide feature has
-to be in **both**, or half of the traffic silently loses it — which is how
-the variant first shipped without the opt-out link.
+**The site ships two chromes.** The control one is in
+`templates/base.html` (used by the control homepage, the control post page,
+and every page with no variant at all); the fresh-take one is in
+`templates/fresh-header.html` and `templates/fresh-footer.html`, which the
+variant homepage, the fresh-take blog index and the fresh-take post page all
+include. A site-wide
+feature has to be in **both**, or half of the traffic silently loses it —
+which is how the variant first shipped without the opt-out link.
 
-`tools/build.py` now refuses to build if either layout is missing one, via
-the `SITE_WIDE` dict in `check_chrome()`. Add to that dict when something
-else has to hold across both:
+`tools/build.py` refuses to build if either is missing one, via the
+`SITE_WIDE` dict in `check_chrome()`. It checks the fresh-take chrome
+assembled rather than as template source, so an include that stops being
+included is caught too. Add to that dict when something else has to hold
+across both:
 
 ```
-build aborted: templates/home-fresh-take.html is missing the tracking
-opt-out control.
+build aborted: the fresh-take chrome is missing the tracking opt-out
+control.
 ```
 
 The banner itself is exempt — `analytics.js` injects it into `<body>` from
@@ -177,7 +182,7 @@ recording; `amplitude.setOptOut(true)` and `statsigClient.shutdown()` are
 called first, but a reload is the only way to be certain nothing further is
 captured.
 
-### Effect on the homepage experiment
+### Effect on the fresh-take experiment
 
 A visitor who hasn't accepted never loads Statsig, so they can't be bucketed
 and always see the **control** homepage. That means the `homepage_fresh_take`
@@ -190,16 +195,141 @@ is already showing control, so `analytics.js` reports `control` as the design
 for that view rather than swapping the layout under the reader. The next
 pageview buckets normally.
 
+### The blog follows the same assignment, and logs no exposure
+
+The fresh-take design covers the blog index and the post pages as well as the
+homepage, so a reader given the fresh homepage doesn't then land on a
+control-styled blog. Those pages read the same `homepage_fresh_take`
+assignment — but ask for it with `{ disableExposureLog: true }`. Which page
+is which comes from `data-page` on `<html>`: `home`, `blog` or `post`.
+
+That is deliberate. The experiment's exposed population is people who saw the
+homepage, and it has been running on that basis; adding everyone who arrives
+straight onto a post from search, or onto the blog index from a link, would
+change what the results mean halfway through. If you'd rather count them,
+drop the option in `applyDesignExperiment()` — but restart the experiment,
+don't read across the change.
+
+Those pages report themselves with their own events instead.
+
+### Events this site logs
+
+Beyond Amplitude's autocapture (pageviews, sessions, form start/submit, file
+downloads, web vitals), these are logged by hand. Every one carries
+`homepage_design`, so anything can be split by arm:
+
+| Event | Where | Also carries |
+|---|---|---|
+| `home_viewed` | homepage, once assigned | |
+| `blog_viewed` | blog index, once assigned | |
+| `post_viewed` | post page, once assigned | `post` (the slug) |
+| `hero_cta_clicked` | `[data-cta="hero"]` | |
+| `cta_clicked` | `[data-cta="primary"]` | |
+| `connect_form_submitted` | contact form, on success | |
+| `newsletter_subscribed` | memo form, on success | |
+| `post_liked` / `post_unliked` | the like button | `post` (the slug) |
+
+### Likes
+
+The fresh-take post page has a like button and the fresh-take blog index
+shows a tally on each card; the control design has neither. This is a static
+site with nowhere to POST a count to, so a like is remembered in the
+visitor's own browser under **`aq_likes_v1`** (`{"<slug>":"<ISO date>"}`) and
+nothing is shared between visitors.
+
+**So read the card tally for what it is.** It counts what that browser has
+liked — 1 or 0 per post, not a total across visitors. A visitor who has liked
+nothing sees 0 everywhere. `tally()` in `assets/js/likes.js` is the single
+place that number comes from; give it a real source and the cards, the markup
+and the styling all stay as they are.
+
+### The numbers on the blog index
+
+The totals on the cards come from **`content/likes.json`** — a file of
+`"<slug>": <count>` that the build renders into the page. They ship at zero,
+because nothing has been counted yet.
+
+**A GitHub Action keeps them up to date** —
+`.github/workflows/refresh-likes.yml`, every Monday morning and on demand
+from the Actions tab. It reads the counts from Amplitude, writes
+`content/likes.json`, rebuilds the site and commits; Pages redeploys from
+that commit. Nothing to do by hand once it's switched on.
+
+### Switching it on
+
+It needs two repository secrets, under **Settings → Secrets and variables →
+Actions**:
+
+| Secret | Value |
+|---|---|
+| `AMPLITUDE_API_KEY` | the AQ Career Site project's API key |
+| `AMPLITUDE_SECRET_KEY` | that project's **secret** key |
+
+Both come from Amplitude → Settings → Projects → *AQ Career Site* → API Keys.
+
+**The secret key is not like the client key elsewhere in this document.** It's
+a server credential that can read the whole project, and this repo is public.
+It goes in a GitHub secret and nowhere else — never in `site.json`, never in
+a file here, never in a commit. Until both secrets exist the job skips itself
+each week with a notice rather than failing.
+
+Then **Actions → Refresh like counts → Run workflow** to try it immediately.
+
+### What it counts
+
+Unique users who fired `post_liked` for each post, minus the unique users who
+fired `post_unliked`, from the first post's date to today — the Dashboard
+REST API's event segmentation endpoint, grouped by the `post` event property.
+
+Uniques rather than event totals, so one person pressing the button twice is
+one like. And the number is a **floor, not a census**: a visitor who declined
+measurement still gets their like locally, it just never reaches Amplitude to
+be counted. Expect the published figure to sit below reality by roughly
+whatever share of visitors decline.
+
+### By hand, or without the Action
+
+`tools/refresh_likes.py` is the same script the workflow runs:
+
+```bash
+AMPLITUDE_API_KEY=... AMPLITUDE_SECRET_KEY=... python3 tools/refresh_likes.py
+```
+
+`--dry-run` prints what would change and writes nothing; `--start YYYYMMDD`
+narrows the period. Then `python3 tools/build.py`, commit, push. Editing
+`content/likes.json` by hand works too — the next run just overwrites it.
+
+The build refuses anything but whole numbers of 0 or more, and warns about a
+slug that doesn't match a post — a typo there would otherwise show zero
+forever. A missing file is fine: every post shows zero.
+
+Two things to know about the number a visitor actually sees. It is **as fresh
+as the last export and deploy**, and it has **their own like added on top**,
+so pressing the button moves it — which means their like can be counted twice
+on their own screen once the next export includes it. The alternative was a
+button that appears to do nothing.
+
+**A live, always-accurate count** would need somewhere to store a per-post
+tally and an endpoint to read and increment it, on one of the approved cloud
+providers. That's a service to build, pay for and look after, and it would
+collect something the site currently doesn't.
+
+**Likes per post are also just a chart** — `post_liked` in Amplitude or
+Statsig. That event is consent-gated like every other; the stored like itself
+is not, since it never leaves the browser.
+
 ## Statsig Labs (switching layouts by hand)
 
-Both homepage layouts ship in the same document, and Statsig decides which one
-you see — so checking the variant normally means hoping you were bucketed into
-it, and accepting measurement first. Labs pins one instead.
+Both designs ship in the same document — the homepage as two whole layouts,
+the blog index and a post page as two sets of chrome around one shared body —
+and Statsig decides which one you see. So checking the variant normally means hoping you were bucketed
+into it, and accepting measurement first. Labs pins one instead.
 
 It appears as a small **Statsig Labs** panel at the bottom-left of the
-homepage, with a Control / Fresh take switch. Switching is instant: both
-layouts are already in the DOM and CSS decides which is shown, so there is no
-reload and nothing to rebuild.
+homepage, the blog index and any post page, with a Control / Fresh take
+switch. Switching
+is instant: both designs are already in the DOM and CSS decides which is
+shown, so there is no reload and nothing to rebuild.
 
 Turning it on:
 
@@ -253,7 +383,9 @@ same call is the way to do it from the console.
 
 **A pinned pageview records nothing.** `analytics.js` returns before it asks
 Statsig for an assignment — asking would log an exposure for a variant nobody
-was really bucketed into — and it logs no `home_viewed` or CTA events either.
+was really bucketed into — and it logs no `home_viewed`, `blog_viewed`,
+`post_viewed` or CTA events either. A like still saves, since that is local state rather than
+experiment data, but logs nothing.
 So Labs is for looking at layouts, never for checking that tracking fires. To
 test tracking, turn Labs off with `?labs=0` and let the real assignment run.
 
