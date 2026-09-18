@@ -1,7 +1,8 @@
-/* Statsig Labs — a development-only switch for the homepage experiment.
+/* Statsig Labs — a development-only switch for the fresh-take experiment.
  *
- * Why this exists: both homepage layouts ship in the same document, and which
- * one you see is decided by the `homepage_fresh_take` experiment in Statsig.
+ * Why this exists: the homepage ships both layouts in the same document, and
+ * a post page ships both sets of chrome around one article. Which you see is
+ * decided by the `homepage_fresh_take` experiment in Statsig.
  * That makes the variant awkward to look at on purpose — you get whichever arm
  * you were bucketed into, and only after accepting measurement. This pins one.
  *
@@ -123,7 +124,7 @@
     }).join('');
 
     root.innerHTML =
-      '<div class="panel" role="group" aria-label="Statsig Labs: homepage layout">' +
+      '<div class="panel" role="group" aria-label="Statsig Labs: site layout">' +
         '<div class="hd"><span class="ttl">Statsig Labs</span>' +
           '<button type="button" class="x" data-act="hide" aria-label="Hide Labs panel"' +
           ' title="Hide for this tab">&times;</button></div>' +
