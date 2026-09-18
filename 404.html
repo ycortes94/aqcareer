@@ -19,6 +19,24 @@
 <link rel="stylesheet" href="/assets/css/site.css?v=3ff57b8c">
 
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="/feed.xml">
+<noscript><style>html.exp-pending body{visibility:visible!important}</style></noscript>
+<script>
+/* Homepage experiment safety net. Inline on purpose: if analytics.js is
+   blocked, errors, or never arrives, the page must still reveal itself.
+   analytics.js calls window.__aqReveal(design) once it knows the variant. */
+(function(){
+  var h=document.documentElement;
+  if(!h.classList.contains('home-exp')) return;
+  var done=false,t;
+  function reveal(d){
+    if(done) return; done=true; clearTimeout(t);
+    h.setAttribute('data-home-design', d==='fresh_take'?'fresh_take':'control');
+    h.classList.remove('exp-pending');
+  }
+  t=setTimeout(function(){reveal('control');},2000);
+  window.__aqReveal=reveal;
+})();
+</script>
 </head>
 <body>
 
@@ -80,7 +98,7 @@
 
 
 <script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true};</script>
-<script src="/assets/js/analytics.js?v=6f200260"></script>
+<script src="/assets/js/analytics.js?v=b4dbdbca"></script>
 
 </body>
 </html>

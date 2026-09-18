@@ -36,6 +36,7 @@ def asset_v(rel):
 
 
 CSS_V = asset_v("assets/css/site.css")
+FT_CSS_V = asset_v("assets/css/fresh-take.css")
 JS_V = asset_v("assets/js/forms.js")
 AN_V = asset_v("assets/js/analytics.js")
 
@@ -71,7 +72,9 @@ def fill(tpl, **kw):
 
 
 def page(*, content, title, desc, canonical, base, ogtype="website",
-         ogimage=None, cur_home="", cur_blog="", extra_js=""):
+         ogimage=None, cur_home="", cur_blog="", extra_js="",
+         html_attrs="", extra_css="", layout_open="", layout_close="",
+         variant_layout=""):
     return fill(
         read(os.path.join(T, "base.html")),
         content=content, title=html.escape(title, quote=True),
@@ -80,6 +83,9 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         cur_home=cur_home, cur_blog=cur_blog, year=YEAR, extra_js=extra_js,
         form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
         css_v=CSS_V, analytics=analytics_snippet(base),
+        html_attrs=html_attrs, extra_css=extra_css,
+        layout_open=layout_open, layout_close=layout_close,
+        variant_layout=variant_layout,
     )
 
 
@@ -157,11 +163,24 @@ def build():
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
                 form_privacy_class="amp-block" if mask_forms else "")
+    variant = fill(read(os.path.join(T, "home-fresh-take.html")), base="",
+                   year=YEAR,
+                   form_endpoint=html.escape(CFG.get("form_endpoint", ""),
+                                             quote=True),
+                   form_privacy_class="amp-block" if mask_forms else "")
     made.append(write("index.html", page(
         content=home,
         title="Home | AQ Career Consulting",
         desc=CFG["description"], canonical=SITE + "/", base="",
         cur_home=' aria-current="page"',
+        html_attrs=' class="home-exp exp-pending"',
+        extra_css=(
+            '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">\n'
+            f'<link rel="stylesheet" href="assets/css/fresh-take.css?v={FT_CSS_V}">'
+        ),
+        layout_open='<div id="layout-control">',
+        layout_close='</div>',
+        variant_layout=variant,
         extra_js=CAROUSEL_JS +
         f'\n<script src="assets/js/forms.js?v={JS_V}"></script>')))
 
