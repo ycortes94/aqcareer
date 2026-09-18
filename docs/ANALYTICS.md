@@ -64,12 +64,13 @@ UI takes precedence over anything the SDK asks for. The docs are explicit:
 from this repo can therefore be overridden server-side without any change
 here.
 
-As checked on 2026-09-17, this project's remote config
+As checked on 2026-09-18, this project's remote config
 (`sr-client-cfg.amplitude.com/config/<key>?config_group=browser`) returned:
 
 ```json
-"sr_privacy_config": { "maskSelector": [], "blockSelector": [],
-                       "unmaskSelector": [], "defaultMaskLevel": "light" }
+"sr_privacy_config": { "maskAttributes": [], "maskSelector": [],
+                       "blockSelector": [], "unmaskSelector": [],
+                       "defaultMaskLevel": "medium", "urlMaskLevels": [] }
 ```
 
 Mask levels, per Amplitude's documentation:
@@ -80,8 +81,10 @@ Mask levels, per Amplitude's documentation:
 | `medium` | all form fields and text inputs |
 | `conservative` | all text and all form fields, including HTML text and links |
 
-At `light`, the message textarea and the name fields would be recorded in
-the clear. So protection here does not rely on configuration:
+`medium` covers the message textarea and the name fields. It was `light`
+when this was first written, which is why protection here does not rest on
+the remote setting alone — there are two layers, and either one would cover
+the forms by itself:
 
 1. **`mask_forms: true`** (the default) makes the build add the
    **`amp-block`** class to both `<form>` elements. `amp-block` is read from
@@ -90,16 +93,27 @@ the clear. So protection here does not rely on configuration:
    form area shows as an empty box in replays. The analytics events
    (form start / form submit) are unaffected, so conversion is still
    measurable.
-2. `maskSelector` is still passed from the SDK as a secondary layer, for the
-   case where the remote config is later set to honour it.
+2. The project's own `defaultMaskLevel`, now `medium`, which also covers any
+   text input added outside the two forms. This is the setting that wins if
+   the two ever disagree, so re-check it before relying on it — it lives
+   under *Settings → Organizational Settings → Session Replay Settings*.
 
 Setting `mask_forms: false` removes the class and the selectors, leaving the
 project's UI mask level as the only protection.
 
-**Also worth doing in the Amplitude UI:** set this project's mask level to
-`medium` or `conservative` under *Settings → Organizational Settings →
-Session Replay Settings*. That covers text elsewhere on the site, not just
-the two forms, and it's the setting that actually wins.
+The consent notice in `analytics.js` tells visitors "All sensitive text
+fields are masked", so both layers are load-bearing copy now, not just
+configuration. Weakening either one means rewriting that sentence.
+
+**Still unverified: network request bodies.** The same remote config returns
+`sr_logging_config.network.body.request: true` and `response: true`. DOM
+masking does not apply to network payloads, and `forms.js` submits via
+`fetch` rather than a native form POST, so the contact form's
+`first_name` / `last_name` / `email` / `message` values cross the wire as a
+URL-encoded body inside a request Session Replay instruments. Whether that
+body is actually retained for a cross-origin request has not been tested.
+Test before assuming either way: accept consent, submit the form with a
+sentinel string, and search the outbound Amplitude payloads for it.
 
 ### Statsig and replay
 
