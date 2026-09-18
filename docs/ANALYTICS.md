@@ -154,6 +154,24 @@ Both are driven by `data-aq-consent="accept|decline|open"` attributes and a
 single delegated click handler, so a link can be added anywhere in the
 markup without touching the JS.
 
+**The homepage ships two complete layouts**, each with its own header and
+footer: `templates/base.html` (the control, and every other page on the site)
+and `templates/home-fresh-take.html` (the variant). A site-wide feature has
+to be in **both**, or half of the traffic silently loses it — which is how
+the variant first shipped without the opt-out link.
+
+`tools/build.py` now refuses to build if either layout is missing one, via
+the `SITE_WIDE` dict in `check_chrome()`. Add to that dict when something
+else has to hold across both:
+
+```
+build aborted: templates/home-fresh-take.html is missing the tracking
+opt-out control.
+```
+
+The banner itself is exempt — `analytics.js` injects it into `<body>` from
+outside either layout, so it appears in both without duplication.
+
 **Withdrawing reloads the page.** By then Session Replay is already
 recording; `amplitude.setOptOut(true)` and `statsigClient.shutdown()` are
 called first, but a reload is the only way to be certain nothing further is
