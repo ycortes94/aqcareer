@@ -21,9 +21,14 @@
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="{{base}}feed.xml">
 <noscript><style>html.exp-pending body{visibility:visible!important}</style></noscript>
 <script>
-/* Homepage experiment safety net. Inline on purpose: if analytics.js is
+/* Fresh-take experiment safety net. Inline on purpose: if analytics.js is
    blocked, errors, or never arrives, the page must still reveal itself.
-   analytics.js calls window.__aqReveal(design) once it knows the variant. */
+   analytics.js calls window.__aqReveal(design) once it knows the variant.
+
+   The class is still home-exp and the attribute still data-home-design:
+   the experiment in Statsig is homepage_fresh_take, and post pages now
+   follow whatever it assigned rather than running an experiment of their
+   own. Renaming either here would only hide that shared identity. */
 (function(){
   var h=document.documentElement;
   if(!h.classList.contains('home-exp')) return;
@@ -78,8 +83,10 @@
 <body>
 {{layout_open}}
 <a class="skip" href="#main">Skip to content</a>
-
-<header>
+{{chrome_top}}
+<!-- .site-chrome marks the control header and footer, so a page that also
+     ships the fresh-take chrome can hide this pair — see site.css. -->
+<header class="site-chrome">
   <div class="wrap hdr">
     <a class="mark" href="{{base}}">
       <span class="name">alina quintana</span>
@@ -104,7 +111,7 @@
 {{content}}
 </main>
 
-<footer class="site">
+<footer class="site site-chrome">
   <div class="wrap fg">
     <nav>
       <a href="{{base}}">Home</a>

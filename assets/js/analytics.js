@@ -152,8 +152,16 @@
   var HOME_EXP = 'homepage_fresh_take';
   var HOME_PARAM = 'homepage_design';
   var REVEAL_MS = 2500;
-  var homeRevealTimer = null;
+  var revealTimer = null;
   var revealedDesign = null;
+
+  /* The fresh-take design covers the homepage, the blog index and the post
+     pages. All three ask the same experiment which arm this visitor is in,
+     so a reader given the fresh homepage doesn't then land on a
+     control-styled blog. data-page says which of the three this is. */
+  function pageKind() {
+    return document.documentElement.getAttribute('data-page') || 'home';
+  }
 
   function logEvent(name, metadata) {
     try {
@@ -163,7 +171,7 @@
     } catch (err) {}
   }
 
-  function revealHome(design) {
+  function revealDesign(design) {
     var html = document.documentElement;
     if (!html.classList.contains('home-exp')) return;
     if (revealedDesign) return;   // first reveal wins; never swap under a reader
@@ -174,9 +182,9 @@
       window.__aqReveal(revealedDesign);
       return;
     }
-    if (homeRevealTimer) {
-      clearTimeout(homeRevealTimer);
-      homeRevealTimer = null;
+    if (revealTimer) {
+      clearTimeout(revealTimer);
+      revealTimer = null;
     }
     html.setAttribute('data-home-design', revealedDesign);
     html.classList.remove('exp-pending');
@@ -195,7 +203,7 @@
     bind('[data-cta="primary"]', 'cta_clicked');
   }
 
-  function applyHomeExperiment(client) {
+  function applyDesignExperiment(client) {
     var html = document.documentElement;
     if (!html.classList.contains('home-exp')) return;
 
@@ -205,7 +213,7 @@
     // pageview is someone checking a layout, not experiment data.
     var labs = window.__aqLabs;
     if (labs && labs.design) {
-      revealHome(labs.design);
+      revealDesign(labs.design);
       remapHash(labs.design);
       return;
     }
@@ -215,15 +223,29 @@
     // control, so that is the design this visit saw. Report it as such rather
     // than asking Statsig for a variant we can no longer honour.
     if (!revealedDesign && client && typeof client.getExperiment === 'function') {
-      var exp = client.getExperiment(HOME_EXP);
+      /* Only the homepage logs an exposure. The experiment's exposed
+         population is people who saw the homepage, and it has been running
+         on that basis; adding everyone who arrives straight onto a post from
+         search, or onto the blog index from a link, would change what the
+         results mean halfway through. Those pages read the assignment so the
+         design stays consistent, and report themselves with their own
+         <kind>_viewed event below, which carries the design. */
+      var exp = pageKind() === 'home'
+        ? client.getExperiment(HOME_EXP)
+        : client.getExperiment(HOME_EXP, { disableExposureLog: true });
       if (exp && typeof exp.get === 'function') {
         design = exp.get(HOME_PARAM, 'control') || 'control';
       }
     } else if (revealedDesign) {
       design = revealedDesign;
     }
-    revealHome(design);
-    logEvent('home_viewed', { homepage_design: design });
+    revealDesign(design);
+    var kind = pageKind();
+    var meta = { homepage_design: design };
+    if (kind === 'post') {
+      meta.post = document.documentElement.getAttribute('data-post') || '';
+    }
+    logEvent(kind + '_viewed', meta);
     wireCtas(design);
     remapHash(design);
   }
@@ -235,7 +257,7 @@
   function revealFallback() {
     var labs = window.__aqLabs;
     var design = (labs && labs.design) || 'control';
-    revealHome(design);
+    revealDesign(design);
     remapHash(design);
   }
 
@@ -253,13 +275,13 @@
   function startStatsig() {
     var key = CFG.statsig_client_key;
     if (!key) {
-      applyHomeExperiment(null);
+      applyDesignExperiment(null);
       return Promise.resolve();
     }
 
     return load(SRC.statsig).then(function () {
       if (!window.Statsig) {
-        applyHomeExperiment(null);
+        applyDesignExperiment(null);
         return;
       }
       var StatsigClient = window.Statsig.StatsigClient;
@@ -280,7 +302,7 @@
 
       window.statsigClient = client;   // available for gates/experiments later
       return client.initializeAsync().then(function () {
-        applyHomeExperiment(client);
+        applyDesignExperiment(client);
       });
     });
   }
@@ -294,7 +316,7 @@
       startAmplitude().catch(function (e) { console.warn('[analytics] amplitude:', e.message); }),
       startStatsig().catch(function (e) {
         console.warn('[analytics] statsig:', e.message);
-        applyHomeExperiment(null);
+        applyDesignExperiment(null);
       })
     ]);
   }
@@ -455,7 +477,7 @@
   /* ---------- go ---------- */
 
   if (document.documentElement.classList.contains('home-exp')) {
-    homeRevealTimer = setTimeout(revealFallback, REVEAL_MS);
+    revealTimer = setTimeout(revealFallback, REVEAL_MS);
   }
 
   ready(wireUi);

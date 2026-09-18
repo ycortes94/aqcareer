@@ -1,0 +1,15 @@
+<!-- Fresh-take header. Shared by the fresh-take homepage and the fresh-take
+     post page, so it has to work from both: every link goes through the
+     page's own base path, and the section anchors point at the homepage's
+     ft- ids. Wrapped in a .ft block by whichever layout includes it. -->
+<header>
+  <div class="wrap hdr">
+    <a class="mark" href="{{base}}#top"><span class="name">alina quintana</span><span class="sub">Career Consulting</span></a>
+    <nav>
+      <a href="{{base}}#ft-about">About</a>
+      <a href="{{base}}#ft-services">Services</a>
+      <a href="{{base}}blog/"{{cur_blog}}>POV Blog</a>
+      <a class="btn" href="{{base}}#ft-connect" data-cta="primary">Connect</a>
+    </nav>
+  </div>
+</header>
