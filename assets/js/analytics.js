@@ -342,16 +342,30 @@
     el.hidden = true;
     el.innerHTML =
       '<div class="panel">' +
-        '<h2 class="t" id="aq-consent-title">Before you read on</h2>' +
-        '<p class="b" id="aq-consent-body">This site measures how it\'s used, with ' +
-          'Amplitude and Statsig, and records visits so I can see where the site ' +
-          'confuses people. Anything you type into a form is excluded. It\'s my own ' +
-          'analytics — nothing here is sold or used for advertising.</p>' +
+        '<h2 class="t" id="aq-consent-title">Data &amp; analytics notice</h2>' +
+        /* Two sentences here are promises the code has to keep:
+
+           1. "Nothing is loaded until you accept" is literally true —
+              startTracking() runs only from choose(GRANTED), so no SDK is
+              fetched before the click. Don't move tracking earlier without
+              rewriting this line.
+           2. "All sensitive text fields are masked" holds because build.py
+              puts amp-block on both <form> elements, blanking them in
+              replays, and every text input on this site sits inside one of
+              those two forms. Add an input outside them and the sentence
+              stops being true — the Amplitude project's own mask level is
+              "light", which does not cover free text. */
+        '<p class="b" id="aq-consent-body">We use analytics and session replay ' +
+          'tools to observe real-time website interactions (such as clicks, ' +
+          'scrolling, and browsing paths). This helps us improve our career ' +
+          'counseling resources and troubleshoot website errors. All sensitive ' +
+          'text fields are masked. We never sell your data or use it for ' +
+          'targeted ads. Nothing is loaded until you accept. Read our ' +
+          '<a href="' + POLICY_HREF + '">Privacy Policy</a>.</p>' +
         '<p class="b" data-aq-consent-now></p>' +
         '<div class="row">' +
-          '<button type="button" class="yes" data-aq-consent="accept">Accept measurement</button>' +
+          '<button type="button" class="yes" data-aq-consent="accept">Accept</button>' +
           '<button type="button" class="no" data-aq-consent="decline">No thanks</button>' +
-          '<a class="more" href="' + POLICY_HREF + '">What\'s collected</a>' +
         '</div>' +
       '</div>';
 
@@ -367,15 +381,19 @@
     // would be untrue — say where things actually stand instead.
     var state = readChoice();
     el.querySelector('.t').textContent =
-      state ? 'Your tracking choice' : 'Before you read on';
-    el.querySelector('[data-aq-consent-now]').textContent =
+      state ? 'Your tracking choice' : 'Data & analytics notice';
+    // On a first visit this stays empty: the notice above already says
+    // nothing is loaded until you accept, so a second line saying it again
+    // is just noise. The reopened states still report where things stand.
+    var now = el.querySelector('[data-aq-consent-now]');
+    now.textContent =
       state === GRANTED
         ? 'Measurement is on for this browser right now. Turning it off ' +
           'reloads the page so nothing further is collected.'
         : state === DENIED
           ? 'Measurement is off for this browser. Nothing is being collected.'
-          : 'Nothing has loaded yet. Your choice is up to you, and the site ' +
-            'works the same either way.';
+          : '';
+    now.hidden = !state;
 
     el.hidden = false;
     if (focusIt) {
@@ -493,11 +511,10 @@
     decline: function () { choose(DENIED); },
     open: function () { ready(function () { openBanner(true); }); },
     /* Forget the answer and reload, so the next paint is a genuine first
-       visit: no SDK loaded, and the dialog's first-visit wording ("Nothing has
-       loaded yet") is actually true. Reopening it in place instead would claim
-       that while Amplitude and Replay were already running. Lives here rather
-       than in a caller because STORE_KEY is versioned — bump it and this keeps
-       clearing the right thing. */
+       visit with no SDK loaded. Reopening the dialog in place instead would
+       show the first-visit notice while Amplitude and Replay were already
+       running. Lives here rather than in a caller because STORE_KEY is
+       versioned — bump it and this keeps clearing the right thing. */
     reset: function () {
       try { window.localStorage.removeItem(STORE_KEY); } catch (err) {}
       try { if (window.amplitude) window.amplitude.setOptOut(true); } catch (err) {}
