@@ -1,18 +1,13 @@
   <section class="hero wrap">
     <div class="hero-grid">
       <div>
-        <h1>Receive the 1st Career Disruptor Memo!</h1>
-        <form action="{{form_endpoint}}" method="post" id="memo-form" data-form="newsletter" class="{{form_privacy_class}}">
-          <input type="hidden" name="form" value="newsletter">
-          <label class="field-label" for="memo-email">Email<span>*</span></label>
-          <div class="subrow">
-            <input class="line-input" id="memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
-            <button class="btn-ghost" type="submit">Subscribe</button>
-          </div>
-          <label class="consent"><input type="checkbox" name="consent" value="yes" required> I want to subscribe to your mailing list.</label>
-          <div class="hp" aria-hidden="true"><label for="memo-website">Website</label><input id="memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        </form>
-        <a class="btn-solid" href="#services" data-cta="hero">Learn how I can support you</a>
+        <p class="hero-eyebrow">National Certified Counselor &middot; Certified Career Counselor</p>
+        <h1>Career programs that honor identity, culture, and values.</h1>
+        <p class="hero-lede">I partner with organizations across Sacramento to build career programs, curriculum, and learning experiences that expand opportunity, confidence, and choice.</p>
+        <div class="hero-actions">
+          <a class="btn-solid" href="#services" data-cta="hero">Explore services</a>
+          <a class="btn-link" href="#connect" data-cta="primary">Discuss a project</a>
+        </div>
       </div>
       <div class="portrait"><img src="{{base}}assets/img/headshot.webp" alt="Alina Quintana" width="1080" height="1080"></div>
     </div>
@@ -27,8 +22,10 @@
     <div class="whatido-grid">
       <div class="photo-frame"><img src="{{base}}assets/img/whatido.jpg" alt="Alina Quintana in conversation with a client" width="864" height="720"></div>
       <div class="green-card">
-        <h2 class="script-h">what I do</h2>
-        <p>I help strengthen career support in Sacramento by partnering with organizations to create programs and resources that help people build careers aligned with their lives and values. Through this work, I disrupt outdated pathways to career mobility and expand opportunity, confidence, and choice for our communities. In 2027, I'll open my practice to individuals seeking career guidance that honors identity and culture.</p>
+        <h2 class="script-h">about Alina</h2>
+        <p>I'm Alina Quintana, a National Certified Counselor and Certified Career Counselor based in Sacramento, California.</p>
+        <p>I help organizations create culturally informed career programs and resources that reflect people's identities, lived experiences, and values. My work brings together career development, curriculum design, facilitation, and a commitment to more equitable pathways to mobility.</p>
+        <p><strong>In 2027, I'll open my practice to a limited number of individuals</strong> seeking career guidance that honors identity and culture.</p>
       </div>
     </div>
   </section>
@@ -57,13 +54,32 @@
     </div>
   </section>
 
+  <section class="signup-band memo-signup">
+    <div class="wrap signup-grid">
+      <div>
+        <h2>Receive the Career Disruptor Memo</h2>
+        <p>Occasional notes on career mobility, culture, and building a working life on your own terms.</p>
+      </div>
+      <form action="{{form_endpoint}}" method="post" id="memo-form" data-form="newsletter" class="{{form_privacy_class}}">
+        <input type="hidden" name="form" value="newsletter">
+        <label class="field-label" for="memo-email">Email address</label>
+        <div class="subrow">
+          <input class="line-input" id="memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
+          <button class="btn-ghost" type="submit">Subscribe</button>
+        </div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
+        <div class="hp" aria-hidden="true"><label for="memo-website">Website</label><input id="memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      </form>
+    </div>
+  </section>
+
   <section class="services wrap" id="services">
     <h2 class="script-h">services</h2>
 
     <div class="srow">
       <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
       <h3>Career Counseling<br>(Q3 2027 &ndash; Limited Clients)</h3>
-      <p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful. Waitlist opens Q1 of 2027.</p>
+      <div class="service-copy"><p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful.</p><a href="#waitlist" data-waitlist="open">Join the 2027 interest list &rarr;</a></div>
     </div>
 
     <div class="srow">
@@ -85,20 +101,48 @@
     </div>
   </section>
 
+  <!-- The interest list opens as a dialog. A closed <dialog> is display:none
+       in the browser's own stylesheet, so nothing flashes on the page before
+       waitlist.js runs and no class has to hide it first. The <noscript>
+       block in base.html lays it back out as a static block, so a visitor
+       without JavaScript gets the form itself rather than a link to a
+       section that isn't there. -->
+  <dialog class="waitlist-dialog" id="waitlist" aria-labelledby="waitlist-title">
+    <div class="waitlist-panel">
+      <button class="waitlist-close" type="button" data-waitlist="close" aria-label="Close">&times;</button>
+      <p class="signup-kicker">Individual career counseling</p>
+      <h2 id="waitlist-title">Join the 2027 interest list</h2>
+      <p class="waitlist-note">Career counseling is planned to open to a small number of clients in Q3 2027. Join the list for availability and launch updates. Joining does not guarantee an appointment.</p>
+      <form action="{{form_endpoint}}" method="post" data-form="waitlist" class="{{form_privacy_class}}">
+        <input type="hidden" name="form" value="waitlist">
+        <div class="two">
+          <div class="fgrp"><label class="field-label" for="wait-first">First name</label><input class="signup-input" id="wait-first" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fgrp"><label class="field-label" for="wait-last">Last name</label><input class="signup-input" id="wait-last" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
+        </div>
+        <div class="fgrp"><label class="field-label" for="wait-email">Email address</label><input class="signup-input" id="wait-email" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required> Yes, email me about 2027 career counseling availability.</label>
+        <div class="hp" aria-hidden="true"><label for="wait-website">Website</label><input id="wait-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button class="btn-solid signup-submit" type="submit">Join the interest list</button>
+      </form>
+    </div>
+  </dialog>
+
   <section class="connect" id="connect">
     <div class="wrap">
       <h2 class="script-h">let's connect</h2>
-      <p class="kicker">Take control of your future,<br>reach out today.</p>
+      <p class="kicker">Tell me what you're building<br>and how I can help.</p>
       <form class="contact {{form_privacy_class}}" action="{{form_endpoint}}" method="post" data-form="contact">
         <input type="hidden" name="form" value="contact">
         <div class="two">
-          <div class="fgrp"><label class="fl" for="fn">First Name</label><input class="box" id="fn" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fgrp"><label class="fl" for="fn">First Name</label><input class="box" id="fn" name="first_name" type="text" required autocomplete="given-name" maxlength="80"></div>
           <div class="fgrp"><label class="fl" for="ln">Last Name</label><input class="box" id="ln" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
         </div>
         <div class="fgrp"><label class="fl" for="cem">Email</label><input class="box" id="cem" name="email" type="email" required autocomplete="email" maxlength="254"></div>
-        <div class="fgrp"><label class="fl" for="cmsg">Write a message</label><textarea class="box" id="cmsg" name="message" maxlength="4000"></textarea></div>
+        <div class="fgrp"><label class="fl" for="corg">Organization <span>(optional)</span></label><input class="box" id="corg" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
+        <div class="fgrp"><label class="fl" for="cinterest">I'm interested in</label><select class="box" id="cinterest" name="inquiry_type" required><option value="">Choose one</option><option value="Curriculum contract">Curriculum contract</option><option value="Workshop">Workshop</option><option value="Speaking">Speaking</option><option value="Partnership or other project">Partnership or other project</option><option value="Individual counseling question">Individual counseling question</option></select></div>
+        <div class="fgrp"><label class="fl" for="cmsg">How can I help?</label><textarea class="box" id="cmsg" name="message" required maxlength="4000"></textarea></div>
         <div class="hp" aria-hidden="true"><label for="c-website">Website</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        <button class="submit" type="submit">Submit</button>
+        <button class="submit" type="submit">Send inquiry</button>
       </form>
     </div>
   </section>

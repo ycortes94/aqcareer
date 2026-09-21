@@ -36,6 +36,8 @@ var ALLOWED_ORIGINS = [
 var LIMITS = {
   email: 254,
   name: 80,
+  organization: 120,
+  inquiryType: 80,
   message: 4000,
   minFillMs: 2000,
   maxFillMs: 24 * 60 * 60 * 1000,
@@ -61,7 +63,8 @@ function doPost(e) {
       return ok({ ok: false, error: 'bad_origin' });
     }
 
-    var kind = p.form === 'contact' ? 'contact' : 'newsletter';
+    var kind = p.form === 'contact' || p.form === 'waitlist'
+      ? p.form : 'newsletter';
     var email = clip_(p.email, LIMITS.email).toLowerCase();
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
@@ -70,6 +73,8 @@ function doPost(e) {
 
     var first = clip_(p.first_name, LIMITS.name);
     var last = clip_(p.last_name, LIMITS.name);
+    var organization = clip_(p.organization, LIMITS.organization);
+    var inquiryType = clip_(p.inquiry_type, LIMITS.inquiryType);
     var rawMessage = String(p.message || '');
     if (rawMessage.length > LIMITS.message) {
       return ok({ ok: false, error: 'too_long' });
@@ -97,9 +102,11 @@ function doPost(e) {
       body = [
         'New message from the "let\'s connect" form on aqcareer.com.',
         '',
-        'Name:    ' + name,
-        'Email:   ' + email,
-        'Sent:    ' + new Date().toLocaleString('en-US',
+        'Name:         ' + name,
+        'Email:        ' + email,
+        'Organization: ' + (organization || '(not provided)'),
+        'Interest:     ' + (inquiryType || '(not selected)'),
+        'Sent:         ' + new Date().toLocaleString('en-US',
                         { timeZone: 'America/Los_Angeles' }),
         '',
         'Message:',
@@ -107,6 +114,21 @@ function doPost(e) {
         '',
         '---',
         'Reply straight to this email to answer them.'
+      ].join('\n');
+    } else if (kind === 'waitlist') {
+      var waitlistName = (first + ' ' + last).trim() || '(no name given)';
+      subject = 'aqcareer.com — new 2027 counseling interest';
+      body = [
+        'Someone joined the 2027 career counseling interest list.',
+        '',
+        'Name:     ' + waitlistName,
+        'Email:    ' + email,
+        'Consent:  ' + (p.consent ? 'yes, checked the box' : 'not checked'),
+        'Sent:     ' + new Date().toLocaleString('en-US',
+                         { timeZone: 'America/Los_Angeles' }),
+        '',
+        '---',
+        'Add this address to the 2027 career counseling interest list.'
       ].join('\n');
     } else {
       subject = 'aqcareer.com — new Career Disruptor Memo signup';
@@ -188,7 +210,9 @@ function log_(kind, email, p) {
       new Date(), kind, email,
       clip_(p.first_name, LIMITS.name), clip_(p.last_name, LIMITS.name),
       String(p.message || '').replace(/\0/g, '').slice(0, LIMITS.message),
-      p.consent ? 'yes' : ''
+      p.consent ? 'yes' : '',
+      clip_(p.organization, LIMITS.organization),
+      clip_(p.inquiry_type, LIMITS.inquiryType)
     ]);
   } catch (err) {
     console.error('log failed: ' + err);   // never block the email on this

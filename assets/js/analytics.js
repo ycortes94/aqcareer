@@ -63,11 +63,12 @@
     hero_cta_clicked: true,
     cta_clicked: true,
     connect_form_submitted: true,
-    newsletter_subscribed: true
+    newsletter_subscribed: true,
+    waitlist_joined: true
   };
 
   // Everything inside the forms is masked in replays.
-  var FORM_SELECTORS = ['#memo-form', 'form.contact'];
+  var FORM_SELECTORS = ['form[data-form]'];
 
   function signalOptOut() {
     if (!CFG.respect_dnt) return false;
@@ -320,13 +321,14 @@
         both, as it has since the nav events shipped. One link wearing two
         hats: filter by one event or the other, never sum them.
       - A control that logs its own event logs nothing here — the like
-        button (post_liked, in likes.js), the form submit buttons
+        button (post_liked, in likes.js), the interest list's open and close
+        buttons (waitlist_opened, in waitlist.js), the form submit buttons
         (form_submitted, in forms.js), the consent buttons, which are the
         measurement UI rather than the site's, and the Labs panel, which is
         development furniture no visitor ever sees. */
 
   var CLICKABLE = 'a[href],button,[role="button"],input[type="submit"],input[type="button"]';
-  var CLICK_OWN_EVENT = '[data-like],[data-aq-consent],[type="submit"],.aq-labs';
+  var CLICK_OWN_EVENT = '[data-like],[data-aq-consent],[data-waitlist],[type="submit"],.aq-labs';
 
   // Rather than a second attribute to keep in sync in four templates.
   function elementLocation(el) {

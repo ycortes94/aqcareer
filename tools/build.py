@@ -42,6 +42,7 @@ JS_V = asset_v("assets/js/forms.js")
 AN_V = asset_v("assets/js/analytics.js")
 LABS_V = asset_v("assets/js/labs.js")
 LIKES_V = asset_v("assets/js/likes.js")
+WAITLIST_V = asset_v("assets/js/waitlist.js")
 
 # Fraunces is the variant's heading face and is only fetched by pages that
 # ship the fresh-take layout.
@@ -265,6 +266,44 @@ LIKE_BAR = f"""  <div class="ft-only ft-like" data-like-bar hidden>
     </button>
     <p class="ft-like-note">Kept in this browser. No account, nothing shared.</p>
   </div>
+"""
+
+
+def subscribe_block(privacy_class):
+    """The memo signup under the post list on the blog index.
+
+    The same list and the same endpoint as the homepage hero's form, because
+    there is only one list: a reader who got to the bottom of the posts is the
+    one worth asking, and sending them back to the homepage to do it loses
+    them. Not .ft-only like the like bar — this is the same offer in both
+    designs, so it ships as one block that fresh-take.css restyles, the way
+    the cards above it already are.
+
+    Wears the homepage's own signup-band markup and copy rather than a shape
+    of its own, so the two read as one offer made twice. Its ids are its own,
+    though: two elements cannot share an id, and docs/ANALYTICS.md already
+    warns that a submit test aimed at the wrong newsletter form drives a
+    hidden one and appears to log nothing."""
+    endpoint = html.escape(CFG.get("form_endpoint", ""), quote=True)
+    return f"""
+  <section class="signup-band memo-signup">
+    <div class="wrap signup-grid">
+      <div>
+        <h2>Receive the Career Disruptor Memo</h2>
+        <p>Occasional notes like these, sent straight to your inbox. Ask to be removed at any time.</p>
+      </div>
+      <form action="{endpoint}" method="post" id="blog-memo-form" data-form="newsletter" class="{privacy_class}">
+        <input type="hidden" name="form" value="newsletter">
+        <label class="field-label" for="blog-memo-email">Email address</label>
+        <div class="subrow">
+          <input class="line-input" id="blog-memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
+          <button class="btn-ghost" type="submit">Subscribe</button>
+        </div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
+        <div class="hp" aria-hidden="true"><label for="blog-memo-website">Website</label><input id="blog-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      </form>
+    </div>
+  </section>
 """
 
 
@@ -535,7 +574,7 @@ def build():
                    form_privacy_class="amp-block" if mask_forms else "")
     made.append(write("index.html", page(
         content=home,
-        title="Home | AQ Career Consulting",
+        title="Career Programs & Counseling | AQ Career Consulting",
         desc=CFG["description"], canonical=SITE + "/", base="",
         cur_home=' aria-current="page"',
         html_attrs=' class="home-exp exp-pending" data-page="home"',
@@ -546,7 +585,8 @@ def build():
         # No tag for labs.js on purpose: the inline gate in base.html injects
         # it, and only for a browser that has Labs switched on.
         extra_js=CAROUSEL_JS + SECTION_SPY_JS +
-        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>')))
+        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>'
+        f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>')))
 
     # ---------- blog index ----------
     counts = like_counts({p["slug"] for p in posts})
@@ -570,7 +610,8 @@ def build():
             '    <h1 class="script-h">POV Blog</h1>\n'
             f'    <p>{html.escape(CFG["blog_tagline"])}</p>\n'
             '  </section>\n\n'
-            '  <div class="posts wrap">\n' + "\n".join(cards) + "\n  </div>\n")
+            '  <div class="posts wrap">\n' + "\n".join(cards) + "\n  </div>\n"
+            + subscribe_block("amp-block" if mask_forms else ""))
     # Both designs, the same way the post pages do it: one set of cards
     # between two sets of chrome, restyled by CSS rather than duplicated.
     bh, bf = fresh_chrome(base="../", cur_blog=' aria-current="page"')
@@ -582,7 +623,10 @@ def build():
         extra_css=FT_HEAD.format(base="../", v=FT_CSS_V),
         chrome_top=f'<div class="ft ft-chrome">\n{bh}\n</div>',
         variant_layout=f'<div class="ft ft-chrome">\n{bf}\n</div>',
-        extra_js=f'<script src="../assets/js/likes.js?v={LIKES_V}"></script>')))
+        # forms.js as well as likes.js now: the memo signup at the foot of the
+        # list needs it, or it posts by leaving the page.
+        extra_js=(f'<script src="../assets/js/forms.js?v={JS_V}"></script>\n'
+                  f'<script src="../assets/js/likes.js?v={LIKES_V}"></script>'))))
 
     # ---------- posts ----------
     # Every post sits at the same depth, so one fill of the fresh-take chrome
