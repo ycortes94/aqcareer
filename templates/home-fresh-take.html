@@ -112,8 +112,9 @@
         <h2>Receive the 1st Career Disruptor Memo!</h2>
       </div>
       <form action="{{form_endpoint}}" method="post" id="ft-memo-form" data-form="newsletter" class="{{form_privacy_class}}">
+        <input type="hidden" name="form" value="newsletter">
         <label class="lbl" for="ft-memo-email">Email</label>
-        <input class="inp" id="ft-memo-email" name="email" type="email" required autocomplete="email">
+        <input class="inp" id="ft-memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
         <label class="check"><input type="checkbox" name="consent" value="yes" required> I want to subscribe to your mailing list.</label>
         <div class="hp" aria-hidden="true"><label for="ft-memo-website">Website</label><input id="ft-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="btn" type="submit" style="width:100%;justify-content:center">Subscribe</button>
@@ -128,12 +129,13 @@
         <p class="lede">Take control of your future, reach out today.</p>
       </div>
       <form class="{{form_privacy_class}}" action="{{form_endpoint}}" method="post" data-form="contact">
+        <input type="hidden" name="form" value="contact">
         <div class="two">
-          <div class="fr"><label class="lbl" for="ft-fn">First Name</label><input class="inp" id="ft-fn" name="first_name" type="text" autocomplete="given-name"></div>
-          <div class="fr"><label class="lbl" for="ft-ln">Last Name</label><input class="inp" id="ft-ln" name="last_name" type="text" autocomplete="family-name"></div>
+          <div class="fr"><label class="lbl" for="ft-fn">First Name</label><input class="inp" id="ft-fn" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fr"><label class="lbl" for="ft-ln">Last Name</label><input class="inp" id="ft-ln" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
         </div>
-        <div class="fr"><label class="lbl" for="ft-em">Email</label><input class="inp" id="ft-em" name="email" type="email" required autocomplete="email"></div>
-        <div class="fr"><label class="lbl" for="ft-msg">Write a message</label><textarea class="inp" id="ft-msg" name="message"></textarea></div>
+        <div class="fr"><label class="lbl" for="ft-em">Email</label><input class="inp" id="ft-em" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <div class="fr"><label class="lbl" for="ft-msg">Write a message</label><textarea class="inp" id="ft-msg" name="message" maxlength="4000"></textarea></div>
         <div class="hp" aria-hidden="true"><label for="ft-c-website">Website</label><input id="ft-c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="btn" type="submit">Submit</button>
       </form>

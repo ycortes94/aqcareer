@@ -32,6 +32,17 @@ var ALLOWED_ORIGINS = [
   'https://ycortes94.github.io'
 ];
 
+// Caps so one POST cannot dump a novel into Gmail or the sheet.
+var LIMITS = {
+  email: 254,
+  name: 80,
+  message: 4000,
+  minFillMs: 2000,
+  maxFillMs: 24 * 60 * 60 * 1000,
+  perEmailPerHour: 3,
+  sitePerHour: 20
+};
+
 function doPost(e) {
   try {
     var p = (e && e.parameter) || {};
@@ -42,26 +53,45 @@ function doPost(e) {
       return ok({ ok: true });
     }
 
-    // Reject submissions that didn't come from the site.
+    // Reject submissions that didn't come from the site. Origin is omitted
+    // when JavaScript is off (the HTML form has no origin field), so a
+    // missing value is allowed; a forged one is not.
     var origin = String(p.origin || '');
     if (origin && ALLOWED_ORIGINS.indexOf(origin) === -1) {
       return ok({ ok: false, error: 'bad_origin' });
     }
 
     var kind = p.form === 'contact' ? 'contact' : 'newsletter';
-    var email = String(p.email || '').trim();
+    var email = clip_(p.email, LIMITS.email).toLowerCase();
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return ok({ ok: false, error: 'invalid_email' });
     }
 
+    var first = clip_(p.first_name, LIMITS.name);
+    var last = clip_(p.last_name, LIMITS.name);
+    var rawMessage = String(p.message || '');
+    if (rawMessage.length > LIMITS.message) {
+      return ok({ ok: false, error: 'too_long' });
+    }
+    var message = rawMessage.replace(/\0/g, '').trim();
+
+    // JS adds loaded_at (ms since the page opened). Instant POSTs are bots.
+    // No-JS visitors omit it, so a missing value is allowed.
+    var timing = timingError_(p.loaded_at);
+    if (timing) {
+      return ok({ ok: false, error: timing });
+    }
+
+    if (rateLimited_(email)) {
+      return ok({ ok: false, error: 'rate_limited' });
+    }
+
     var subject, body;
 
     if (kind === 'contact') {
-      var first = String(p.first_name || '').trim();
-      var last = String(p.last_name || '').trim();
       var name = (first + ' ' + last).trim() || '(no name given)';
-      var message = String(p.message || '').trim() || '(no message)';
+      if (!message) message = '(no message)';
 
       subject = 'aqcareer.com — new inquiry from ' + name;
       body = [
@@ -112,6 +142,42 @@ function doPost(e) {
   }
 }
 
+function clip_(value, max) {
+  return String(value || '').replace(/[\r\n\0]/g, ' ').trim().slice(0, max);
+}
+
+function timingError_(loadedAt) {
+  if (loadedAt === undefined || loadedAt === null || loadedAt === '') {
+    return null;
+  }
+  var started = Number(loadedAt);
+  if (!isFinite(started) || started <= 0) {
+    return 'too_fast';
+  }
+  var elapsed = Date.now() - started;
+  if (elapsed < LIMITS.minFillMs || elapsed > LIMITS.maxFillMs) {
+    return 'too_fast';
+  }
+  return null;
+}
+
+// Cheap throttle in Apps Script's shared cache. Not a firewall: it stops
+// a script from mailing Alina 200 times in a minute. Cache is best-effort.
+function rateLimited_(email) {
+  var cache = CacheService.getScriptCache();
+  var hour = 3600;
+  var globalKey = 'aq_rate_global';
+  var emailKey = 'aq_rate_' + email;
+  var global = parseInt(cache.get(globalKey) || '0', 10);
+  var perEmail = parseInt(cache.get(emailKey) || '0', 10);
+  if (global >= LIMITS.sitePerHour || perEmail >= LIMITS.perEmailPerHour) {
+    return true;
+  }
+  cache.put(globalKey, String(global + 1), hour);
+  cache.put(emailKey, String(perEmail + 1), hour);
+  return false;
+}
+
 // Appends each submission to a Google Sheet, if one is linked.
 // Optional: set a SHEET_ID script property to turn this on.
 function log_(kind, email, p) {
@@ -120,8 +186,9 @@ function log_(kind, email, p) {
     if (!id) return;
     SpreadsheetApp.openById(id).getSheets()[0].appendRow([
       new Date(), kind, email,
-      String(p.first_name || ''), String(p.last_name || ''),
-      String(p.message || ''), p.consent ? 'yes' : ''
+      clip_(p.first_name, LIMITS.name), clip_(p.last_name, LIMITS.name),
+      String(p.message || '').replace(/\0/g, '').slice(0, LIMITS.message),
+      p.consent ? 'yes' : ''
     ]);
   } catch (err) {
     console.error('log failed: ' + err);   // never block the email on this

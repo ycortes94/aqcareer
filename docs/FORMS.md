@@ -89,12 +89,25 @@ than silently swallowing the message.
 
 ## Spam handling
 
+The endpoint is public — GitHub Pages cannot hide it — so the script has to
+decide what to drop:
+
 - Each form has a hidden **honeypot** field. Bots fill it; humans can't see
   it. Those submissions are dropped silently.
-- The script checks the submission came from the site's own domain.
-- Free Apps Script accounts can send roughly 100 emails a day, which is far
-  above what this site will see. If spam ever becomes a problem, the next
-  step is adding a CAPTCHA — worth doing only if it actually happens.
+- The script checks the submission came from the site's own domain (when
+  JavaScript sent an `origin`).
+- JavaScript also sends `loaded_at`. A POST that arrives in under two seconds
+  is treated as a bot. Visitors without JavaScript skip this check.
+- Fields are length-capped (email 254, names 80, message 4000).
+- Rate limits: 3 submissions per email per hour, and 20 across the whole
+  site per hour. Extra attempts get a polite error, not an email.
+- Free Apps Script accounts can send roughly 100 emails a day. These limits
+  sit well below that.
+
+If spam still gets through, the next step is a CAPTCHA such as [Cloudflare
+Turnstile](https://www.cloudflare.com/products/turnstile/) — worth adding
+only if it actually happens. A CAPTCHA needs a Cloudflare account and a
+check inside this script; it is not required for a quiet personal site.
 
 ## Changing the address later
 
