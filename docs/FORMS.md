@@ -1,9 +1,16 @@
 # Connecting the forms
 
-Two forms on the home page need somewhere to send submissions:
+Four forms need somewhere to send submissions — three on the home page:
 
-- the **Career Disruptor Memo** signup in the hero
+- the **Career Disruptor Memo** signup
+- the **2027 career counseling interest list**, which opens as a dialog from
+  the Career Counseling service (see `assets/js/waitlist.js`)
 - the **let's connect** contact form at the bottom
+
+and one at the foot of the blog index:
+
+- the **Career Disruptor Memo** signup again, the same list and the same
+  endpoint, asked of readers who reached the end of the post list
 
 A GitHub Pages site is static — it can't send email by itself. The handler is
 a small Google Apps Script web app that runs on Alina's own Google account:
@@ -77,7 +84,9 @@ python3 tools/build.py && git add -A && git commit -m "Connect forms" && git pus
 
 **6. Test it**
 
-Open the live site, submit both forms, and confirm two emails arrive. The
+Open the live site, submit each form, and confirm an email arrives for every
+one — including the memo signup on `/blog/`, which posts to the same endpoint
+as the home page's but is a separate form that can break on its own. The
 contact form sets `reply-to` to the visitor's address, so replying in Gmail
 goes straight back to them.
 

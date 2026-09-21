@@ -1,8 +1,10 @@
 /* Form submission for aqcareer.com.
  *
- * Both forms post to a Google Apps Script web app, which emails the
- * submission on. The endpoint URL is injected by the build from
- * site.json (form_endpoint).
+ * Every form posts to a Google Apps Script web app, which emails the
+ * submission on: the Career Disruptor Memo signup, the 2027 counseling
+ * interest list, and the contact form on the homepage, plus the memo signup
+ * again at the foot of the blog index. The endpoint URL is injected by the
+ * build from site.json (form_endpoint).
  *
  * Progressive enhancement: without JavaScript the forms still submit
  * normally to the same endpoint, they just leave the page to do it.
@@ -19,6 +21,7 @@
 
   var MESSAGES = {
     newsletter: 'Thank you — you’re on the list for the first memo.',
+    waitlist: 'Thank you — you’re on the 2027 career counseling interest list.',
     contact: 'Thank you — your message is on its way. Alina will be in touch.',
     invalid_email: 'That email address doesn’t look right. Mind checking it?',
     rate_limited: 'That was sent a few times already. Please wait a bit and try again, or reach Alina on ' +
@@ -51,7 +54,11 @@
   }
 
   // Same allow-list as analytics.js: Statsig gets Pulse conversions only.
-  var PULSE = { connect_form_submitted: true, newsletter_subscribed: true };
+  var PULSE = {
+    connect_form_submitted: true,
+    newsletter_subscribed: true,
+    waitlist_joined: true
+  };
 
   function log(name, meta) {
     /* A pinned Labs layout still logs to Amplitude, so a submit can be
@@ -64,6 +71,12 @@
     var props = meta || {};
     props.homepage_design = (pinned && labs.design) ||
       document.documentElement.getAttribute('data-home-design') || 'control';
+    /* Which page it was sent from. The memo signup appears twice — on the
+       homepage and again at the foot of the blog index — and
+       newsletter_subscribed is a Pulse conversion, so without this the two
+       are one undifferentiated number. Same name and same derivation as
+       analytics.js's page. */
+    props.page = document.documentElement.getAttribute('data-page') || 'other';
     if (pinned) props.labs_pinned = true;
     try {
       // Amplitude always — product analytics source of truth.
@@ -77,7 +90,9 @@
   }
 
   function wire(form) {
-    var kind = form.getAttribute('data-form') === 'contact' ? 'contact' : 'newsletter';
+    var requestedKind = form.getAttribute('data-form');
+    var kind = requestedKind === 'contact' || requestedKind === 'waitlist'
+      ? requestedKind : 'newsletter';
     var button = form.querySelector('button[type="submit"]');
     var loadedAt = Date.now();
 
@@ -120,7 +135,10 @@
           if (result && result.ok) {
             form.reset();
             say(form, MESSAGES[kind], 'ok');
-            log(kind === 'contact' ? 'connect_form_submitted' : 'newsletter_subscribed');
+            var successEvent = kind === 'contact'
+              ? 'connect_form_submitted'
+              : (kind === 'waitlist' ? 'waitlist_joined' : 'newsletter_subscribed');
+            log(successEvent);
           } else if (result && result.error === 'invalid_email') {
             say(form, MESSAGES.invalid_email, 'error');
           } else if (result && result.error === 'rate_limited') {

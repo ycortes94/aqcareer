@@ -19,7 +19,11 @@
 <link rel="stylesheet" href="{{base}}assets/css/site.css?v={{css_v}}">
 {{extra_css}}
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="{{base}}feed.xml">
-<noscript><style>html.exp-pending body{visibility:visible!important}</style></noscript>
+<noscript><style>html.exp-pending body{visibility:visible!important}
+/* No script to open it, so the interest list is laid out in the page
+   instead — the form still posts on its own. See assets/js/waitlist.js. */
+.waitlist-dialog{display:block;position:static;margin:0 auto 56px;width:min(680px,calc(100% - 48px));max-height:none}
+.waitlist-close{display:none}</style></noscript>
 <script>
 /* Fresh-take experiment safety net. Inline on purpose: if analytics.js is
    blocked, errors, or never arrives, the page must still reveal itself.
