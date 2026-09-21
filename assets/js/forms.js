@@ -49,9 +49,14 @@
 
   function logConversion(name) {
     try {
-      if (window.statsigClient) window.statsigClient.logEvent(name);
+      // Amplitude always — product analytics source of truth.
       if (window.amplitude && typeof window.amplitude.track === 'function') {
         window.amplitude.track(name);
+      }
+      // Statsig only for Pulse conversions (same allow-list as analytics.js).
+      if ((name === 'connect_form_submitted' || name === 'newsletter_subscribed') &&
+          window.statsigClient) {
+        window.statsigClient.logEvent(name);
       }
     } catch (err) {}
   }

@@ -141,14 +141,10 @@ one SDK version, not a guarantee.
 
 ### Statsig and replay
 
-Statsig loads the `statsig-js-client+web-analytics` bundle, which contains
-**no session replay code at all** — verified: the string
-`runStatsigSessionReplay` does not appear in it. Only one tool records
-sessions, and its masking is configured above.
-
-Statsig's autocapture also has form and input events filtered out before
-logging (`eventFilterFunc` in `assets/js/analytics.js`), so field names and
-typed content from those two forms don't reach Statsig either.
+Statsig loads the **core** `statsig-js-client` bundle (not `+web-analytics`).
+That build has **no session replay and no autocapture**. Only Amplitude
+records sessions; Statsig evaluates experiments and receives a small set of
+Pulse conversion events. See [Architecture](#architecture) below.
 
 ## Consent
 
@@ -250,30 +246,78 @@ don't read across the change.
 
 Those pages report themselves with their own events instead.
 
+### Architecture
+
+**Amplitude owns product analytics. Statsig owns the experiment.** Sending
+Statsig's product events into Amplitude (via the outgoing integration) on top
+of the Amplitude SDK is what inflated charts — the same visit showed up as
+`[Amplitude] Page Viewed`, `auto_capture::page_view`, and a dual-written
+custom event.
+
+| Concern | Who |
+|---|---|
+| Pageviews, sessions, forms, nav, likes, Session Replay | **Amplitude SDK** |
+| Experiment assignment (`homepage_fresh_take`) | **Statsig SDK** |
+| Pulse scorecard conversions | **Statsig `logEvent`** for a short allow-list only |
+| Variant breakdown in Amplitude charts | **Statsig → Amplitude integration: exposures only** |
+
+**Pulse events (also sent to Amplitude):** `hero_cta_clicked`,
+`cta_clicked`, `connect_form_submitted`, `newsletter_subscribed`.
+
+**Amplitude only:** `home_viewed` / `blog_viewed` / `post_viewed`,
+`nav_link_clicked`, `post_liked` / `post_unliked`, plus Amplitude autocapture.
+
+**Identity:** Statsig initializes first; Amplitude then inits with
+`deviceId` set to Statsig's `stableID`, so forwarded exposures join the same
+user as Replay and product events.
+
+#### Statsig → Amplitude Event Filtering
+
+Set on 2026-09-21 in
+[Yosimy Test Project → Integrations → Amplitude](https://console.statsig.com/7mxCrruFNbq8sowJtiFrEu/integrations)
+→ **Event Filtering**. The outgoing connection stays **enabled** (API key for
+**AQ Career Site**); only exposures cross the wire:
+
+| Setting | Value |
+|---|---|
+| Experiment exposures | on |
+| Config exposures | on — this is what `homepage_fresh_take` emits (`statsig::config_exposure`) |
+| Gate / layer / holdout / disabled exposures | off |
+| First exposures | off (enterprise feature, not enabled here) |
+| Send new events by default | **off** — this was forwarding every custom and `auto_capture::*` event |
+| Enabled events | empty |
+
+`Send new events by default` was the duplicate path: with it on, everything
+the Statsig SDK logged was re-posted to Amplitude's Batch API alongside the
+Amplitude SDK's own copy. With it off and the enabled-events list empty, no
+product event forwards — a new Statsig event has to be opted in explicitly.
+
+Config **change** events (console edits) are still forwarded. They're not
+visitor traffic, so they don't inflate product charts; turn them off under
+the same dialog if you'd rather keep Amplitude to user events only.
+
 ### Events this site logs
 
 Beyond Amplitude's autocapture (pageviews, sessions, form start/submit, file
 downloads, web vitals), these are logged by hand. Every one carries
 `homepage_design`, so anything can be split by arm:
 
-| Event | Where | Also carries |
-|---|---|---|
-| `home_viewed` | homepage, once assigned | |
-| `blog_viewed` | blog index, once assigned | |
-| `post_viewed` | post page, once assigned | `post` (the slug) |
-| `nav_link_clicked` | any nav link, `[data-nav]` | `nav_item`, `nav_label`, `nav_location` |
-| `hero_cta_clicked` | `[data-cta="hero"]` | |
-| `cta_clicked` | `[data-cta="primary"]` | |
-| `connect_form_submitted` | contact form, on success | |
-| `newsletter_subscribed` | memo form, on success | |
-| `post_liked` / `post_unliked` | the like button | `post` (the slug) |
+| Event | Where | Also carries | Destination |
+|---|---|---|---|
+| `home_viewed` | homepage, once assigned | | Amplitude |
+| `blog_viewed` | blog index, once assigned | | Amplitude |
+| `post_viewed` | post page, once assigned | `post` (the slug) | Amplitude |
+| `nav_link_clicked` | any nav link, `[data-nav]` | `nav_item`, `nav_label`, `nav_location` | Amplitude |
+| `hero_cta_clicked` | `[data-cta="hero"]` | | Amplitude + Statsig (Pulse) |
+| `cta_clicked` | `[data-cta="primary"]` | | Amplitude + Statsig (Pulse) |
+| `connect_form_submitted` | contact form, on success | | Amplitude + Statsig (Pulse) |
+| `newsletter_subscribed` | memo form, on success | | Amplitude + Statsig (Pulse) |
+| `post_liked` / `post_unliked` | the like button | `post` (the slug) | Amplitude |
 
-**All of them go to both tools.** `logEvent()` in `analytics.js` sent to
-Statsig alone until 2026-09-18, which is why none of the rows above reached
-Amplitude: a session replay showed its `[Amplitude] Page Viewed` and nothing
-else, however much the visitor clicked. `forms.js` and `likes.js` already
-sent to both. Keep them paired — an event name that exists in only one tool
-is a trap for whoever builds the chart.
+Through 2026-09-18 every hand-logged event went to both SDKs, and Statsig
+autocapture was on. That, plus the Statsig → Amplitude integration, duplicated
+volume in Amplitude. As of the architecture above, only Pulse conversions
+dual-write.
 
 ### Nav clicks
 
@@ -329,7 +373,7 @@ watch the calls.
 | Checked | Result |
 |---|---|
 | `nav_link_clicked` fires on header and footer links in both chromes | yes |
-| Reaches **both** Amplitude and Statsig | yes |
+| Reaches **Amplitude** (`nav_link_clicked` is Amplitude-only) | yes |
 | Properties correct (`nav_item`, `nav_label`, `nav_location`, `homepage_design`) | yes |
 | Amplitude accepts it | `code: 200`, "Event tracked successfully" |
 | Event carries `[Amplitude] Session Replay ID` — so it lands on the replay timeline | yes |
@@ -523,7 +567,7 @@ SDKs load from CDN, pinned to exact versions in `assets/js/analytics.js`:
 |---|---|
 | `@amplitude/analytics-browser` | 2.45.10 |
 | `plugin-session-replay-browser` | 1.35.1 |
-| `@statsig/js-client` | 3.33.5 |
+| `@statsig/js-client` | 3.33.5 (core `statsig-js-client.min.js`, not `+web-analytics`) |
 
 Pinned rather than floating (`@2`) so a CDN-side release can't change the
 site's behaviour without a commit here. Bump them deliberately.
@@ -531,7 +575,8 @@ site's behaviour without a commit here. Bump them deliberately.
 Note the Amplitude analytics bundle used is the **analytics-only** build —
 not the unified `cdn.amplitude.com/script/<KEY>.js`, which bundles Session
 Replay and Web Experiment together and gives less control over the replay
-configuration.
+configuration. Statsig is the core client only — no autocapture bundle — so
+product analytics cannot double through the Statsig → Amplitude integration.
 
 ## Checking it works
 
