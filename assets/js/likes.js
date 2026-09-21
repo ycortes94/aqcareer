@@ -52,18 +52,20 @@
   }
 
   function log(name) {
-    /* Labs has pinned a design for development (see assets/js/labs.js). This
-       event carries the design, and a pinned pageview is someone looking at a
-       layout rather than a visitor in an arm — logging it would file their
-       like under a group nobody was bucketed into. The like itself still
-       saves; it is this browser's own state, not experiment data. */
+    /* Labs has pinned a design for development (see assets/js/labs.js), which
+       is the only way to see this button at all until the experiment hands
+       the fresh-take arm to somebody. So the event is logged, stamped
+       labs_pinned, and tools/refresh_likes.py filters those out before they
+       can reach the published totals. Mirrors logEvent() in analytics.js. */
     var labs = window.__aqLabs;
-    if (labs && labs.design) return;
+    var pinned = !!(labs && labs.design);
 
     var meta = {
       post: slug(),
-      homepage_design: document.documentElement.getAttribute('data-home-design') || 'control'
+      homepage_design: (pinned && labs.design) ||
+        document.documentElement.getAttribute('data-home-design') || 'control'
     };
+    if (pinned) meta.labs_pinned = true;
     try {
       // Amplitude only — likes are not Pulse metrics for homepage_fresh_take.
       if (window.amplitude && typeof window.amplitude.track === 'function') {

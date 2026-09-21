@@ -20,10 +20,12 @@
  *
  * It is off for everyone else, so a visitor never sees the panel.
  *
- * It deliberately records nothing. A pinned pageview is not experiment data:
- * analytics.js skips asking Statsig for an assignment (asking would log an
- * exposure for a variant nobody was really bucketed into) and logs no events.
- * So use it to look at layouts, never to test whether tracking fires.
+ * A pinned pageview is not experiment data, so analytics.js never asks
+ * Statsig for an assignment while pinned (asking would log an exposure for a
+ * variant nobody was really bucketed into) and sends nothing to Statsig at
+ * all. Amplitude does get the events, stamped labs_pinned, so you can watch
+ * a layout's clicks land in the Event Explorer while building it — chart
+ * with labs_pinned excluded and real visitors are unaffected.
  */
 (function () {
   'use strict';
@@ -63,10 +65,15 @@
     render();
   }
 
+  /* Pinning is an attribute flip, but unpinning can't be: the assignment is
+     asked for once per pageview and analytics.js won't swap a design under a
+     reader, so flipping back in place left the pinned layout on screen with
+     the panel claiming it came from the experiment. Reload and let the real
+     assignment decide, which is what the button says it does. */
   function unpin() {
     store({ design: null });
     LABS.design = null;
-    render();
+    window.location.reload();
   }
 
   /* z-index sits BELOW the consent dialog's 200 on purpose. Both are fixed to
@@ -131,7 +138,8 @@
         '<div class="seg">' + seg + '</div>' +
         (pinned
           ? '<p class="note">Pinned to <strong>' + LABS.design + '</strong>. ' +
-            'Nothing is being recorded for this pageview.</p>' +
+            'Events are logged to Amplitude tagged <code>labs_pinned</code>, ' +
+            'and kept out of the experiment.</p>' +
             '<button type="button" class="live" data-act="unpin">Use the real experiment</button>'
           : '<p class="note">Not pinned — showing <strong>' + current() + '</strong> from the ' +
             'experiment. Pick a layout to pin it.</p>') +
