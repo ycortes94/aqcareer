@@ -559,6 +559,12 @@ Unique users who fired `post_liked` for each post, minus the unique users who
 fired `post_unliked`, from the first post's date to today — the Dashboard
 REST API's event segmentation endpoint, grouped by the `post` event property.
 
+With one limit: that endpoint answers **36 months** of monthly counts and
+refuses a wider range with a 400, and the blog is older than that, so the
+start is moved forward to fit. The run says so when it does. Nothing is lost
+today — the like button shipped in September 2026 — but a like older than
+36 months would eventually fall out of the total.
+
 Uniques rather than event totals, so one person pressing the button twice is
 one like. And the number is a **floor, not a census**: a visitor who declined
 measurement still gets their like locally, it just never reaches Amplitude to
