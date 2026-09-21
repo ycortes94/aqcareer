@@ -8,8 +8,9 @@ it weekly, rebuilds the site and commits the result. See docs/ANALYTICS.md.
 
 What it counts: unique users who fired `post_liked` for each post, minus the
 unique users who fired `post_unliked`, over the whole period. Uniques rather
-than event totals, so one person pressing the button twice is one like. The
-figure can only ever be a floor — a visitor who declined measurement still
+than event totals, so one person pressing the button twice is one like.
+Presses made while a Labs layout was pinned are excluded — see NOT_PINNED.
+The figure can only ever be a floor — a visitor who declined measurement still
 gets their like, it just never reaches Amplitude to be counted.
 
 Credentials come from the environment and nowhere else. The secret key grants
@@ -41,6 +42,22 @@ LIKED = "post_liked"
 UNLIKED = "post_unliked"
 PROPERTY = "post"      # the event property carrying the slug
 
+# Presses made while a Labs layout was pinned. The like button ships on the
+# fresh-take post page only, so pinning is how anyone working on the layout
+# sees it, and those presses are development rather than readers. They carry
+# labs_pinned; real visitors never set it.
+#
+# "is not" keeps events where the property is unset, which is what this needs.
+# Checked against the project on 2026-09-21: of 5 element_clicked, the
+# unfiltered count was 5, "is not true" gave 4 and "is true" gave 1.
+PINNED_PROPERTY = "labs_pinned"
+NOT_PINNED = {
+    "subprop_type": "event",
+    "subprop_key": PINNED_PROPERTY,
+    "subprop_op": "is not",
+    "subprop_value": ["true"],
+}
+
 
 def fail(msg):
     raise SystemExit(f"refresh_likes: {msg}")
@@ -54,7 +71,8 @@ def slugs():
 def query_url(event, start, end, base):
     """A segmentation query for one event, grouped by the post property."""
     spec = {"event_type": event,
-            "group_by": [{"type": "event", "value": PROPERTY}]}
+            "group_by": [{"type": "event", "value": PROPERTY}],
+            "filters": [NOT_PINNED]}
     params = {
         "e": json.dumps(spec, separators=(",", ":")),
         "start": start,

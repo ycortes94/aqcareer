@@ -481,6 +481,18 @@ site with nowhere to POST a count to, so a like is remembered in the
 visitor's own browser under **`aq_likes_v1`** (`{"<slug>":"<ISO date>"}`) and
 nothing is shared between visitors.
 
+**No `post_liked` has ever been logged, and that is the experiment, not the
+button.** The bar is built as `ft-only` (`LIKE_BAR` in `tools/build.py`), so
+only a visitor served the fresh-take arm can see it — and
+`homepage_fresh_take` has been `assignment_stopped` in Statsig, which hands
+every visitor the `control` default. Nobody has been given the layout the
+button lives on. Restart assignment and the events start arriving on their
+own; nothing in `likes.js` needs changing for that.
+
+Until then the only way to reach the button is to pin the layout in Labs, so
+those presses log with `labs_pinned: true` and the weekly export filters them
+out rather than publishing development likes as reader likes.
+
 **So read the card tally for what it is.** It counts what that browser has
 liked — 1 or 0 per post, not a total across visitors. A visitor who has liked
 nothing sees 0 everywhere. `tally()` in `assets/js/likes.js` is the single
@@ -530,6 +542,14 @@ one like. And the number is a **floor, not a census**: a visitor who declined
 measurement still gets their like locally, it just never reaches Amplitude to
 be counted. Expect the published figure to sit below reality by roughly
 whatever share of visitors decline.
+
+Presses made while a Labs layout was pinned are filtered out, with
+`labs_pinned is not true` on both queries. The like button ships on the
+fresh-take post page only, so pinning is how anyone working on that layout
+reaches it, and their presses are development rather than readers. `is not`
+keeps events where the property is unset, which is every real visitor —
+checked against the project on 2026-09-21, where 5 `element_clicked` split
+into 4 unset and 1 pinned.
 
 ### By hand, or without the Action
 
