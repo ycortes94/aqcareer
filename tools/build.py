@@ -302,8 +302,8 @@ def subscribe_block(privacy_class):
         <h2>Receive the Career Disruptor Memo</h2>
         <p>Occasional notes like these, sent straight to your inbox. Ask to be removed at any time.</p>
       </div>
-      <form action="{endpoint}" method="post" id="blog-memo-form" data-form="newsletter" class="{privacy_class}">
-        <input type="hidden" name="form" value="newsletter">
+      <form action="{endpoint}" method="post" id="blog-memo-form" data-form="memo" class="{privacy_class}">
+        <input type="hidden" name="form" value="memo">
         <label class="field-label" for="blog-memo-email">Email address</label>
         <div class="subrow">
           <input class="line-input" id="blog-memo-email" name="email" type="email" required autocomplete="email" maxlength="254">

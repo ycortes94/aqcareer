@@ -21,7 +21,7 @@
                    /^http:\/\/(127\.0\.0\.1|localhost)([:/]|$)/.test(ENDPOINT);
 
   var MESSAGES = {
-    newsletter: 'Thank you — you’re on the list for the first memo.',
+    memo: 'Thank you — you’re on the list for the first memo.',
     waitlist: 'Thank you — you’re on the 2027 career counseling interest list.',
     contact: 'Thank you — your message is on its way. Alina will be in touch.',
     invalid_email: 'That email address doesn’t look right. Mind checking it?',
@@ -155,7 +155,7 @@
   function wire(form) {
     var requestedKind = form.getAttribute('data-form');
     var kind = requestedKind === 'contact' || requestedKind === 'waitlist'
-      ? requestedKind : 'newsletter';
+      ? requestedKind : 'memo';
     var button = form.querySelector('button[type="submit"]');
     var loadedAt = Date.now();
 
@@ -171,7 +171,7 @@
       if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
         return;
       }
-      log('form_submitted', { form: kind });
+      log('form_submitted', { form: kind === 'memo' ? 'newsletter' : kind });
 
       if (!CONFIGURED) {
         say(form, MESSAGES.unconfigured, 'error');
