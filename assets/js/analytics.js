@@ -181,20 +181,49 @@
      so a reader given the fresh homepage doesn't then land on a
      control-styled blog. data-page says which of the three this is. */
   function pageKind() {
-    return document.documentElement.getAttribute('data-page') || 'home';
+    return document.documentElement.getAttribute('data-page') || '';
   }
 
   /* Amplitude is the product-analytics source of truth. Statsig only gets
      Pulse conversion events (STATSIG_PULSE_EVENTS) so experiment scorecards
      keep working without duplicating pageviews and nav clicks into Amplitude
      via the outgoing integration. */
+  /* Amplitude loads after Statsig on purpose, so it can take Statsig's
+     stableID as its deviceId — but the design events fire the moment the
+     assignment lands, which is a beat before that. Sent straight through,
+     every one of them found window.amplitude still undefined and vanished:
+     home_viewed, blog_viewed and post_viewed were never reaching Amplitude
+     at all. Hold anything logged before the SDK is there.
+
+     Bounded, and emptied without sending if Amplitude never arrives — a
+     blocked CDN shouldn't leave the page filling a queue for a session. */
+  var ampReady = false;
+  var ampQueue = [];
+  var AMP_QUEUE_MAX = 40;
+
   function trackAmplitude(name, metadata) {
     var meta = metadata || {};
+    if (!ampReady) {
+      if (ampQueue.length < AMP_QUEUE_MAX) ampQueue.push([name, meta]);
+      return;
+    }
     try {
       if (window.amplitude && typeof window.amplitude.track === 'function') {
         window.amplitude.track(name, meta);
       }
     } catch (err) {}
+  }
+
+  /* Called once startAmplitude() has settled either way. With no key
+     configured, or a CDN that never answered, window.amplitude is still
+     undefined and the flush quietly drops what it is holding. */
+  function amplitudeSettled() {
+    ampReady = true;
+    var queued = ampQueue;
+    ampQueue = [];
+    for (var i = 0; i < queued.length; i++) {
+      trackAmplitude(queued[i][0], queued[i][1]);
+    }
   }
 
   function logStatsigPulse(name, metadata) {
@@ -247,37 +276,73 @@
     html.classList.remove('exp-pending');
   }
 
-  function wireCtas(design) {
-    function bind(sel, eventName) {
-      var nodes = document.querySelectorAll(sel);
-      for (var i = 0; i < nodes.length; i++) {
-        nodes[i].addEventListener('click', function () {
-          logEvent(eventName, { homepage_design: design });
-        });
-      }
-    }
-    bind('[data-cta="hero"]', 'hero_cta_clicked');
-    bind('[data-cta="primary"]', 'cta_clicked');
-  }
-
-  /* ---------- nav clicks ----------
+  /* ---------- clicks ----------
      Amplitude's elementInteractions autocapture is off (see startAmplitude),
-     and the nav links are same-page anchors on the homepage, so clicking
-     About or Services fired nothing at all and the replay timeline showed
-     only the pageview. This logs one nav_link_clicked per click, carrying
-     which item it was.
+     so a control logs nothing unless this file logs it. That used to mean
+     two named events — the hero CTA and the nav links — and a site where
+     every other control was silent: the testimonial arrows and dots, the
+     burger menu, the post cards on the blog index, the links at the foot of
+     an article, the social icons. A replay showed the visitor clicking and
+     the event stream showed nothing.
 
-     Delegated from the document rather than bound per node, for three
-     reasons: it covers both chromes (the homepage ships each nav twice, one
-     hidden by CSS), it covers pages that never run the experiment — privacy,
-     404 — where wireCtas() is never reached, and it survives a nav rendered
-     or re-ordered later. */
+     One delegated listener on the document now covers all of it. Delegated
+     rather than bound per node for the reasons the nav always was: it covers
+     both chromes (the homepage ships each nav twice, one hidden by CSS), it
+     covers pages that never run the experiment — privacy, 404 — and it
+     survives anything rendered later, such as the carousel's own dots.
+
+     One click produces one event, the most specific one that fits, with two
+     deliberate exceptions:
+
+      - The fresh-take Connect link carries data-cta and data-nav and logs
+        both, as it has since the nav events shipped. One link wearing two
+        hats: filter by one event or the other, never sum them.
+      - A control that logs its own event logs nothing here — the like
+        button (post_liked, in likes.js), the form submit buttons
+        (form_submitted, in forms.js), the consent buttons, which are the
+        measurement UI rather than the site's, and the Labs panel, which is
+        development furniture no visitor ever sees. */
+
+  var CLICKABLE = 'a[href],button,[role="button"],input[type="submit"],input[type="button"]';
+  var CLICK_OWN_EVENT = '[data-like],[data-aq-consent],[type="submit"],.aq-labs';
 
   // Rather than a second attribute to keep in sync in four templates.
-  function navLocation(el) {
+  function elementLocation(el) {
     if (el.closest('footer')) return 'footer';
     if (el.closest('header')) return 'header';
     return 'page';
+  }
+
+  /* What the visitor actually read on the control. aria-label comes first
+     because the icon-only ones — the carousel arrows, the social links —
+     have no text at all. Capped, since a whole card's worth of copy is a
+     property nobody can chart. */
+  function clickText(el) {
+    var t = el.getAttribute('aria-label') || el.textContent || '';
+    if (!t.trim() && el.tagName === 'INPUT') t = el.value || '';
+    t = t.replace(/\s+/g, ' ').trim();
+    return t.length > 80 ? t.slice(0, 80) : t;
+  }
+
+  // Null for anything that isn't a link. `leaves` is what decides a flush:
+  // an in-page anchor stays put, a mail or tel link hands off without
+  // unloading, everything else can take the page with it.
+  function linkTarget(el) {
+    var href = el.tagName === 'A' ? el.getAttribute('href') : null;
+    if (!href) return null;
+    if (href.charAt(0) === '#') return { kind: 'anchor', leaves: false };
+    if (/^mailto:/i.test(href)) return { kind: 'email', leaves: false };
+    if (/^tel:/i.test(href)) return { kind: 'phone', leaves: false };
+    var host;
+    try {
+      host = new URL(href, window.location.href).host;
+    } catch (err) {
+      host = window.location.host;
+    }
+    return {
+      kind: host === window.location.host ? 'internal' : 'external',
+      leaves: true
+    };
   }
 
   function designNow() {
@@ -285,30 +350,89 @@
            document.documentElement.getAttribute('data-home-design') || '';
   }
 
-  function wireNav() {
-    document.addEventListener('click', function (ev) {
-      var link = ev.target.closest && ev.target.closest('[data-nav]');
-      if (!link) return;
-      // A pinned layout records nothing, the same as a pinned pageview —
-      // see applyDesignExperiment.
-      if (window.__aqLabs && window.__aqLabs.design) return;
+  /* The blog index cards. Which post was opened is the whole point of the
+     event, so it comes from data-post — the slug the build already knows —
+     rather than being parsed back out of the href. The position says which
+     card in the grid it was, so "the top one always wins" can be checked
+     against "this post is the one people want". */
+  function postCardMeta(card) {
+    var cards = document.querySelectorAll('.pcard');
+    var position = 0;
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i] === card) { position = i + 1; break; }
+    }
+    var title = card.querySelector('h2');
+    return {
+      post: card.getAttribute('data-post') || '',
+      post_title: title ? title.textContent.replace(/\s+/g, ' ').trim() : '',
+      card_position: position
+    };
+  }
 
-      var meta = {
+  function onClick(ev) {
+    var t = ev.target;
+    if (!t || !t.closest) return;
+    // A pinned layout records nothing, the same as a pinned pageview —
+    // see applyDesignExperiment.
+    if (window.__aqLabs && window.__aqLabs.design) return;
+
+    var design = designNow();
+    var el = t.closest(CLICKABLE);
+    var named = false;
+
+    var cta = t.closest('[data-cta]');
+    if (cta) {
+      logEvent(cta.getAttribute('data-cta') === 'hero'
+                 ? 'hero_cta_clicked' : 'cta_clicked',
+               design ? { homepage_design: design } : {});
+      named = true;
+    }
+
+    var nav = t.closest('[data-nav]');
+    if (nav) {
+      var navMeta = {
         // The stable one: rename the link's text and this still groups.
-        nav_item: link.getAttribute('data-nav') || '',
+        nav_item: nav.getAttribute('data-nav') || '',
         // What the visitor actually read on the button.
-        nav_label: (link.textContent || '').replace(/\s+/g, ' ').trim(),
-        nav_location: navLocation(link)
+        nav_label: clickText(nav),
+        nav_location: elementLocation(nav)
       };
-      var design = designNow();
-      if (design) meta.homepage_design = design;
-      logEvent('nav_link_clicked', meta);
+      if (design) navMeta.homepage_design = design;
+      logEvent('nav_link_clicked', navMeta);
+      named = true;
+    }
 
-      // An in-page anchor stays put; POV Blog, Privacy and any nav link
-      // followed from a post page leave the document.
-      var href = link.getAttribute('href') || '';
-      if (href.charAt(0) !== '#') flushNow();
-    });
+    var card = named ? null : t.closest('.pcard');
+    if (card) {
+      var cardMeta = postCardMeta(card);
+      if (design) cardMeta.homepage_design = design;
+      logEvent('post_card_clicked', cardMeta);
+      named = true;
+    }
+
+    if (!named && el && !el.closest(CLICK_OWN_EVENT)) {
+      var meta = {
+        element_type: el.tagName === 'A' ? 'link' : 'button',
+        element_text: clickText(el),
+        element_id: el.id || '',
+        element_location: elementLocation(el),
+        page: pageKind() || 'other'
+      };
+      var link = linkTarget(el);
+      if (link) {
+        meta.link_type = link.kind;
+        meta.link_url = el.getAttribute('href');
+      }
+      if (design) meta.homepage_design = design;
+      logEvent('element_clicked', meta);
+    }
+
+    var target = el ? linkTarget(el) : null;
+    if (target && target.leaves) flushNow();
+  }
+
+  function wireClicks() {
+    document.addEventListener('click', onClick);
   }
 
   function applyDesignExperiment(client) {
@@ -348,13 +472,12 @@
       design = revealedDesign;
     }
     revealDesign(design);
-    var kind = pageKind();
+    var kind = pageKind() || 'home';
     var meta = { homepage_design: design };
     if (kind === 'post') {
       meta.post = document.documentElement.getAttribute('data-post') || '';
     }
     logEvent(kind + '_viewed', meta);
-    wireCtas(design);
     remapHash(design);
   }
 
@@ -421,7 +544,7 @@
     started = true;
     // Bound here, not at load: with measurement declined there is no listener
     // on the page at all.
-    wireNav();
+    wireClicks();
     // Statsig first so Amplitude can init with the same stableID as deviceId.
     // Parallel init used to race and leave exposures unjoinable to Replay.
     startStatsig()
@@ -434,7 +557,10 @@
         return startAmplitude(stableId).catch(function (e) {
           console.warn('[analytics] amplitude:', e.message);
         });
-      });
+      })
+      // Whatever happened above, stop holding events for an SDK that is
+      // either ready now or never coming.
+      .then(amplitudeSettled);
   }
 
   /* ---------- the disclaimer ---------- */
