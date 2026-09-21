@@ -1,8 +1,9 @@
 /**
  * Form handler for aqcareer.com — Google Apps Script web app.
  *
- * Receives the newsletter signup and the "let's connect" contact form and
- * emails them on. Runs on Alina's own Google account, so there is no server
+ * Receives the Career Disruptor Memo signup, the 2027 counseling interest
+ * list, and the "let's connect" contact form and emails them on. Runs on
+ * Alina's own Google account, so there is no server
  * to maintain and no new service to sign up for.
  *
  * ---------------------------------------------------------------------------
@@ -63,8 +64,10 @@ function doPost(e) {
       return ok({ ok: false, error: 'bad_origin' });
     }
 
+    // Spreadsheet column: waitlist, memo, or contact. Older pages still
+    // post "newsletter"; that is the same list as memo.
     var kind = p.form === 'contact' || p.form === 'waitlist'
-      ? p.form : 'newsletter';
+      ? p.form : 'memo';
     var email = clip_(p.email, LIMITS.email).toLowerCase();
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
