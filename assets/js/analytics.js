@@ -24,8 +24,10 @@
  *    UI overrides anything the SDK asks for. So both <form> elements carry
  *    the amp-block class in the markup, which a remote config cannot undo.
  *    maskSelector below is a secondary layer. We never add `.amp-unmask`.
- *  - Statsig loads the bundle WITHOUT session replay, and its form_submit /
- *    input autocapture events are filtered out before they're logged.
+ *  - Statsig loads the core client ONLY (no web-analytics / autocapture).
+ *    Amplitude owns product analytics and Session Replay. Statsig owns
+ *    experiment assignment and a small set of Pulse conversion events.
+ *    The Statsig → Amplitude integration should forward exposures only.
  */
 (function () {
   'use strict';
@@ -44,10 +46,24 @@
   var HAS_KEYS = !!(CFG.amplitude_api_key || CFG.statsig_client_key);
 
   // Pinned exact versions — a floating major could change behaviour under us.
+  // Core Statsig client only: the +web-analytics build was dual-logging
+  // pageviews/clicks into Statsig, and the outgoing Amplitude integration
+  // then forwarded those as auto_capture::* on top of Amplitude autocapture.
   var SRC = {
     amplitude: 'https://cdn.jsdelivr.net/npm/@amplitude/analytics-browser@2.45.10/lib/scripts/amplitude-min.js',
     replay: 'https://cdn.amplitude.com/libs/plugin-session-replay-browser-1.35.1-min.js.gz',
-    statsig: 'https://cdn.jsdelivr.net/npm/@statsig/js-client@3.33.5/build/statsig-js-client+web-analytics.min.js'
+    statsig: 'https://cdn.jsdelivr.net/npm/@statsig/js-client@3.33.5/build/statsig-js-client.min.js'
+  };
+
+  /* Events Statsig needs for homepage_fresh_take Pulse. Everything else is
+     Amplitude-only so the Statsig → Amplitude integration cannot inflate
+     charts when it forwards product events. Keep this list in sync with the
+     experiment's primary/secondary metrics. */
+  var STATSIG_PULSE_EVENTS = {
+    hero_cta_clicked: true,
+    cta_clicked: true,
+    connect_form_submitted: true,
+    newsletter_subscribed: true
   };
 
   // Everything inside the forms is masked in replays.
@@ -105,7 +121,7 @@
     });
   }
 
-  function startAmplitude() {
+  function startAmplitude(deviceId) {
     var key = CFG.amplitude_api_key;
     if (!key) return Promise.resolve();
 
@@ -126,7 +142,7 @@
         }));
       }
 
-      window.amplitude.init(key, {
+      var initOpts = {
         // Declining calls setOptOut(true), which Amplitude persists in its own
         // AMP_<key> cookie. Nothing else ever clears it, so without this an
         // accept that follows a decline would init an SDK that silently drops
@@ -145,7 +161,12 @@
           networkTracking: false,
           webVitals: true
         }
-      });
+      };
+      // Same ID Statsig uses for assignment (stableID), so forwarded exposures
+      // join to the same Amplitude user / Session Replay as product events.
+      if (deviceId) initOpts.deviceId = deviceId;
+
+      window.amplitude.init(key, undefined, initOpts);
     });
   }
 
@@ -163,24 +184,32 @@
     return document.documentElement.getAttribute('data-page') || 'home';
   }
 
-  /* Both tools, every time. This used to log to Statsig alone, which is why
-     none of the hand-logged events below reached Amplitude — a session replay
-     showed its pageview and nothing else, however much the visitor clicked.
-     forms.js and likes.js already send to both; this was the odd one out.
-     Keep them paired: an event name that exists in only one tool is a trap
-     for whoever builds the chart. */
-  function logEvent(name, metadata) {
+  /* Amplitude is the product-analytics source of truth. Statsig only gets
+     Pulse conversion events (STATSIG_PULSE_EVENTS) so experiment scorecards
+     keep working without duplicating pageviews and nav clicks into Amplitude
+     via the outgoing integration. */
+  function trackAmplitude(name, metadata) {
+    var meta = metadata || {};
+    try {
+      if (window.amplitude && typeof window.amplitude.track === 'function') {
+        window.amplitude.track(name, meta);
+      }
+    } catch (err) {}
+  }
+
+  function logStatsigPulse(name, metadata) {
+    if (!STATSIG_PULSE_EVENTS[name]) return;
     var meta = metadata || {};
     try {
       if (window.statsigClient) {
         window.statsigClient.logEvent(name, null, meta);
       }
     } catch (err) {}
-    try {
-      if (window.amplitude && typeof window.amplitude.track === 'function') {
-        window.amplitude.track(name, meta);
-      }
-    } catch (err) {}
+  }
+
+  function logEvent(name, metadata) {
+    trackAmplitude(name, metadata);
+    logStatsigPulse(name, metadata);
   }
 
   /* Events queue for a second before upload, which is fine for a click that
@@ -351,37 +380,36 @@
     if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView();
   }
 
+  function statsigStableId(client) {
+    try {
+      if (client && typeof client.getContext === 'function') {
+        var ctx = client.getContext();
+        if (ctx && ctx.stableID) return ctx.stableID;
+      }
+    } catch (err) {}
+    return '';
+  }
+
   function startStatsig() {
     var key = CFG.statsig_client_key;
     if (!key) {
       applyDesignExperiment(null);
-      return Promise.resolve();
+      return Promise.resolve('');
     }
 
     return load(SRC.statsig).then(function () {
       if (!window.Statsig) {
         applyDesignExperiment(null);
-        return;
+        return '';
       }
       var StatsigClient = window.Statsig.StatsigClient;
-      var runStatsigAutoCapture = window.Statsig.runStatsigAutoCapture;
-
       var client = new StatsigClient(key, {});
 
-      if (typeof runStatsigAutoCapture === 'function') {
-        runStatsigAutoCapture(client, {
-          // Drop anything tied to form or input interaction, so field names
-          // and typed content can't reach Statsig from these two forms.
-          eventFilterFunc: function (event) {
-            var name = (event && (event.eventName || event.name) || '') + '';
-            return !/form_submit|form_start|input|change|submit/i.test(name);
-          }
-        });
-      }
-
-      window.statsigClient = client;   // available for gates/experiments later
+      // No runStatsigAutoCapture — Amplitude owns pageviews, clicks, forms.
+      window.statsigClient = client;
       return client.initializeAsync().then(function () {
         applyDesignExperiment(client);
+        return statsigStableId(client);
       });
     });
   }
@@ -394,13 +422,19 @@
     // Bound here, not at load: with measurement declined there is no listener
     // on the page at all.
     wireNav();
-    Promise.all([
-      startAmplitude().catch(function (e) { console.warn('[analytics] amplitude:', e.message); }),
-      startStatsig().catch(function (e) {
+    // Statsig first so Amplitude can init with the same stableID as deviceId.
+    // Parallel init used to race and leave exposures unjoinable to Replay.
+    startStatsig()
+      .catch(function (e) {
         console.warn('[analytics] statsig:', e.message);
         applyDesignExperiment(null);
+        return '';
       })
-    ]);
+      .then(function (stableId) {
+        return startAmplitude(stableId).catch(function (e) {
+          console.warn('[analytics] amplitude:', e.message);
+        });
+      });
   }
 
   /* ---------- the disclaimer ---------- */

@@ -65,7 +65,7 @@
       homepage_design: document.documentElement.getAttribute('data-home-design') || 'control'
     };
     try {
-      if (window.statsigClient) window.statsigClient.logEvent(name, null, meta);
+      // Amplitude only — likes are not Pulse metrics for homepage_fresh_take.
       if (window.amplitude && typeof window.amplitude.track === 'function') {
         window.amplitude.track(name, meta);
       }
