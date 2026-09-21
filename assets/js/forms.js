@@ -51,21 +51,23 @@
   var PULSE = { connect_form_submitted: true, newsletter_subscribed: true };
 
   function log(name, meta) {
-    /* A pinned Labs layout logs nothing, the same as a pinned pageview:
-       these events carry the design, and someone checking a layout was
-       never bucketed into an arm. See assets/js/labs.js. */
+    /* A pinned Labs layout still logs to Amplitude, so a submit can be
+       watched while a layout is being built, but it carries labs_pinned and
+       Statsig never sees it: someone checking a layout was never bucketed
+       into an arm. Mirrors logEvent() in assets/js/analytics.js. */
     var labs = window.__aqLabs;
-    if (labs && labs.design) return;
+    var pinned = !!(labs && labs.design);
 
     var props = meta || {};
-    props.homepage_design =
+    props.homepage_design = (pinned && labs.design) ||
       document.documentElement.getAttribute('data-home-design') || 'control';
+    if (pinned) props.labs_pinned = true;
     try {
       // Amplitude always — product analytics source of truth.
       if (window.amplitude && typeof window.amplitude.track === 'function') {
         window.amplitude.track(name, props);
       }
-      if (PULSE[name] && window.statsigClient) {
+      if (!pinned && PULSE[name] && window.statsigClient) {
         window.statsigClient.logEvent(name, null, props);
       }
     } catch (err) {}

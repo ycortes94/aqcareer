@@ -236,9 +236,31 @@
     } catch (err) {}
   }
 
+  /* Labs has pinned a layout for development (see assets/js/labs.js). Pinned
+     sessions used to log nothing at all, which made the panel useless for the
+     one question people actually asked of it — does this variant's markup
+     fire anything? — because the only way to see the fresh-take layout is to
+     pin it, and pinning switched the logging off.
+
+     They log to Amplitude now, so a click can be watched landing in the Event
+     Explorer while a layout is being built, and every one of them carries
+     labs_pinned. Statsig still sees none of it: Pulse scorecards are the
+     experiment's results and nobody pinning a layout was bucketed into an
+     arm. Exclude labs_pinned in any chart meant to stand for real visitors. */
+  function labsPinned() {
+    var labs = window.__aqLabs;
+    return !!(labs && labs.design);
+  }
+
   function logEvent(name, metadata) {
-    trackAmplitude(name, metadata);
-    logStatsigPulse(name, metadata);
+    var meta = metadata || {};
+    if (labsPinned()) {
+      meta.labs_pinned = true;
+      trackAmplitude(name, meta);
+      return;
+    }
+    trackAmplitude(name, meta);
+    logStatsigPulse(name, meta);
   }
 
   /* Events queue for a second before upload, which is fine for a click that
@@ -345,7 +367,12 @@
     };
   }
 
+  /* The pin comes first: Labs flips the layout in place without a reload, so
+     revealedDesign still holds whichever arm this pageview started on. Read
+     it second and a click made after pinning fresh take reports control. */
   function designNow() {
+    var labs = window.__aqLabs;
+    if (labs && labs.design) return labs.design;
     return revealedDesign ||
            document.documentElement.getAttribute('data-home-design') || '';
   }
@@ -372,9 +399,6 @@
   function onClick(ev) {
     var t = ev.target;
     if (!t || !t.closest) return;
-    // A pinned layout records nothing, the same as a pinned pageview —
-    // see applyDesignExperiment.
-    if (window.__aqLabs && window.__aqLabs.design) return;
 
     var design = designNow();
     var el = t.closest(CLICKABLE);
@@ -435,18 +459,32 @@
     document.addEventListener('click', onClick);
   }
 
+  /* home_viewed / blog_viewed / post_viewed. One place, because a pinned
+     layout reports the page the same way a bucketed visitor does — only the
+     design it names and the labs_pinned stamp differ. */
+  function logViewed(design) {
+    var kind = pageKind() || 'home';
+    var meta = { homepage_design: design };
+    if (kind === 'post') {
+      meta.post = document.documentElement.getAttribute('data-post') || '';
+    }
+    logEvent(kind + '_viewed', meta);
+  }
+
   function applyDesignExperiment(client) {
     var html = document.documentElement;
     if (!html.classList.contains('home-exp')) return;
 
-    // Labs has pinned a layout for development (see assets/js/labs.js). Don't
-    // ask Statsig for an assignment — that would log an exposure for a variant
-    // nobody was really bucketed into — and log nothing else either. A pinned
-    // pageview is someone checking a layout, not experiment data.
+    // Labs has pinned a layout (see assets/js/labs.js). Don't ask Statsig for
+    // an assignment — that would log an exposure for a variant nobody was
+    // really bucketed into. The pageview itself is logged, carrying
+    // labs_pinned like everything else from a pinned session, so the design
+    // being looked at is legible in the event stream.
     var labs = window.__aqLabs;
     if (labs && labs.design) {
       revealDesign(labs.design);
       remapHash(labs.design);
+      logViewed(labs.design);
       return;
     }
 
@@ -472,12 +510,7 @@
       design = revealedDesign;
     }
     revealDesign(design);
-    var kind = pageKind() || 'home';
-    var meta = { homepage_design: design };
-    if (kind === 'post') {
-      meta.post = document.documentElement.getAttribute('data-post') || '';
-    }
-    logEvent(kind + '_viewed', meta);
+    logViewed(design);
     remapHash(design);
   }
 
