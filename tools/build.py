@@ -13,6 +13,7 @@ import html
 import json
 import os
 import re
+import struct
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 T = os.path.join(ROOT, "templates")
@@ -135,6 +136,116 @@ def nice_date(iso):
 
 def read_minutes(words):
     return max(1, round(words / 225))
+
+
+def image_size(rel):
+    """(width, height) of a PNG, JPEG, WebP or GIF, read from its header.
+
+    Pillow would be one line, and one dependency: this script also runs in
+    the weekly likes workflow on a bare runner, where a pip install is a new
+    way for the build to fail. Two integers are not worth that. Anything it
+    can't read returns None, and the caller falls back to markup that works
+    without the numbers — correct, just without the no-enlarging cap."""
+    try:
+        with open(os.path.join(ROOT, rel), "rb") as f:
+            head = f.read(30)
+            if head[:8] == b"\x89PNG\r\n\x1a\n":
+                w, h = struct.unpack(">II", head[16:24])
+                return int(w), int(h)
+            if head[:6] in (b"GIF87a", b"GIF89a"):
+                w, h = struct.unpack("<HH", head[6:10])
+                return int(w), int(h)
+            if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+                # Three encodings, three places to look. The dimensions are
+                # stored one less than they are, in all three.
+                tag = head[12:16]
+                if tag == b"VP8X":
+                    w = int.from_bytes(head[24:27], "little") + 1
+                    h = int.from_bytes(head[27:30], "little") + 1
+                    return w, h
+                if tag == b"VP8 ":
+                    w, h = struct.unpack("<HH", head[26:30])
+                    return (w & 0x3FFF), (h & 0x3FFF)
+                if tag == b"VP8L":
+                    bits = int.from_bytes(head[21:25], "little")
+                    return (bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1
+                return None
+            if head[:2] != b"\xff\xd8":
+                return None
+            # JPEG: walk the segment chain to the start-of-frame, which is
+            # the only place the dimensions are written. Every iteration
+            # starts on a marker's 0xFF prefix, of which there may be
+            # several — the padding between segments is more 0xFF.
+            f.seek(2)
+            while True:
+                byte = f.read(1)
+                while byte == b"\xff":
+                    byte = f.read(1)
+                if not byte:
+                    return None
+                code = byte[0]
+                (length,) = struct.unpack(">H", f.read(2))
+                if 0xC0 <= code <= 0xCF and code not in (0xC4, 0xC8, 0xCC):
+                    h, w = struct.unpack(">HH", f.read(5)[1:5])
+                    return int(w), int(h)
+                if length < 2:
+                    return None         # malformed; don't seek backwards
+                f.seek(length - 2, 1)
+    except (OSError, struct.error, IndexError):
+        return None
+
+
+# How tall a cover is allowed to get. The images are portraits, squares and
+# wide photos all at once, so capping the height rather than the width is
+# what keeps them a comparable size on the page.
+COVER_MAX_H = 520
+
+
+def cover_block(cover):
+    """The post's hero image, in a frame no wider than the image itself.
+
+    The covers are a mixed bag — 1600px photographs, a 250px book jacket, a
+    squat logo. Stretched across the column the small ones came out blurry
+    and cropped to a letterbox, a face sliced in half. So the frame carries
+    the largest size the image can actually fill (--cover-w) and the
+    stylesheet never asks for more than that; the height cap is folded into
+    the same number, so a portrait doesn't become a tower. Intrinsic
+    width/height go on the <img> too, which is what stops the text below
+    jumping while the file loads."""
+    if not cover:
+        return ""
+    size = image_size(cover.lstrip("/"))
+    frame, dims = "", ""
+    if size:
+        w, h = size
+        frame = f' style="--cover-w:{min(w, round(COVER_MAX_H * w / h))}px"'
+        dims = f' width="{w}" height="{h}"'
+    return ('  <div class="post-cover wrap">'
+            f'<div class="cover"{frame}>'
+            f'<img src="../..{cover}" alt=""{dims}></div></div>\n')
+
+
+IMG_TAG = re.compile(r'<img\b[^>]*?src="(/assets/[^"]+)"[^>]*?>', re.I)
+
+
+def size_body_images(body):
+    """Stamp every image in a post body with its real pixel dimensions.
+
+    Same two reasons as the cover: the browser reserves the right box before
+    the file arrives, and the stylesheet can leave a small image at its own
+    size instead of blowing it up to the width of the column. Posts come out
+    of Wix with no dimensions on them at all, and hand-written ones are
+    unlikely to carry any either."""
+    def stamp(m):
+        tag = m.group(0)
+        if re.search(r"\swidth=", tag, re.I):
+            return tag
+        size = image_size(m.group(1).lstrip("/"))
+        if not size:
+            return tag
+        return (tag.rstrip(">").rstrip("/").rstrip() +
+                f' width="{size[0]}" height="{size[1]}">')
+    return IMG_TAG.sub(stamp, body)
 
 
 HEART_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4l-1.3-1.2C6 '
@@ -443,8 +554,12 @@ def build():
     for p in posts:
         thumb = (f'<div class="thumb"><img src="../{p["cover"].lstrip("/")}" '
                  f'alt="" loading="lazy"></div>') if p["cover"] else ""
+        # data-post names the post for post_card_clicked, so the event says
+        # which one was opened without the slug being parsed back out of the
+        # href — see assets/js/analytics.js.
         cards.append(
-            f'      <a class="pcard" href="../post/{p["slug"]}/">\n'
+            f'      <a class="pcard" href="../post/{p["slug"]}/" '
+            f'data-post="{html.escape(p["slug"], quote=True)}">\n'
             f'{("        " + thumb) if thumb else ""}\n'
             f'        <h2>{html.escape(p["title"])}</h2>\n'
             f'        <p class="excerpt">{html.escape(p["excerpt"])}</p>\n'
@@ -476,10 +591,9 @@ def build():
     post_chrome_top = f'<div class="ft ft-chrome">\n{ph}\n</div>'
     post_chrome_bottom = f'<div class="ft ft-chrome">\n{pf}\n</div>'
     for n, p in enumerate(posts):
-        body = p["body"].replace('src="/assets/', 'src="../../assets/')
-        cover = (f'  <div class="post-cover wrap">'
-                 f'<img src="../..{p["cover"]}" alt=""></div>\n'
-                 if p["cover"] else "")
+        body = size_body_images(p["body"]) \
+            .replace('src="/assets/', 'src="../../assets/')
+        cover = cover_block(p["cover"])
         nxt = posts[n - 1] if n > 0 else None
         prv = posts[n + 1] if n + 1 < len(posts) else None
         links = ['<a href="../../blog/">&larr; All posts</a>']

@@ -256,7 +256,7 @@ custom event.
 
 | Concern | Who |
 |---|---|
-| Pageviews, sessions, forms, nav, likes, Session Replay | **Amplitude SDK** |
+| Pageviews, sessions, forms, clicks, likes, Session Replay | **Amplitude SDK** |
 | Experiment assignment (`homepage_fresh_take`) | **Statsig SDK** |
 | Pulse scorecard conversions | **Statsig `logEvent`** for a short allow-list only |
 | Variant breakdown in Amplitude charts | **Statsig → Amplitude integration: exposures only** |
@@ -265,7 +265,8 @@ custom event.
 `cta_clicked`, `connect_form_submitted`, `newsletter_subscribed`.
 
 **Amplitude only:** `home_viewed` / `blog_viewed` / `post_viewed`,
-`nav_link_clicked`, `post_liked` / `post_unliked`, plus Amplitude autocapture.
+`element_clicked`, `nav_link_clicked`, `post_card_clicked`, `form_submitted`,
+`post_liked` / `post_unliked`, plus Amplitude autocapture.
 
 **Identity:** Statsig initializes first; Amplitude then inits with
 `deviceId` set to Statsig's `stableID`, so forwarded exposures join the same
@@ -307,9 +308,12 @@ downloads, web vitals), these are logged by hand. Every one carries
 | `home_viewed` | homepage, once assigned | | Amplitude |
 | `blog_viewed` | blog index, once assigned | | Amplitude |
 | `post_viewed` | post page, once assigned | `post` (the slug) | Amplitude |
+| `element_clicked` | any button or link with no more specific event | `element_type`, `element_text`, `element_id`, `element_location`, `link_type`, `link_url`, `page` | Amplitude |
 | `nav_link_clicked` | any nav link, `[data-nav]` | `nav_item`, `nav_label`, `nav_location` | Amplitude |
+| `post_card_clicked` | a card on the blog index | `post` (the slug), `post_title`, `card_position` | Amplitude |
 | `hero_cta_clicked` | `[data-cta="hero"]` | | Amplitude + Statsig (Pulse) |
 | `cta_clicked` | `[data-cta="primary"]` | | Amplitude + Statsig (Pulse) |
+| `form_submitted` | either form, on a submit the browser accepted | `form` (`contact` / `newsletter`) | Amplitude |
 | `connect_form_submitted` | contact form, on success | | Amplitude + Statsig (Pulse) |
 | `newsletter_subscribed` | memo form, on success | | Amplitude + Statsig (Pulse) |
 | `post_liked` / `post_unliked` | the like button | `post` (the slug) | Amplitude |
@@ -319,22 +323,72 @@ autocapture was on. That, plus the Statsig → Amplitude integration, duplicated
 volume in Amplitude. As of the architecture above, only Pulse conversions
 dual-write.
 
-### Nav clicks
+### Nothing logged before Amplitude exists
+
+Worth knowing, because it silently cost this site every design pageview it
+ever recorded. `startTracking()` loads **Statsig first**, so Amplitude can
+take Statsig's `stableID` as its `deviceId`; the `*_viewed` events fire the
+moment the assignment lands, which is a beat *before* Amplitude is fetched.
+Sent straight through, they found `window.amplitude` undefined and vanished.
+`home_viewed`, `blog_viewed` and `post_viewed` were in the code, in the docs
+and in nobody's Amplitude project.
+
+`trackAmplitude()` now holds events in a bounded queue until the SDK is
+there, and flushes once `startAmplitude()` has settled — either way, so a
+blocked CDN empties the queue instead of filling it for the whole session.
+Anything logged from a click is long past this and goes straight out.
+
+**So an empty `home_viewed` before 2026-09-21 is the bug, not the traffic.**
+Charts that used those events to split the experiment by arm have no data to
+read before that date; the exposures Statsig forwarded are unaffected.
+
+### Clicks
 
 Amplitude's `elementInteractions` autocapture is **off** (see
-`startAmplitude()`), and most nav links are same-page anchors, so clicking
-**About** or **Services** on the homepage produced no event at all.
-`nav_link_clicked` fills that gap. It carries:
+`startAmplitude()`), so a control logs nothing unless `analytics.js` logs it.
+Until 2026-09-21 that meant two named events — the hero CTA and the nav links
+— and a site where everything else was silent: the testimonial arrows and
+dots, the burger menu, the post cards on the blog index, the links at the
+foot of an article, the social icons. A session replay showed the visitor
+clicking and the event stream showed nothing.
+
+One delegated listener on `document` now covers all of it, and **one click
+produces one event** — the most specific one that fits:
+
+| Clicked | Event |
+|---|---|
+| A nav link (`[data-nav]`) | `nav_link_clicked` |
+| A CTA (`[data-cta]`) | `hero_cta_clicked` / `cta_clicked` |
+| A post card on the blog index | `post_card_clicked` |
+| A control that owns its event — the like button, the form submit buttons | that control's event, nothing else |
+| The consent buttons, the Labs panel | nothing: measurement UI and development furniture, not the site |
+| **Anything else clickable** — buttons, links, `[role="button"]` | `element_clicked` |
+
+`element_clicked` is the catch-all, so a control added later reports itself
+without anyone remembering to wire it up:
+
+| Property | Example | Notes |
+|---|---|---|
+| `element_type` | `button` / `link` | |
+| `element_text` | `Next testimonial` | `aria-label` first — the carousel arrows and social icons have no text at all — then the visible text, capped at 80 characters. |
+| `element_id` | `memo-email` | Empty for most things; the stable handle where there is one. |
+| `element_location` | `header` / `footer` / `page` | Nearest `<header>`/`<footer>`, same derivation as `nav_location`. |
+| `link_type` | `internal` / `external` / `anchor` / `email` / `phone` | Links only. `anchor` is a same-page jump. |
+| `link_url` | `../../blog/` | Links only, as written in the markup. |
+| `page` | `home` / `blog` / `post` / `other` | `data-page` on `<html>`; `other` is privacy and 404, which carry none. |
+
+`nav_link_clicked` still carries what it always did:
 
 | Property | Example | Notes |
 |---|---|---|
 | `nav_item` | `about` | The `data-nav` value. Stable — the grouping key to chart. |
 | `nav_label` | `Services & Products` | The visible text. Reads well, but changes when the wording does. |
 | `nav_location` | `header` / `footer` | Derived from the nearest `<header>`/`<footer>`, not a second attribute to keep in sync. |
-| `homepage_design` | `fresh_take` | Omitted on pages outside the experiment — privacy, 404 — rather than guessed. |
+| `homepage_design` | `fresh_take` | On every event above. Omitted on pages outside the experiment — privacy, 404 — rather than guessed. |
 
 Only site navigation carries `data-nav`: home, about, services, blog,
-connect, privacy. Social and external links are left out.
+connect, privacy. Social and external links are left out — they are
+`element_clicked` instead, which is where to look for them.
 
 **`about` only exists in the fresh-take chrome** — the control homepage has no
 About section, so an empty `about` count for `homepage_design: control` is the
@@ -343,40 +397,52 @@ design, not a bug. `services` is in both, which is why that's the one
 goes silent while the other keeps reporting, and the breakdown then reads as a
 design preference rather than a missing attribute.
 
-Two things to know before charting it:
+Three things to know before charting any of it:
 
 - **The fresh-take Connect link logs twice** — `cta_clicked` and
   `nav_link_clicked`. It is one link wearing both hats: `data-cta` for the
   experiment's CTA analysis, `data-nav` so the nav breakdown accounts for
   every item in the bar. Filter by one event or the other, never sum them.
+  It is the only overlap; everything else logs once.
+- **`element_clicked` is a mixed bag by design.** It is one event covering
+  every unnamed control, so chart it broken down by `element_text` or
+  `element_id` rather than as a total. Anything worth watching on its own
+  deserves its own event — add it above the catch-all in `onClick()`.
 - **A pinned Labs layout logs nothing**, the same as a pinned pageview. Turn
-  Labs off with `?labs=0` to watch nav events fire.
+  Labs off with `?labs=0` to watch clicks fire.
 
-The handler is delegated from `document`, not bound per link, so it covers
-both chromes (the homepage ships each nav twice, one hidden by CSS) and pages
-that never run the experiment, where `wireCtas()` is never reached. It is
-attached from `startTracking()`, so a visitor who declined has no listener on
-the page at all.
+The handler is delegated from `document`, not bound per node, so it covers
+both chromes (the homepage ships each nav twice, one hidden by CSS), pages
+that never run the experiment — privacy, 404 — and controls rendered later,
+such as the carousel's own dots. It is attached from `startTracking()`, so a
+visitor who declined has no listener on the page at all.
 
-Links that leave the document — POV Blog, Privacy, any nav link followed from
-a post page — get a `flush()` on both SDKs, because an event queued a moment
-before unload is an event that may never be sent. Best-effort: the navigation
-can still win the race, so expect nav clicks that navigate away to undercount
-slightly against ones that stay put.
+Clicks that leave the document — POV Blog, Privacy, a post card, any link
+followed from a post page — get a `flush()` on both SDKs, because an event
+queued a moment before unload is an event that may never be sent.
+Best-effort: the navigation can still win the race, so expect clicks that
+navigate away to undercount slightly against ones that stay put.
 
-#### Verified, 2026-09-18
+#### Verified, 2026-09-21
 
-Served the built site locally, accepted the disclaimer, then clicked nav links
-in both chromes and wrapped `amplitude.track` / `statsigClient.logEvent` to
-watch the calls.
+Served the built site locally with the upload endpoints blocked in devtools
+(so the test never reached the real project), accepted the disclaimer, then
+clicked through both chromes with `amplitude.track` /
+`statsigClient.logEvent` wrapped to watch the calls, and gunzipped the
+outgoing payload to confirm what actually left the browser.
 
 | Checked | Result |
 |---|---|
-| `nav_link_clicked` fires on header and footer links in both chromes | yes |
-| Reaches **Amplitude** (`nav_link_clicked` is Amplitude-only) | yes |
-| Properties correct (`nav_item`, `nav_label`, `nav_location`, `homepage_design`) | yes |
-| Amplitude accepts it | `code: 200`, "Event tracked successfully" |
-| Event carries `[Amplitude] Session Replay ID` — so it lands on the replay timeline | yes |
+| `blog_viewed` reaches the upload payload rather than being dropped | yes — this is the queue fix; before it, the payload held only `[Amplitude] Page Viewed` |
+| Carousel arrows, carousel dots, burger menu | `element_clicked`, with `aria-label` as the text |
+| Footer social icons | `element_clicked`, `link_type: external` |
+| A blog index card | `post_card_clicked`, with the slug, title and position |
+| A post's "← All posts" link | `element_clicked`, `link_type: internal` |
+| Nav links, header and footer, both chromes | `nav_link_clicked`, properties unchanged |
+| Hero CTA | `hero_cta_clicked` only — no duplicate `element_clicked` |
+| Subscribe / Submit | `form_submitted` only — no duplicate `element_clicked` |
+| The like button | `post_liked` only |
+| "Tracking choice" and the consent buttons | nothing, as intended |
 | Fires on the privacy page, which never runs the experiment | yes, with `homepage_design` absent |
 | Suppressed while a Labs layout is pinned | yes |
 
@@ -535,7 +601,9 @@ same call is the way to do it from the console.
 **A pinned pageview records nothing.** `analytics.js` returns before it asks
 Statsig for an assignment — asking would log an exposure for a variant nobody
 was really bucketed into — and it logs no `home_viewed`, `blog_viewed`,
-`post_viewed`, `nav_link_clicked` or CTA events either. A like still saves, since that is local state rather than
+`post_viewed` either, nor any click event: `element_clicked`,
+`nav_link_clicked`, `post_card_clicked`, the CTAs, `form_submitted` and the
+form conversions are all suppressed. A like still saves, since that is local state rather than
 experiment data, but logs nothing.
 So Labs is for looking at layouts, never for checking that tracking fires. To
 test tracking, turn Labs off with `?labs=0` and let the real assignment run.

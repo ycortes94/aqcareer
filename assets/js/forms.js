@@ -47,16 +47,26 @@
     el.classList.toggle('is-ok', kind === 'ok');
   }
 
-  function logConversion(name) {
+  // Same allow-list as analytics.js: Statsig gets Pulse conversions only.
+  var PULSE = { connect_form_submitted: true, newsletter_subscribed: true };
+
+  function log(name, meta) {
+    /* A pinned Labs layout logs nothing, the same as a pinned pageview:
+       these events carry the design, and someone checking a layout was
+       never bucketed into an arm. See assets/js/labs.js. */
+    var labs = window.__aqLabs;
+    if (labs && labs.design) return;
+
+    var props = meta || {};
+    props.homepage_design =
+      document.documentElement.getAttribute('data-home-design') || 'control';
     try {
       // Amplitude always — product analytics source of truth.
       if (window.amplitude && typeof window.amplitude.track === 'function') {
-        window.amplitude.track(name);
+        window.amplitude.track(name, props);
       }
-      // Statsig only for Pulse conversions (same allow-list as analytics.js).
-      if ((name === 'connect_form_submitted' || name === 'newsletter_subscribed') &&
-          window.statsigClient) {
-        window.statsigClient.logEvent(name);
+      if (PULSE[name] && window.statsigClient) {
+        window.statsigClient.logEvent(name, null, props);
       }
     } catch (err) {}
   }
@@ -68,11 +78,19 @@
     form.addEventListener('submit', function (event) {
       event.preventDefault();
 
-      if (!CONFIGURED) {
-        say(form, MESSAGES.unconfigured, 'error');
+      /* Validity first, then the event, then whether there is anywhere to
+         send it. A submit the browser itself refused — a missing email, the
+         consent box unticked — is not an attempt the visitor made, and an
+         endpoint that isn't configured yet is not their problem: they tried
+         either way, and form_submitted says so. The success events below
+         stay what they always were, so the two together read as a funnel. */
+      if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
         return;
       }
-      if (typeof form.reportValidity === 'function' && !form.reportValidity()) {
+      log('form_submitted', { form: kind });
+
+      if (!CONFIGURED) {
+        say(form, MESSAGES.unconfigured, 'error');
         return;
       }
 
@@ -95,7 +113,7 @@
           if (result && result.ok) {
             form.reset();
             say(form, MESSAGES[kind], 'ok');
-            logConversion(kind === 'contact' ? 'connect_form_submitted' : 'newsletter_subscribed');
+            log(kind === 'contact' ? 'connect_form_submitted' : 'newsletter_subscribed');
           } else if (result && result.error === 'invalid_email') {
             say(form, MESSAGES.invalid_email, 'error');
           } else {
