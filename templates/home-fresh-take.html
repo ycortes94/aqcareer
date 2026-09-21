@@ -98,6 +98,7 @@
         </div>
         <div class="fr"><label class="lbl" for="ft-wait-email">Email address</label><input class="inp" id="ft-wait-email" name="email" type="email" required autocomplete="email" maxlength="254"></div>
         <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, email me about 2027 career counseling availability.</label>
+        {{turnstile}}
         <div class="hp" aria-hidden="true"><label for="ft-wait-website">Website</label><input id="ft-wait-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="btn" type="submit">Join the interest list</button>
       </form>
@@ -142,6 +143,7 @@
         <label class="lbl" for="ft-memo-email">Email address</label>
         <input class="inp" id="ft-memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
         <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
+        {{turnstile}}
         <div class="hp" aria-hidden="true"><label for="ft-memo-website">Website</label><input id="ft-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="btn" type="submit" style="width:100%;justify-content:center">Subscribe</button>
       </form>
@@ -165,6 +167,7 @@
         <div class="fr"><label class="lbl" for="ft-interest">I'm interested in</label><select class="inp" id="ft-interest" name="inquiry_type" required><option value="">Choose one</option><option value="Curriculum contract">Curriculum contract</option><option value="Workshop">Workshop</option><option value="Speaking">Speaking</option><option value="Partnership or other project">Partnership or other project</option><option value="Individual counseling question">Individual counseling question</option></select></div>
         <div class="fr"><label class="lbl" for="ft-msg">How can I help?</label><textarea class="inp" id="ft-msg" name="message" required maxlength="4000"></textarea></div>
         <div class="hp" aria-hidden="true"><label for="ft-c-website">Website</label><input id="ft-c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        {{turnstile}}
         <button class="btn" type="submit">Send inquiry</button>
       </form>
     </div>

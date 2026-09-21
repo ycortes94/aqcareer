@@ -65,6 +65,9 @@
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');
     focusFirstField(dialog);
+    try {
+      document.dispatchEvent(new CustomEvent('aq:waitlist-opened', { detail: { dialog: dialog } }));
+    } catch (err) {}
     log('waitlist_opened', { source: source || 'link' });
   }
 

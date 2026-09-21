@@ -204,6 +204,7 @@ select.box{appearance:auto}
 /* Honeypot: off-screen rather than display:none, so bots that check for
    hidden fields still fill it in. Kept out of the tab order too. */
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.js-turnstile{margin:14px 0 4px}
 .form-status{margin:14px 0 0;font-size:13px;line-height:1.6}
 .form-status a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .form-status.is-ok{color:var(--green-deep);font-weight:600}
