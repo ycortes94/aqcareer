@@ -7,7 +7,8 @@ Normally nobody runs this by hand — .github/workflows/refresh-likes.yml runs
 it weekly, rebuilds the site and commits the result. See docs/ANALYTICS.md.
 
 What it counts: unique users who fired `post_liked` for each post, minus the
-unique users who fired `post_unliked`, over the whole period. Uniques rather
+unique users who fired `post_unliked`, over as long a period as Amplitude will
+answer for monthly counts — 36 months, see MAX_DAYS. Uniques rather
 than event totals, so one person pressing the button twice is one like.
 Presses made while a Labs layout was pinned are excluded — see NOT_PINNED.
 The figure can only ever be a floor — a visitor who declined measurement still
@@ -42,6 +43,14 @@ LIKED = "post_liked"
 UNLIKED = "post_unliked"
 PROPERTY = "post"      # the event property carrying the slug
 
+# How far back a monthly query may reach. Amplitude answers 36 months of
+# monthly counts and refuses a wider range outright, with a 400 — and the blog
+# is older than that now, so the first post's date no longer fits. A little
+# inside the limit, counted in days, to stay clear of how long months are.
+# Nothing real is lost: the like button shipped in September 2026, and a like
+# cannot predate the button.
+MAX_DAYS = 1080
+
 # Presses made while a Labs layout was pinned. The like button ships on the
 # fresh-take post page only, so pinning is how anyone working on the layout
 # sees it, and those presses are development rather than readers. They carry
@@ -66,6 +75,20 @@ def fail(msg):
 def slugs():
     with open(POSTS, encoding="utf-8") as f:
         return [p["slug"] for p in json.load(f)]
+
+
+def within_window(start, end):
+    """The start date Amplitude will actually answer for, given end.
+
+    Asking further back than MAX_DAYS is refused rather than trimmed, so the
+    range has to be trimmed here or the whole run fails."""
+    first = dt.datetime.strptime(start, "%Y%m%d").date()
+    floor = end - dt.timedelta(days=MAX_DAYS)
+    if first >= floor:
+        return start
+    print(f"  note: {start} is further back than Amplitude answers for "
+          f"monthly counts; reading from {floor:%Y%m%d}")
+    return floor.strftime("%Y%m%d")
 
 
 def query_url(event, start, end, base):
@@ -99,8 +122,15 @@ def fetch(url, api_key, secret_key):
             403: "those keys don't have access to this project",
             429: "Amplitude is rate limiting — try again later",
         }.get(err.code, "")
+        # Amplitude says which parameter it objected to in the body, and a
+        # bare status code sends whoever reads this guessing.
+        try:
+            body = err.read().decode("utf-8", "replace").strip()
+        except OSError:
+            body = ""
         fail(f"Amplitude returned {err.code} {err.reason}"
-             + (f" — {hint}" if hint else ""))
+             + (f" — {hint}" if hint else "")
+             + (f"\n  {body[:500]}" if body else ""))
     except urllib.error.URLError as err:
         fail(f"could not reach Amplitude — {err.reason}")
 
@@ -196,6 +226,7 @@ def main(argv):
             dt.datetime.strptime(start, "%Y%m%d")
         except ValueError:
             fail(f"start date should be YYYYMMDD, not {start!r}")
+        start = within_window(start, end)
 
         print(f"reading {LIKED} / {UNLIKED} from {start} to "
               f"{end.strftime('%Y%m%d')}")
