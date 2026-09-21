@@ -21,6 +21,9 @@
     newsletter: 'Thank you — you’re on the list for the first memo.',
     contact: 'Thank you — your message is on its way. Alina will be in touch.',
     invalid_email: 'That email address doesn’t look right. Mind checking it?',
+    rate_limited: 'That was sent a few times already. Please wait a bit and try again, or reach Alina on ' +
+                  '<a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a>.',
+    too_long: 'That’s a bit long for this form. Try a shorter message?',
     failed: 'Something went wrong sending that. You can reach Alina on ' +
             '<a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a> ' +
             'in the meantime.',
@@ -76,6 +79,7 @@
   function wire(form) {
     var kind = form.getAttribute('data-form') === 'contact' ? 'contact' : 'newsletter';
     var button = form.querySelector('button[type="submit"]');
+    var loadedAt = Date.now();
 
     form.addEventListener('submit', function (event) {
       event.preventDefault();
@@ -99,6 +103,7 @@
       var data = new FormData(form);
       data.set('form', kind);
       data.set('origin', window.location.origin);
+      data.set('loaded_at', String(loadedAt));
 
       var body = new URLSearchParams();
       data.forEach(function (value, key) { body.append(key, value); });
@@ -118,6 +123,10 @@
             log(kind === 'contact' ? 'connect_form_submitted' : 'newsletter_subscribed');
           } else if (result && result.error === 'invalid_email') {
             say(form, MESSAGES.invalid_email, 'error');
+          } else if (result && result.error === 'rate_limited') {
+            say(form, MESSAGES.rate_limited, 'error');
+          } else if (result && result.error === 'too_long') {
+            say(form, MESSAGES.too_long, 'error');
           } else {
             say(form, MESSAGES.failed, 'error');
           }
