@@ -144,6 +144,11 @@ html[data-home-design="fresh_take"] body{
 .ft .card .num{font-family:var(--ft-serif);font-size:13px;font-weight:600;color:var(--ft-green-mid);letter-spacing:.12em;margin-bottom:16px}
 .ft .card h3{font-size:23px;margin-bottom:12px}
 .ft .card p{font-size:15px;color:var(--ft-muted);margin:0}
+.ft .card-link{
+  align-self:flex-start;margin-top:18px;color:var(--ft-green);font-size:14px;
+  font-weight:700;text-decoration:none;border-bottom:1px solid rgba(1,66,53,.3)
+}
+.ft .card-link:hover{border-color:var(--ft-green)}
 .ft .pill{
   display:inline-block;align-self:flex-start;background:var(--ft-green-soft);color:var(--ft-green);
   font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
@@ -187,6 +192,18 @@ html[data-home-design="fresh_take"] body{
 .ft .memo h2{font-size:clamp(26px,3vw,36px);margin:12px 0 12px}
 .ft .memo p{color:var(--ft-muted);font-size:16px;margin:0}
 .ft .memo form{background:#fff;border-radius:var(--ft-r);padding:28px}
+/* The interest list dialog, which site.css styles for the control. Same
+   markup, this layout's treatment: white card, Fraunces heading, the green
+   the rest of the variant uses. */
+.ft .waitlist-dialog::backdrop{background:rgba(1,66,53,.6)}
+.ft .waitlist-panel{background:#fff;border-radius:var(--ft-r);padding:38px 36px 34px}
+.ft .waitlist-panel h2{
+  font-family:var(--ft-serif);font-weight:400;font-size:clamp(26px,3vw,34px);
+  letter-spacing:-.01em;color:var(--ft-ink);margin:12px 0 14px
+}
+.ft .waitlist-note{color:var(--ft-muted);font-size:16px;margin:0 0 24px;max-width:none}
+.ft .waitlist-close{font-family:var(--ft-sans);color:var(--ft-green)}
+.ft .waitlist-dialog .btn{width:100%;justify-content:center}
 .ft .lbl{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ft-muted);margin-bottom:7px}
 .ft .inp{
   width:100%;border:1px solid rgba(1,66,53,.25);border-radius:var(--ft-r);background:#fff;
@@ -260,6 +277,7 @@ html[data-home-design="fresh_take"] body{
   .ft .svc,
   .ft .memo-grid,
   .ft .connect-grid{grid-template-columns:1fr;gap:38px}
+  .ft .waitlist-panel{padding:32px 22px 28px}
   .ft .pt{order:-1;max-width:400px}
   .ft .plogos{grid-template-columns:repeat(2,1fr)}
   .ft section.pad{padding-block:60px}
@@ -362,9 +380,79 @@ html[data-home-design="fresh_take"] .ft-card-likes.is-liked svg{fill:currentColo
 /* A card with no cover image keeps its top edge tidy. */
 html[data-home-design="fresh_take"] .pcard h2:first-child{margin-top:26px}
 
+/* The memo signup under the list. It is the homepage's signup band, shared
+   with the control design like the cards above it, so each rule has to
+   out-specify its site.css counterpart — the prefix does that. Everything
+   below restates the treatments the fresh-take homepage's own memo form
+   already uses (.memo, .lbl, .inp, .check, .btn), reached through the
+   control's class names because this markup is the control's.
+
+   Scoped to data-page="blog" rather than to .signup-band alone: the homepage
+   carries bands of its own inside #layout-control, and while this arm hides
+   that whole layout, nothing should depend on it staying hidden. */
+html[data-home-design="fresh_take"][data-page="blog"] .signup-band{
+  background:var(--ft-sand);padding:72px 0 80px
+}
+html[data-home-design="fresh_take"][data-page="blog"] .signup-grid{
+  max-width:var(--ft-maxw);gap:56px
+}
+html[data-home-design="fresh_take"][data-page="blog"] .signup-grid h2{
+  font-family:var(--ft-serif);font-weight:400;font-size:clamp(26px,3vw,36px);
+  line-height:1.15;letter-spacing:-.01em;color:var(--ft-ink);margin:0 0 12px
+}
+html[data-home-design="fresh_take"][data-page="blog"] .signup-grid p{
+  font-size:16px;color:var(--ft-muted)
+}
+/* The variant's memo form runs label, field, consent, then a full-width
+   button — the control's runs label, then field and button side by side, with
+   the consent under them. Same markup either way, so the order is done here:
+   the form becomes the flex column, .subrow steps out of the way with
+   display:contents, and its two children take their places in it separately.
+   Every child needs an explicit order, including the .form-status paragraph
+   forms.js appends, or the unnumbered ones collect at the top. */
+html[data-home-design="fresh_take"][data-page="blog"] .signup-grid form{
+  background:#fff;border-radius:var(--ft-r);padding:28px;
+  display:flex;flex-direction:column
+}
+html[data-home-design="fresh_take"][data-page="blog"] .subrow{display:contents}
+html[data-home-design="fresh_take"][data-page="blog"] .field-label{
+  order:0;display:block;font-size:12px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ft-muted);margin-bottom:7px
+}
+html[data-home-design="fresh_take"][data-page="blog"] .line-input{
+  order:1;border:1px solid rgba(1,66,53,.25);border-radius:var(--ft-r);background:#fff;
+  font-size:15px;padding:12px 13px;color:var(--ft-ink)
+}
+html[data-home-design="fresh_take"][data-page="blog"] .line-input:focus{
+  outline:2px solid var(--ft-green-mid);outline-offset:1px;border-color:var(--ft-green)
+}
+html[data-home-design="fresh_take"][data-page="blog"] .consent{
+  order:2;align-items:flex-start;gap:10px;font-size:13px;color:var(--ft-muted);
+  margin:16px 0 18px
+}
+html[data-home-design="fresh_take"][data-page="blog"] .consent input{
+  width:16px;height:16px;margin-top:2px;accent-color:var(--ft-green)
+}
+html[data-home-design="fresh_take"][data-page="blog"] .btn-ghost{
+  order:3;width:100%;background:var(--ft-green);color:#fff;border:0;
+  border-radius:var(--ft-r);font-family:var(--ft-sans);font-size:14px;
+  font-weight:600;padding:14px 26px;transition:background .15s
+}
+html[data-home-design="fresh_take"][data-page="blog"] .btn-ghost:hover{
+  background:var(--ft-green-mid)
+}
+/* .ft .form-status doesn't reach this one — the shared body sits outside both
+   .ft chrome blocks — so the variant's colours are repeated here. */
+html[data-home-design="fresh_take"][data-page="blog"] .form-status{order:4}
+html[data-home-design="fresh_take"][data-page="blog"] .form-status.is-ok{
+  color:var(--ft-green);font-weight:600
+}
+html[data-home-design="fresh_take"][data-page="blog"] .form-status.is-error{color:#8a2b20}
+
 @media (max-width:900px){
   html[data-home-design="fresh_take"] .blog-head{padding-block:44px 0}
   html[data-home-design="fresh_take"] .posts{padding-block:30px 60px}
+  html[data-home-design="fresh_take"][data-page="blog"] .signup-band{padding:52px 0 60px}
 }
 
 /* ---------- post page ----------

@@ -75,7 +75,12 @@ nav.main a:hover{background:#eef4f2}
 /* ---------- hero ---------- */
 .hero{padding-block:52px 40px}
 .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
-.hero h1{font-size:30px;font-weight:700;line-height:1.25;margin:0 0 26px}
+.hero-eyebrow,.signup-kicker{font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--green-mid);margin:0 0 14px}
+.hero h1{font-size:clamp(34px,4.2vw,54px);font-weight:500;line-height:1.12;margin:0 0 20px;color:var(--green-deep)}
+.hero-lede{max-width:54ch;font-size:17px;line-height:1.7;color:#3a4a46;margin:0}
+.hero-actions{display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-top:30px}
+.btn-link{color:var(--green-deep);font-size:14px;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(1,66,53,.35);padding-bottom:2px}
+.btn-link:hover{border-color:var(--green-deep)}
 .field-label{font-size:11px;color:#3b3b3b;margin-bottom:2px}
 .field-label span{color:var(--green-mid)}
 .subrow{display:grid;grid-template-columns:1fr 150px;gap:14px;align-items:end}
@@ -103,7 +108,9 @@ nav.main a:hover{background:#eef4f2}
 .green-card{background:var(--green-mid);color:#fff;padding:44px 46px}
 .script-h{font-family:var(--script);line-height:1;margin:0}
 .green-card .script-h{font-size:56px;text-align:center;margin-bottom:22px}
-.green-card p{font-size:15px;line-height:1.75;margin:0}
+.green-card p{font-size:15px;line-height:1.75;margin:0 0 16px}
+.green-card p:last-child{margin-bottom:0}
+.green-card strong{font-weight:700}
 
 /* ---------- partners ---------- */
 .partners{padding-block:0 64px}
@@ -140,6 +147,42 @@ nav.main a:hover{background:#eef4f2}
 .srow .ico svg{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.1}
 .srow h3{font-size:24px;font-weight:300;line-height:1.3;margin:0;color:#1c1c1c}
 .srow p{margin:0;font-size:14.5px;line-height:1.8;color:#3a3a3a}
+.service-copy{margin:0}
+.service-copy a{display:inline-block;margin-top:12px;color:var(--green-deep);font-size:13.5px;font-weight:700;text-decoration:none}
+.service-copy a:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* ---------- newsletter signup ---------- */
+.signup-band{padding:64px 0}
+.memo-signup{background:#eef4f2}
+.signup-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:64px;align-items:center}
+.signup-grid h2{font-size:clamp(27px,3vw,38px);font-weight:500;line-height:1.2;color:var(--green-deep);margin:0 0 12px}
+.signup-grid p{font-size:15.5px;line-height:1.7;color:#46534f;margin:0;max-width:52ch}
+.signup-grid form{background:#fff;padding:28px}
+.signup-grid .consent{margin:16px 0 20px}
+.signup-input{width:100%;border:1px solid #aebdb8;background:#fff;color:#111;font:inherit;font-size:14px;padding:10px 11px}
+.signup-input:focus{outline:2px solid var(--green-mid);outline-offset:2px}
+.signup-submit{width:100%}
+
+/* ---------- 2027 interest list dialog ----------
+   Closed, the browser's own stylesheet makes a <dialog> display:none, so
+   the panel costs the page nothing until it is asked for and never flashes
+   inline first. base.html's <noscript> turns it back into a static block.
+   Both homepage layouts ship one; the variant restyles it in
+   fresh-take.css. */
+.waitlist-dialog{
+  width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);
+  padding:0;border:0;background:transparent;overflow:auto;color:var(--ink)
+}
+.waitlist-dialog::backdrop{background:rgba(1,66,53,.55)}
+.waitlist-panel{position:relative;background:#f3ece1;padding:40px 42px 36px}
+.waitlist-panel h2{font-size:clamp(25px,3vw,33px);font-weight:500;line-height:1.2;color:var(--green-deep);margin:0 0 12px}
+.waitlist-note{font-size:15px;line-height:1.7;color:#46534f;margin:0 0 26px}
+.waitlist-close{
+  position:absolute;top:8px;right:10px;background:none;border:0;line-height:1;
+  font-family:var(--sans);font-size:26px;color:var(--green-deep);cursor:pointer;padding:6px 11px
+}
+.waitlist-close:hover{opacity:.6}
+.waitlist-dialog :focus-visible{outline:2px solid var(--green-deep);outline-offset:2px}
 
 /* ---------- connect ---------- */
 .connect{background:var(--green-mid);color:#fff;padding:64px 0 76px;margin-top:56px}
@@ -148,9 +191,11 @@ nav.main a:hover{background:#eef4f2}
 form.contact{max-width:420px;margin:0 auto}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .fl{font-size:11px;display:block;margin:0 0 4px}
+.fl span{opacity:.8}
 .box{width:100%;border:0;background:#fff;color:#111;font:inherit;font-size:14px;padding:9px 10px}
 .box:focus{outline:2px solid var(--green-deep);outline-offset:2px}
 textarea.box{height:86px;resize:vertical}
+select.box{appearance:auto}
 .fgrp{margin-bottom:16px}
 .submit{width:100%;background:var(--green-dark);color:#fff;border:0;font-family:var(--sans);font-size:13px;padding:12px;cursor:pointer;margin-top:6px}
 .submit:hover{background:var(--green-deep)}
@@ -290,6 +335,8 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
   nav.main.open{display:flex;order:4;grid-column:1/-1;justify-self:center;flex-wrap:wrap;justify-content:center}
   .burger{display:block;justify-self:end}
   .hero-grid,.whatido-grid{grid-template-columns:1fr;gap:34px}
+  .signup-grid{grid-template-columns:1fr;gap:32px}
+  .waitlist-panel{padding:34px 24px 30px}
   .portrait{order:-1}
   .logos{grid-template-columns:repeat(2,1fr)}
   .srow{grid-template-columns:26px 1fr;gap:16px}

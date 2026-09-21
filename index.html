@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Home | AQ Career Consulting</title>
+<title>Career Programs &amp; Counseling | AQ Career Consulting</title>
 <meta name="description" content="Alina Quintana, National Certified Counselor and Certified Career Counselor in Sacramento, partners with organizations to build career programs that expand opportunity, confidence, and choice.">
 <link rel="canonical" href="https://www.aqcareer.com/">
-<meta property="og:title" content="Home | AQ Career Consulting">
+<meta property="og:title" content="Career Programs &amp; Counseling | AQ Career Consulting">
 <meta property="og:description" content="Alina Quintana, National Certified Counselor and Certified Career Counselor in Sacramento, partners with organizations to build career programs that expand opportunity, confidence, and choice.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.aqcareer.com/">
@@ -16,11 +16,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/site.css?v=7095bce0">
+<link rel="stylesheet" href="assets/css/site.css?v=bb624278">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/fresh-take.css?v=6f24e462">
+<link rel="stylesheet" href="assets/css/fresh-take.css?v=0fa19636">
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="feed.xml">
-<noscript><style>html.exp-pending body{visibility:visible!important}</style></noscript>
+<noscript><style>html.exp-pending body{visibility:visible!important}
+/* No script to open it, so the interest list is laid out in the page
+   instead — the form still posts on its own. See assets/js/waitlist.js. */
+.waitlist-dialog{display:block;position:static;margin:0 auto 56px;width:min(680px,calc(100% - 48px));max-height:none}
+.waitlist-close{display:none}</style></noscript>
 <script>
 /* Fresh-take experiment safety net. Inline on purpose: if analytics.js is
    blocked, errors, or never arrives, the page must still reveal itself.
@@ -115,18 +119,13 @@
   <section class="hero wrap">
     <div class="hero-grid">
       <div>
-        <h1>Receive the 1st Career Disruptor Memo!</h1>
-        <form action="https://script.google.com/macros/s/AKfycbxC5EXbJx7EDBvzaroDulWisOPMlOfTAKjeGnMgUqGQx9dIlSms3xZzcEf1NqkGK64FPg/exec" method="post" id="memo-form" data-form="newsletter" class="amp-block">
-          <input type="hidden" name="form" value="newsletter">
-          <label class="field-label" for="memo-email">Email<span>*</span></label>
-          <div class="subrow">
-            <input class="line-input" id="memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
-            <button class="btn-ghost" type="submit">Subscribe</button>
-          </div>
-          <label class="consent"><input type="checkbox" name="consent" value="yes" required> I want to subscribe to your mailing list.</label>
-          <div class="hp" aria-hidden="true"><label for="memo-website">Website</label><input id="memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        </form>
-        <a class="btn-solid" href="#services" data-cta="hero">Learn how I can support you</a>
+        <p class="hero-eyebrow">National Certified Counselor &middot; Certified Career Counselor</p>
+        <h1>Career programs that honor identity, culture, and values.</h1>
+        <p class="hero-lede">I partner with organizations across Sacramento to build career programs, curriculum, and learning experiences that expand opportunity, confidence, and choice.</p>
+        <div class="hero-actions">
+          <a class="btn-solid" href="#services" data-cta="hero">Explore services</a>
+          <a class="btn-link" href="#connect" data-cta="primary">Discuss a project</a>
+        </div>
       </div>
       <div class="portrait"><img src="assets/img/headshot.webp" alt="Alina Quintana" width="1080" height="1080"></div>
     </div>
@@ -141,8 +140,10 @@
     <div class="whatido-grid">
       <div class="photo-frame"><img src="assets/img/whatido.jpg" alt="Alina Quintana in conversation with a client" width="864" height="720"></div>
       <div class="green-card">
-        <h2 class="script-h">what I do</h2>
-        <p>I help strengthen career support in Sacramento by partnering with organizations to create programs and resources that help people build careers aligned with their lives and values. Through this work, I disrupt outdated pathways to career mobility and expand opportunity, confidence, and choice for our communities. In 2027, I'll open my practice to individuals seeking career guidance that honors identity and culture.</p>
+        <h2 class="script-h">about Alina</h2>
+        <p>I'm Alina Quintana, a National Certified Counselor and Certified Career Counselor based in Sacramento, California.</p>
+        <p>I help organizations create culturally informed career programs and resources that reflect people's identities, lived experiences, and values. My work brings together career development, curriculum design, facilitation, and a commitment to more equitable pathways to mobility.</p>
+        <p><strong>In 2027, I'll open my practice to a limited number of individuals</strong> seeking career guidance that honors identity and culture.</p>
       </div>
     </div>
   </section>
@@ -197,13 +198,32 @@
     </div>
   </section>
 
+  <section class="signup-band memo-signup">
+    <div class="wrap signup-grid">
+      <div>
+        <h2>Receive the Career Disruptor Memo</h2>
+        <p>Occasional notes on career mobility, culture, and building a working life on your own terms.</p>
+      </div>
+      <form action="https://script.google.com/macros/s/AKfycbxC5EXbJx7EDBvzaroDulWisOPMlOfTAKjeGnMgUqGQx9dIlSms3xZzcEf1NqkGK64FPg/exec" method="post" id="memo-form" data-form="newsletter" class="amp-block">
+        <input type="hidden" name="form" value="newsletter">
+        <label class="field-label" for="memo-email">Email address</label>
+        <div class="subrow">
+          <input class="line-input" id="memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
+          <button class="btn-ghost" type="submit">Subscribe</button>
+        </div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
+        <div class="hp" aria-hidden="true"><label for="memo-website">Website</label><input id="memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+      </form>
+    </div>
+  </section>
+
   <section class="services wrap" id="services">
     <h2 class="script-h">services</h2>
 
     <div class="srow">
       <div class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg></div>
       <h3>Career Counseling<br>(Q3 2027 &ndash; Limited Clients)</h3>
-      <p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful. Waitlist opens Q1 of 2027.</p>
+      <div class="service-copy"><p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful.</p><a href="#waitlist" data-waitlist="open">Join the 2027 interest list &rarr;</a></div>
     </div>
 
     <div class="srow">
@@ -225,20 +245,48 @@
     </div>
   </section>
 
+  <!-- The interest list opens as a dialog. A closed <dialog> is display:none
+       in the browser's own stylesheet, so nothing flashes on the page before
+       waitlist.js runs and no class has to hide it first. The <noscript>
+       block in base.html lays it back out as a static block, so a visitor
+       without JavaScript gets the form itself rather than a link to a
+       section that isn't there. -->
+  <dialog class="waitlist-dialog" id="waitlist" aria-labelledby="waitlist-title">
+    <div class="waitlist-panel">
+      <button class="waitlist-close" type="button" data-waitlist="close" aria-label="Close">&times;</button>
+      <p class="signup-kicker">Individual career counseling</p>
+      <h2 id="waitlist-title">Join the 2027 interest list</h2>
+      <p class="waitlist-note">Career counseling is planned to open to a small number of clients in Q3 2027. Join the list for availability and launch updates. Joining does not guarantee an appointment.</p>
+      <form action="https://script.google.com/macros/s/AKfycbxC5EXbJx7EDBvzaroDulWisOPMlOfTAKjeGnMgUqGQx9dIlSms3xZzcEf1NqkGK64FPg/exec" method="post" data-form="waitlist" class="amp-block">
+        <input type="hidden" name="form" value="waitlist">
+        <div class="two">
+          <div class="fgrp"><label class="field-label" for="wait-first">First name</label><input class="signup-input" id="wait-first" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fgrp"><label class="field-label" for="wait-last">Last name</label><input class="signup-input" id="wait-last" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
+        </div>
+        <div class="fgrp"><label class="field-label" for="wait-email">Email address</label><input class="signup-input" id="wait-email" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required> Yes, email me about 2027 career counseling availability.</label>
+        <div class="hp" aria-hidden="true"><label for="wait-website">Website</label><input id="wait-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button class="btn-solid signup-submit" type="submit">Join the interest list</button>
+      </form>
+    </div>
+  </dialog>
+
   <section class="connect" id="connect">
     <div class="wrap">
       <h2 class="script-h">let's connect</h2>
-      <p class="kicker">Take control of your future,<br>reach out today.</p>
+      <p class="kicker">Tell me what you're building<br>and how I can help.</p>
       <form class="contact amp-block" action="https://script.google.com/macros/s/AKfycbxC5EXbJx7EDBvzaroDulWisOPMlOfTAKjeGnMgUqGQx9dIlSms3xZzcEf1NqkGK64FPg/exec" method="post" data-form="contact">
         <input type="hidden" name="form" value="contact">
         <div class="two">
-          <div class="fgrp"><label class="fl" for="fn">First Name</label><input class="box" id="fn" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fgrp"><label class="fl" for="fn">First Name</label><input class="box" id="fn" name="first_name" type="text" required autocomplete="given-name" maxlength="80"></div>
           <div class="fgrp"><label class="fl" for="ln">Last Name</label><input class="box" id="ln" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
         </div>
         <div class="fgrp"><label class="fl" for="cem">Email</label><input class="box" id="cem" name="email" type="email" required autocomplete="email" maxlength="254"></div>
-        <div class="fgrp"><label class="fl" for="cmsg">Write a message</label><textarea class="box" id="cmsg" name="message" maxlength="4000"></textarea></div>
+        <div class="fgrp"><label class="fl" for="corg">Organization <span>(optional)</span></label><input class="box" id="corg" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
+        <div class="fgrp"><label class="fl" for="cinterest">I'm interested in</label><select class="box" id="cinterest" name="inquiry_type" required><option value="">Choose one</option><option value="Curriculum contract">Curriculum contract</option><option value="Workshop">Workshop</option><option value="Speaking">Speaking</option><option value="Partnership or other project">Partnership or other project</option><option value="Individual counseling question">Individual counseling question</option></select></div>
+        <div class="fgrp"><label class="fl" for="cmsg">How can I help?</label><textarea class="box" id="cmsg" name="message" required maxlength="4000"></textarea></div>
         <div class="hp" aria-hidden="true"><label for="c-website">Website</label><input id="c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        <button class="submit" type="submit">Submit</button>
+        <button class="submit" type="submit">Send inquiry</button>
       </form>
     </div>
   </section>
@@ -312,12 +360,12 @@
   <section class="hero wrap">
     <div class="hero-grid">
       <div>
-        <p class="eyebrow">Career Counselor &middot; Sacramento, CA</p>
-        <h1>Careers that honor <em>identity, culture,</em> and values.</h1>
-        <p class="lede">I partner with organizations across Sacramento to build career programs that expand opportunity, confidence, and choice — and to disrupt outdated pathways to mobility.</p>
+        <p class="eyebrow">National Certified Counselor &middot; Certified Career Counselor</p>
+        <h1>Career programs that honor <em>identity, culture,</em> and values.</h1>
+        <p class="lede">I partner with organizations across Sacramento to build career programs, curriculum, and learning experiences that expand opportunity, confidence, and choice.</p>
         <div class="cta">
-          <a class="btn" href="#ft-services" data-cta="hero">Learn how I can support you &rarr;</a>
-          <a class="btn-text" href="#ft-connect" data-cta="primary">Book a conversation</a>
+          <a class="btn" href="#ft-services" data-cta="hero">Explore services &rarr;</a>
+          <a class="btn-text" href="#ft-connect" data-cta="primary">Discuss a project</a>
         </div>
       </div>
       <!-- The portrait's backdrop circle is part of the image and its corners
@@ -341,10 +389,10 @@
     <div class="about-grid">
       <img src="assets/img/whatido.jpg" alt="Alina working with a client">
       <div class="about-body">
-        <h2>What I do</h2>
-        <p>I help strengthen career support in Sacramento by partnering with organizations to create programs and resources that help people build careers aligned with their lives and values.</p>
-        <p>Through this work, I disrupt outdated pathways to career mobility and expand opportunity, confidence, and choice for our communities.</p>
-        <p><strong>In 2027, I'll open my practice to individuals</strong> seeking career guidance that honors identity and culture.</p>
+        <h2>About Alina</h2>
+        <p>I'm Alina Quintana, a National Certified Counselor and Certified Career Counselor based in Sacramento, California.</p>
+        <p>I help organizations create culturally informed career programs and resources that reflect people's identities, lived experiences, and values. My work brings together career development, curriculum design, facilitation, and a commitment to more equitable pathways to mobility.</p>
+        <p><strong>In 2027, I'll open my practice to a limited number of individuals</strong> seeking career guidance that honors identity and culture.</p>
       </div>
     </div>
   </section>
@@ -358,7 +406,8 @@
         <div class="num">01</div>
         <span class="pill">Q3 2027 &middot; Limited Clients</span>
         <h3>Career Counseling</h3>
-        <p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful. Waitlist opens Q1 of 2027.</p>
+        <p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful.</p>
+        <a class="card-link" href="#ft-waitlist" data-waitlist="open">Join the 2027 interest list &rarr;</a>
       </div>
       <div class="card">
         <div class="num">02</div>
@@ -377,6 +426,30 @@
       </div>
     </div>
   </section>
+
+  <!-- The interest list opens as a dialog; see the control layout's copy of
+       this for why it is a <dialog> in the markup rather than a section that
+       script hides. It stays inside this .ft block so the variant's own type
+       and colour reach it. -->
+  <dialog class="waitlist-dialog" id="ft-waitlist" aria-labelledby="ft-waitlist-title">
+    <div class="waitlist-panel">
+      <button class="waitlist-close" type="button" data-waitlist="close" aria-label="Close">&times;</button>
+      <p class="eyebrow">Individual career counseling</p>
+      <h2 id="ft-waitlist-title">Join the 2027 interest list</h2>
+      <p class="waitlist-note">Career counseling is planned to open to a small number of clients in Q3 2027. Join the list for availability and launch updates. Joining does not guarantee an appointment.</p>
+      <form action="https://script.google.com/macros/s/AKfycbxC5EXbJx7EDBvzaroDulWisOPMlOfTAKjeGnMgUqGQx9dIlSms3xZzcEf1NqkGK64FPg/exec" method="post" data-form="waitlist" class="amp-block">
+        <input type="hidden" name="form" value="waitlist">
+        <div class="two">
+          <div class="fr"><label class="lbl" for="ft-wait-first">First name</label><input class="inp" id="ft-wait-first" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fr"><label class="lbl" for="ft-wait-last">Last name</label><input class="inp" id="ft-wait-last" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
+        </div>
+        <div class="fr"><label class="lbl" for="ft-wait-email">Email address</label><input class="inp" id="ft-wait-email" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, email me about 2027 career counseling availability.</label>
+        <div class="hp" aria-hidden="true"><label for="ft-wait-website">Website</label><input id="ft-wait-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button class="btn" type="submit">Join the interest list</button>
+      </form>
+    </div>
+  </dialog>
 
   <section class="partners pad">
     <div class="wrap">
@@ -436,13 +509,14 @@
   <section class="memo pad">
     <div class="wrap memo-grid">
       <div>
-        <h2>Receive the 1st Career Disruptor Memo!</h2>
+        <h2>Receive the Career Disruptor Memo</h2>
+        <p>Occasional notes on career mobility, culture, and building a working life on your own terms.</p>
       </div>
       <form action="https://script.google.com/macros/s/AKfycbxC5EXbJx7EDBvzaroDulWisOPMlOfTAKjeGnMgUqGQx9dIlSms3xZzcEf1NqkGK64FPg/exec" method="post" id="ft-memo-form" data-form="newsletter" class="amp-block">
         <input type="hidden" name="form" value="newsletter">
-        <label class="lbl" for="ft-memo-email">Email</label>
+        <label class="lbl" for="ft-memo-email">Email address</label>
         <input class="inp" id="ft-memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
-        <label class="check"><input type="checkbox" name="consent" value="yes" required> I want to subscribe to your mailing list.</label>
+        <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
         <div class="hp" aria-hidden="true"><label for="ft-memo-website">Website</label><input id="ft-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="btn" type="submit" style="width:100%;justify-content:center">Subscribe</button>
       </form>
@@ -453,18 +527,20 @@
     <div class="connect-grid">
       <div>
         <h2 style="font-size:clamp(28px,3.2vw,40px);margin:12px 0 14px">Let's connect</h2>
-        <p class="lede">Take control of your future, reach out today.</p>
+        <p class="lede">Tell me what you're building and how I can help.</p>
       </div>
       <form class="amp-block" action="https://script.google.com/macros/s/AKfycbxC5EXbJx7EDBvzaroDulWisOPMlOfTAKjeGnMgUqGQx9dIlSms3xZzcEf1NqkGK64FPg/exec" method="post" data-form="contact">
         <input type="hidden" name="form" value="contact">
         <div class="two">
-          <div class="fr"><label class="lbl" for="ft-fn">First Name</label><input class="inp" id="ft-fn" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fr"><label class="lbl" for="ft-fn">First Name</label><input class="inp" id="ft-fn" name="first_name" type="text" required autocomplete="given-name" maxlength="80"></div>
           <div class="fr"><label class="lbl" for="ft-ln">Last Name</label><input class="inp" id="ft-ln" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
         </div>
         <div class="fr"><label class="lbl" for="ft-em">Email</label><input class="inp" id="ft-em" name="email" type="email" required autocomplete="email" maxlength="254"></div>
-        <div class="fr"><label class="lbl" for="ft-msg">Write a message</label><textarea class="inp" id="ft-msg" name="message" maxlength="4000"></textarea></div>
+        <div class="fr"><label class="lbl" for="ft-org">Organization <span>(optional)</span></label><input class="inp" id="ft-org" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
+        <div class="fr"><label class="lbl" for="ft-interest">I'm interested in</label><select class="inp" id="ft-interest" name="inquiry_type" required><option value="">Choose one</option><option value="Curriculum contract">Curriculum contract</option><option value="Workshop">Workshop</option><option value="Speaking">Speaking</option><option value="Partnership or other project">Partnership or other project</option><option value="Individual counseling question">Individual counseling question</option></select></div>
+        <div class="fr"><label class="lbl" for="ft-msg">How can I help?</label><textarea class="inp" id="ft-msg" name="message" required maxlength="4000"></textarea></div>
         <div class="hp" aria-hidden="true"><label for="ft-c-website">Website</label><input id="ft-c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        <button class="btn" type="submit">Submit</button>
+        <button class="btn" type="submit">Send inquiry</button>
       </form>
     </div>
   </section>
@@ -517,7 +593,7 @@
 </div>
 
 <script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
-<script src="assets/js/analytics.js?v=70c105ca"></script>
+<script src="assets/js/analytics.js?v=e9a0299c"></script>
 <script>
 /* Every carousel on the page, not just the first: the homepage carries both
    experiment layouts in one document, so each arm has its own and each needs
@@ -630,6 +706,7 @@
   schedule();
 })();
 </script>
-<script src="assets/js/forms.js?v=8717d890"></script>
+<script src="assets/js/forms.js?v=d44575a4"></script>
+<script src="assets/js/waitlist.js?v=73d7ea87"></script>
 </body>
 </html>
