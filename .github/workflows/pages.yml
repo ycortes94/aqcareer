@@ -1,0 +1,50 @@
+# Publish the site to GitHub Pages whenever main changes.
+#
+# Pages is set to "GitHub Actions" as its source (Settings -> Pages), which
+# means nothing reaches the web unless a workflow puts it there. This is that
+# workflow. Without it, merging a pull request changes main and nothing else.
+#
+# There is no build step on purpose. The generated files — index.html, blog/,
+# post/<slug>/, feed.xml, sitemap.xml — are committed, so what this uploads is
+# what tools/build.py produced when the change was made. Rebuild locally and
+# commit the result, the way the README describes.
+#
+# Run it by hand with Actions -> Deploy to GitHub Pages -> Run workflow.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Read the repository, write the deployment, and let Pages verify the
+# deployment came from this run.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. Merges tend to land in bursts, and a half-finished
+# deploy should never be overwritten mid-flight.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package the site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
