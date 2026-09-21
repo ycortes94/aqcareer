@@ -385,6 +385,7 @@ without anyone remembering to wire it up:
 | `nav_label` | `Services & Products` | The visible text. Reads well, but changes when the wording does. |
 | `nav_location` | `header` / `footer` | Derived from the nearest `<header>`/`<footer>`, not a second attribute to keep in sync. |
 | `homepage_design` | `fresh_take` | On every event above. Omitted on pages outside the experiment — privacy, 404 — rather than guessed. |
+| `labs_pinned` | `true` | Only present when a Labs layout is pinned; absent for every real visitor. Exclude it when charting. |
 
 Only site navigation carries `data-nav`: home, about, services, blog,
 connect, privacy. Social and external links are left out — they are
@@ -408,8 +409,9 @@ Three things to know before charting any of it:
   every unnamed control, so chart it broken down by `element_text` or
   `element_id` rather than as a total. Anything worth watching on its own
   deserves its own event — add it above the catch-all in `onClick()`.
-- **A pinned Labs layout logs nothing**, the same as a pinned pageview. Turn
-  Labs off with `?labs=0` to watch clicks fire.
+- **A pinned Labs layout carries `labs_pinned: true`.** Those clicks are
+  someone checking a layout, so exclude them from anything meant to describe
+  real visitors. Statsig gets none of them.
 
 The handler is delegated from `document`, not bound per node, so it covers
 both chromes (the homepage ships each nav twice, one hidden by CSS), pages
@@ -444,7 +446,32 @@ outgoing payload to confirm what actually left the browser.
 | The like button | `post_liked` only |
 | "Tracking choice" and the consent buttons | nothing, as intended |
 | Fires on the privacy page, which never runs the experiment | yes, with `homepage_design` absent |
-| Suppressed while a Labs layout is pinned | yes |
+| Suppressed while a Labs layout is pinned | no longer — see below |
+
+#### Verified, 2026-09-21 — the fresh-take chrome and pinned sessions
+
+The fresh-take arm had never logged a single event, and the reason was not the
+tracking: `homepage_fresh_take` is **`assignment_stopped`** in Statsig, so
+`getExperiment()` answers `ruleID: assignmentPaused` with no
+`homepage_design` parameter at all and every visitor falls back to the
+`control` default. Nobody has been served the variant, so nothing could have
+reported it. The instrumentation was fine and had no traffic.
+
+Checked against the real project from `?design=fresh_take` on the local build:
+
+| Checked | Result |
+|---|---|
+| Fresh-take carousel arrow | `element_clicked`, `homepage_design: fresh_take`, `labs_pinned: true` |
+| Fresh-take header nav | `nav_link_clicked`, `nav_item: services`, `nav_location: header` |
+| All three fresh-take CTAs | `hero_cta_clicked` and `cta_clicked`; the Connect link also `nav_link_clicked`, the documented overlap |
+| Newsletter submit | `form_submitted`, `form: newsletter`, `labs_pinned: true` |
+| What Statsig received from any of it | nothing — `logEvent` wrapped and never called |
+| `labs_pinned` arriving in the project | yes, on `home_viewed`, `element_clicked`, `nav_link_clicked`, `cta_clicked`, `hero_cta_clicked`, `form_submitted` |
+
+The homepage ships both newsletter forms — `#memo-form` for the control and
+`#ft-memo-form` for the variant — so a submit test that reaches for
+`#memo-form` on a fresh-take page drives the hidden one and appears to log
+nothing. Target the visible form.
 
 ### Likes
 
@@ -574,8 +601,9 @@ It is invisible rather than secret, though: anyone who works out `?labs=1` can
 switch it on for their own browser. That reveals nothing they couldn't already
 get — both layouts ship in the homepage HTML either way, so the variant is
 readable from the page source or reachable by editing `data-home-design` in
-devtools — and because a pinned pageview logs nothing, someone doing it cannot
-disturb the experiment's results.
+devtools — and because a pinned session is kept out of Statsig altogether and
+stamped `labs_pinned` in Amplitude, someone doing it cannot disturb the
+experiment's results.
 
 ### Getting the disclaimer back
 
@@ -598,15 +626,31 @@ The work is `window.aqConsent.reset()` in `analytics.js`, not in the panel:
 the right thing instead of silently clearing a key nobody uses any more. That
 same call is the way to do it from the console.
 
-**A pinned pageview records nothing.** `analytics.js` returns before it asks
-Statsig for an assignment — asking would log an exposure for a variant nobody
-was really bucketed into — and it logs no `home_viewed`, `blog_viewed`,
-`post_viewed` either, nor any click event: `element_clicked`,
-`nav_link_clicked`, `post_card_clicked`, the CTAs, `form_submitted` and the
-form conversions are all suppressed. A like still saves, since that is local state rather than
-experiment data, but logs nothing.
-So Labs is for looking at layouts, never for checking that tracking fires. To
-test tracking, turn Labs off with `?labs=0` and let the real assignment run.
+### A pinned session logs, and says so
+
+**Statsig sees nothing from a pinned pageview.** `analytics.js` returns before
+it asks for an assignment — asking would log an exposure for a variant nobody
+was really bucketed into — and `logEvent()` skips the Pulse conversions
+entirely while pinned, so the experiment's scorecards cannot be moved by
+someone looking at a layout.
+
+**Amplitude does see it, stamped `labs_pinned: true`.** Pinned sessions used
+to log nothing at all, and that made the panel useless for the one question
+people kept asking of it — *does the fresh-take markup fire anything?* The
+only way to see that layout is to pin it, and pinning switched the logging
+off, so the honest answer looked identical to a bug. Now the events arrive
+and can be watched landing in the Amplitude Event Explorer while a layout is
+being built.
+
+The cost is that `labs_pinned` has to be excluded anywhere real visitors are
+being counted. It is on every event from a pinned session — the `_viewed`
+events, every click event, `form_submitted` and the form conversions — so one
+filter covers all of them.
+
+`homepage_design` on those events is the pinned design, not the arm this
+pageview started in. Pinning is an attribute flip with no reload, so
+`designNow()` reads the pin first; without that a click made after pinning
+fresh take reported `control`.
 
 ## Do Not Track / Global Privacy Control
 
