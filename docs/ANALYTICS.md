@@ -87,15 +87,15 @@ the remote setting alone — there are two layers, and either one would cover
 the forms by itself:
 
 1. **`mask_forms: true`** (the default) makes the build add the
-   **`amp-block`** class to both `<form>` elements. `amp-block` is read from
+   **`amp-block`** class to every `<form>` element. `amp-block` is read from
    the markup, so it replaces each form with a blank placeholder in the
    recording and a remote config change cannot switch it off. Trade-off: the
    form area shows as an empty box in replays. The analytics events
    (form start / form submit) are unaffected, so conversion is still
    measurable.
 2. The project's own `defaultMaskLevel`, now `medium`, which also covers any
-   text input added outside the two forms. This is the setting that wins if
-   the two ever disagree, so re-check it before relying on it — it lives
+   text input added outside the forms. This is the setting that wins if
+   the layers ever disagree, so re-check it before relying on it — it lives
    under *Settings → Organizational Settings → Session Replay Settings*.
 
 Setting `mask_forms: false` removes the class and the selectors, leaving the
@@ -262,11 +262,12 @@ custom event.
 | Variant breakdown in Amplitude charts | **Statsig → Amplitude integration: exposures only** |
 
 **Pulse events (also sent to Amplitude):** `hero_cta_clicked`,
-`cta_clicked`, `connect_form_submitted`, `newsletter_subscribed`.
+`cta_clicked`, `connect_form_submitted`, `newsletter_subscribed`,
+`waitlist_joined`.
 
 **Amplitude only:** `home_viewed` / `blog_viewed` / `post_viewed`,
 `element_clicked`, `nav_link_clicked`, `post_card_clicked`, `form_submitted`,
-`post_liked` / `post_unliked`, plus Amplitude autocapture.
+`waitlist_opened`, `post_liked` / `post_unliked`, plus Amplitude autocapture.
 
 **Identity:** Statsig initializes first; Amplitude then inits with
 `deviceId` set to Statsig's `stableID`, so forwarded exposures join the same
@@ -313,10 +314,27 @@ downloads, web vitals), these are logged by hand. Every one carries
 | `post_card_clicked` | a card on the blog index | `post` (the slug), `post_title`, `card_position` | Amplitude |
 | `hero_cta_clicked` | `[data-cta="hero"]` | | Amplitude + Statsig (Pulse) |
 | `cta_clicked` | `[data-cta="primary"]` | | Amplitude + Statsig (Pulse) |
-| `form_submitted` | either form, on a submit the browser accepted | `form` (`contact` / `newsletter`) | Amplitude |
-| `connect_form_submitted` | contact form, on success | | Amplitude + Statsig (Pulse) |
-| `newsletter_subscribed` | memo form, on success | | Amplitude + Statsig (Pulse) |
+| `waitlist_opened` | the 2027 interest list dialog, when it opens | `source` (`link` / `hash`), `page` | Amplitude |
+| `form_submitted` | any form, on a submit the browser accepted | `form` (`contact` / `newsletter` / `waitlist`), `page` | Amplitude |
+| `connect_form_submitted` | contact form, on success | `page` | Amplitude + Statsig (Pulse) |
+| `newsletter_subscribed` | either memo form, on success | `page` | Amplitude + Statsig (Pulse) |
+| `waitlist_joined` | 2027 counseling interest form, on success | `page` | Amplitude + Statsig (Pulse) |
 | `post_liked` / `post_unliked` | the like button | `post` (the slug) | Amplitude |
+
+**The memo signup is on two pages, and `page` is how you tell them apart.**
+It sits on the home page and again at the foot of the blog index, both
+posting to the same list, both logging `newsletter_subscribed`. `page` is
+`home` or `blog`, derived from `data-page` on `<html>` exactly as
+`element_clicked`'s is, so the conversion can be read per surface or as one
+total.
+
+Worth knowing before reading the experiment: `newsletter_subscribed` is a
+Pulse conversion, so the blog index is now a **second way for an exposed
+visitor to convert** on that metric. Someone who saw the homepage, went to
+the blog and subscribed there counts. That is a genuine conversion rather
+than a measurement error, but it means the metric changed meaning on the day
+the blog form shipped — compare periods across that date with care, and split
+by `page` if you want the homepage-only number the earlier data represents.
 
 Through 2026-09-18 every hand-logged event went to both SDKs, and Statsig
 autocapture was on. That, plus the Statsig → Amplitude integration, duplicated
@@ -467,6 +485,10 @@ Checked against the real project from `?design=fresh_take` on the local build:
 | Newsletter submit | `form_submitted`, `form: newsletter`, `labs_pinned: true` |
 | What Statsig received from any of it | nothing — `logEvent` wrapped and never called |
 | `labs_pinned` arriving in the project | yes, on `home_viewed`, `element_clicked`, `nav_link_clicked`, `cta_clicked`, `hero_cta_clicked`, `form_submitted` |
+
+The blog index has a memo form of its own, `#blog-memo-form`. Only one copy
+of it ships, restyled per design rather than duplicated, so there is no
+hidden twin to catch you out there.
 
 The homepage ships both newsletter forms — `#memo-form` for the control and
 `#ft-memo-form` for the variant — so a submit test that reaches for

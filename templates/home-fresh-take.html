@@ -13,12 +13,12 @@
   <section class="hero wrap">
     <div class="hero-grid">
       <div>
-        <p class="eyebrow">Career Counselor &middot; Sacramento, CA</p>
-        <h1>Careers that honor <em>identity, culture,</em> and values.</h1>
-        <p class="lede">I partner with organizations across Sacramento to build career programs that expand opportunity, confidence, and choice — and to disrupt outdated pathways to mobility.</p>
+        <p class="eyebrow">National Certified Counselor &middot; Certified Career Counselor</p>
+        <h1>Career programs that honor <em>identity, culture,</em> and values.</h1>
+        <p class="lede">I partner with organizations across Sacramento to build career programs, curriculum, and learning experiences that expand opportunity, confidence, and choice.</p>
         <div class="cta">
-          <a class="btn" href="{{base}}#ft-services" data-cta="hero">Learn how I can support you &rarr;</a>
-          <a class="btn-text" href="{{base}}#ft-connect" data-cta="primary">Book a conversation</a>
+          <a class="btn" href="{{base}}#ft-services" data-cta="hero">Explore services &rarr;</a>
+          <a class="btn-text" href="{{base}}#ft-connect" data-cta="primary">Discuss a project</a>
         </div>
       </div>
       <!-- The portrait's backdrop circle is part of the image and its corners
@@ -42,10 +42,10 @@
     <div class="about-grid">
       <img src="{{base}}assets/img/whatido.jpg" alt="Alina working with a client">
       <div class="about-body">
-        <h2>What I do</h2>
-        <p>I help strengthen career support in Sacramento by partnering with organizations to create programs and resources that help people build careers aligned with their lives and values.</p>
-        <p>Through this work, I disrupt outdated pathways to career mobility and expand opportunity, confidence, and choice for our communities.</p>
-        <p><strong>In 2027, I'll open my practice to individuals</strong> seeking career guidance that honors identity and culture.</p>
+        <h2>About Alina</h2>
+        <p>I'm Alina Quintana, a National Certified Counselor and Certified Career Counselor based in Sacramento, California.</p>
+        <p>I help organizations create culturally informed career programs and resources that reflect people's identities, lived experiences, and values. My work brings together career development, curriculum design, facilitation, and a commitment to more equitable pathways to mobility.</p>
+        <p><strong>In 2027, I'll open my practice to a limited number of individuals</strong> seeking career guidance that honors identity and culture.</p>
       </div>
     </div>
   </section>
@@ -59,7 +59,8 @@
         <div class="num">01</div>
         <span class="pill">Q3 2027 &middot; Limited Clients</span>
         <h3>Career Counseling</h3>
-        <p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful. Waitlist opens Q1 of 2027.</p>
+        <p>Beginning in Q3 of 2027, I will open my practice to a small number of individual clients seeking career guidance that honors identity, culture, lived experience, and values. This work supports people in making intentional decisions, building agency, and shaping futures that feel aligned and meaningful.</p>
+        <a class="card-link" href="#ft-waitlist" data-waitlist="open">Join the 2027 interest list &rarr;</a>
       </div>
       <div class="card">
         <div class="num">02</div>
@@ -78,6 +79,30 @@
       </div>
     </div>
   </section>
+
+  <!-- The interest list opens as a dialog; see the control layout's copy of
+       this for why it is a <dialog> in the markup rather than a section that
+       script hides. It stays inside this .ft block so the variant's own type
+       and colour reach it. -->
+  <dialog class="waitlist-dialog" id="ft-waitlist" aria-labelledby="ft-waitlist-title">
+    <div class="waitlist-panel">
+      <button class="waitlist-close" type="button" data-waitlist="close" aria-label="Close">&times;</button>
+      <p class="eyebrow">Individual career counseling</p>
+      <h2 id="ft-waitlist-title">Join the 2027 interest list</h2>
+      <p class="waitlist-note">Career counseling is planned to open to a small number of clients in Q3 2027. Join the list for availability and launch updates. Joining does not guarantee an appointment.</p>
+      <form action="{{form_endpoint}}" method="post" data-form="waitlist" class="{{form_privacy_class}}">
+        <input type="hidden" name="form" value="waitlist">
+        <div class="two">
+          <div class="fr"><label class="lbl" for="ft-wait-first">First name</label><input class="inp" id="ft-wait-first" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fr"><label class="lbl" for="ft-wait-last">Last name</label><input class="inp" id="ft-wait-last" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
+        </div>
+        <div class="fr"><label class="lbl" for="ft-wait-email">Email address</label><input class="inp" id="ft-wait-email" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, email me about 2027 career counseling availability.</label>
+        <div class="hp" aria-hidden="true"><label for="ft-wait-website">Website</label><input id="ft-wait-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button class="btn" type="submit">Join the interest list</button>
+      </form>
+    </div>
+  </dialog>
 
   <section class="partners pad">
     <div class="wrap">
@@ -109,13 +134,14 @@
   <section class="memo pad">
     <div class="wrap memo-grid">
       <div>
-        <h2>Receive the 1st Career Disruptor Memo!</h2>
+        <h2>Receive the Career Disruptor Memo</h2>
+        <p>Occasional notes on career mobility, culture, and building a working life on your own terms.</p>
       </div>
       <form action="{{form_endpoint}}" method="post" id="ft-memo-form" data-form="newsletter" class="{{form_privacy_class}}">
         <input type="hidden" name="form" value="newsletter">
-        <label class="lbl" for="ft-memo-email">Email</label>
+        <label class="lbl" for="ft-memo-email">Email address</label>
         <input class="inp" id="ft-memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
-        <label class="check"><input type="checkbox" name="consent" value="yes" required> I want to subscribe to your mailing list.</label>
+        <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
         <div class="hp" aria-hidden="true"><label for="ft-memo-website">Website</label><input id="ft-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
         <button class="btn" type="submit" style="width:100%;justify-content:center">Subscribe</button>
       </form>
@@ -126,18 +152,20 @@
     <div class="connect-grid">
       <div>
         <h2 style="font-size:clamp(28px,3.2vw,40px);margin:12px 0 14px">Let's connect</h2>
-        <p class="lede">Take control of your future, reach out today.</p>
+        <p class="lede">Tell me what you're building and how I can help.</p>
       </div>
       <form class="{{form_privacy_class}}" action="{{form_endpoint}}" method="post" data-form="contact">
         <input type="hidden" name="form" value="contact">
         <div class="two">
-          <div class="fr"><label class="lbl" for="ft-fn">First Name</label><input class="inp" id="ft-fn" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fr"><label class="lbl" for="ft-fn">First Name</label><input class="inp" id="ft-fn" name="first_name" type="text" required autocomplete="given-name" maxlength="80"></div>
           <div class="fr"><label class="lbl" for="ft-ln">Last Name</label><input class="inp" id="ft-ln" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
         </div>
         <div class="fr"><label class="lbl" for="ft-em">Email</label><input class="inp" id="ft-em" name="email" type="email" required autocomplete="email" maxlength="254"></div>
-        <div class="fr"><label class="lbl" for="ft-msg">Write a message</label><textarea class="inp" id="ft-msg" name="message" maxlength="4000"></textarea></div>
+        <div class="fr"><label class="lbl" for="ft-org">Organization <span>(optional)</span></label><input class="inp" id="ft-org" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
+        <div class="fr"><label class="lbl" for="ft-interest">I'm interested in</label><select class="inp" id="ft-interest" name="inquiry_type" required><option value="">Choose one</option><option value="Curriculum contract">Curriculum contract</option><option value="Workshop">Workshop</option><option value="Speaking">Speaking</option><option value="Partnership or other project">Partnership or other project</option><option value="Individual counseling question">Individual counseling question</option></select></div>
+        <div class="fr"><label class="lbl" for="ft-msg">How can I help?</label><textarea class="inp" id="ft-msg" name="message" required maxlength="4000"></textarea></div>
         <div class="hp" aria-hidden="true"><label for="ft-c-website">Website</label><input id="ft-c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-        <button class="btn" type="submit">Submit</button>
+        <button class="btn" type="submit">Send inquiry</button>
       </form>
     </div>
   </section>
