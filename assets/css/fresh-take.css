@@ -42,7 +42,7 @@ html[data-home-design="fresh_take"] body{
   font-weight:350;
   line-height:1.65;
 }
-.ft img{max-width:100%;display:block}
+.ft img{max-width:100%;height:auto;display:block}
 .ft h1,.ft h2,.ft h3{
   font-family:var(--ft-serif);font-weight:400;line-height:1.1;margin:0;letter-spacing:-.01em
 }
@@ -401,17 +401,21 @@ html[data-home-design="fresh_take"] .post-head .byline{
 }
 
 /* The hero portrait's treatment: a sand rectangle offset behind the image.
-   .post-cover is a .wrap, so the block is inset rather than bled off the
-   page edge — at full width the offset would sit under the scrollbar. */
+   It sits on .cover, the frame the build sizes to the image, rather than on
+   .post-cover, which is as wide as the column: behind a cover narrower than
+   that — a book jacket, a logo — a full-width block stuck out either side
+   of the image it was meant to back. Offsets are percentages for the same
+   reason, so the block keeps its proportions at any cover's width. */
 html[data-home-design="fresh_take"] .post-cover{
-  position:relative;margin:40px auto 0;max-width:var(--ft-maxw)
+  margin:40px auto 0;max-width:var(--ft-maxw)
 }
-html[data-home-design="fresh_take"] .post-cover::before{
-  content:"";position:absolute;inset:auto 8px -18px 46px;height:60%;
+html[data-home-design="fresh_take"] .post-cover .cover{position:relative}
+html[data-home-design="fresh_take"] .post-cover .cover::before{
+  content:"";position:absolute;inset:auto 3% -18px 11%;height:60%;
   background:var(--ft-sand);border-radius:var(--ft-r)
 }
 html[data-home-design="fresh_take"] .post-cover img{
-  position:relative;border-radius:var(--ft-r);aspect-ratio:16/8.4
+  position:relative;border-radius:var(--ft-r)
 }
 
 html[data-home-design="fresh_take"] .post-body{
@@ -485,5 +489,5 @@ html[data-home-design="fresh_take"] .post-nav a:hover{
 @media (max-width:900px){
   html[data-home-design="fresh_take"] .post-head{padding-block:40px 0}
   html[data-home-design="fresh_take"] .post-body{font-size:16.5px}
-  html[data-home-design="fresh_take"] .post-cover::before{inset:auto 6px -12px 26px}
+  html[data-home-design="fresh_take"] .post-cover .cover::before{inset:auto 3% -12px 9%}
 }

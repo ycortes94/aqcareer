@@ -42,7 +42,11 @@ html[data-home-design="fresh_take"] .ft-only{display:block}
    otherwise outrank the browser's [hidden]{display:none}, showing the like
    bar before likes.js has decided it can work at all. */
 html[data-home-design="fresh_take"] .ft-only[hidden]{display:none}
-img{max-width:100%;display:block}
+/* height:auto matters now that the build stamps intrinsic width and height
+   on the post images: those attributes are presentational hints, so without
+   it an image narrowed by max-width keeps its full pixel height and comes
+   out stretched. */
+img{max-width:100%;height:auto;display:block}
 a{color:inherit}
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
 .skip{position:absolute;left:-9999px}
@@ -193,8 +197,19 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
 .post-head .pmeta{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--green-mid)}
 .post-head h1{font-size:clamp(28px,4vw,40px);font-weight:400;line-height:1.2;margin:16px 0 18px;color:#111}
 .post-head .byline{font-size:13px;color:#555}
-.post-cover{margin:34px 0 8px}
-.post-cover img{width:100%;aspect-ratio:16/9;object-fit:cover}
+/* auto, not 0: .wrap centres itself and this rule was overriding that, so
+   the cover sat against the left of the page while the article below it was
+   centred. Invisible while the image was stretched the full width. */
+.post-cover{margin:34px auto 8px}
+/* The covers are a mixed bag — 1600px photographs, a 250px book jacket, a
+   squat logo. width:100% with a 16:9 crop blew the small ones up across the
+   column, blurry, with a face sliced in half. The frame instead carries the
+   largest size the image can actually fill, written by the build as
+   --cover-w, and the image fills the frame: nothing is ever enlarged and
+   nothing is cropped. Absent the variable — an image the build couldn't
+   read — it falls back to the column width, which is where it started. */
+.post-cover .cover{margin-inline:auto;max-width:min(100%,var(--cover-w,100%))}
+.post-cover img{width:100%}
 .post-body{padding-block:26px 44px;font-size:16.5px;line-height:1.85;color:#232323}
 .post-body p{margin:0 0 20px}
 .post-body h2{font-size:24px;font-weight:400;line-height:1.3;margin:38px 0 14px;color:#111}
@@ -204,7 +219,9 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
 .post-body a{color:var(--green-deep);text-decoration:underline;text-underline-offset:2px}
 .post-body strong{font-weight:700}
 .post-body figure{margin:28px 0}
-.post-body figure img{width:100%}
+/* Same as the cover: an image smaller than the column stays its own size
+   and centres, rather than being stretched to fit. */
+.post-body figure img{width:auto;max-width:100%;margin-inline:auto}
 .post-body figcaption{font-size:13px;color:#666;margin-top:8px;text-align:center}
 .post-body blockquote{margin:28px 0;padding-left:20px;border-left:3px solid var(--green-mid);color:#3a3a3a;font-style:italic}
 .post-nav{border-top:1px solid #e2e2e2;padding-block:26px 64px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:14px}
