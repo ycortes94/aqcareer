@@ -6,12 +6,12 @@
  * to maintain and no new service to sign up for.
  *
  * ---------------------------------------------------------------------------
- * IMPORTANT — DO NOT PUT THE EMAIL ADDRESS IN THIS FILE.
+ * IMPORTANT — DO NOT PUT THE EMAIL ADDRESS OR THE TURNSTILE SECRET IN THIS FILE.
  * This file lives in a PUBLIC GitHub repository. Anything written here is
  * visible to anyone, and scraped by spam bots.
  *
- * The address is set once inside the Apps Script editor instead, as a Script
- * Property. Setup instructions: docs/FORMS.md
+ * The address and the Turnstile secret are set once inside the Apps Script
+ * editor instead, as Script Properties. Setup instructions: docs/FORMS.md
  * ---------------------------------------------------------------------------
  */
 
@@ -86,6 +86,10 @@ function doPost(e) {
     var timing = timingError_(p.loaded_at);
     if (timing) {
       return ok({ ok: false, error: timing });
+    }
+
+    if (!turnstileOk_(p.turnstile_token)) {
+      return ok({ ok: false, error: 'bot' });
     }
 
     if (rateLimited_(email)) {
@@ -166,6 +170,27 @@ function doPost(e) {
 
 function clip_(value, max) {
   return String(value || '').replace(/[\r\n\0]/g, ' ').trim().slice(0, max);
+}
+
+function turnstileOk_(token) {
+  var secret = PropertiesService.getScriptProperties().getProperty('TURNSTILE_SECRET');
+  if (!secret) return true;
+  if (!token) return false;
+  try {
+    var resp = UrlFetchApp.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'post',
+      payload: {
+        secret: secret,
+        response: String(token)
+      },
+      muteHttpExceptions: true
+    });
+    var body = JSON.parse(resp.getContentText() || '{}');
+    return !!(body && body.success);
+  } catch (err) {
+    console.error('turnstile: ' + err);
+    return false;
+  }
 }
 
 function timingError_(loadedAt) {

@@ -13,6 +13,7 @@
   'use strict';
 
   var ENDPOINT = document.documentElement.getAttribute('data-form-endpoint') || '';
+  var SITEKEY = document.documentElement.getAttribute('data-turnstile-sitekey') || '';
 
   // Require https so submissions are never sent in the clear. Plain http is
   // allowed on localhost only, for testing against a local stub.
@@ -27,6 +28,8 @@
     rate_limited: 'That was sent a few times already. Please wait a bit and try again, or reach Alina on ' +
                   '<a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a>.',
     too_long: 'That’s a bit long for this form. Try a shorter message?',
+    bot: 'That didn’t go through the spam check. Refresh the page and try once more, or reach Alina on ' +
+         '<a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a>.',
     failed: 'Something went wrong sending that. You can reach Alina on ' +
             '<a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a> ' +
             'in the meantime.',
@@ -89,6 +92,66 @@
     } catch (err) {}
   }
 
+  var widgets = [];
+  var turnstileWaiters = [];
+  var turnstileLoading = false;
+
+  function loadTurnstile(done) {
+    if (!SITEKEY) { done(); return; }
+    if (window.turnstile) { done(); return; }
+    turnstileWaiters.push(done);
+    if (turnstileLoading) return;
+    turnstileLoading = true;
+    var s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    function flush() {
+      var q = turnstileWaiters;
+      turnstileWaiters = [];
+      for (var i = 0; i < q.length; i++) q[i]();
+    }
+    s.onload = flush;
+    s.onerror = flush;
+    document.head.appendChild(s);
+  }
+
+  function inClosedDialog(el) {
+    var d = el.closest && el.closest('dialog');
+    return !!(d && !d.open);
+  }
+
+  function renderWidget(form) {
+    var slot = form.querySelector('.js-turnstile');
+    if (!slot || !SITEKEY || !window.turnstile) return;
+    if (slot.getAttribute('data-widget-id')) return;
+    try {
+      var id = window.turnstile.render(slot, { sitekey: SITEKEY, theme: 'auto' });
+      slot.setAttribute('data-widget-id', id);
+      widgets.push({ form: form, id: id, slot: slot });
+    } catch (err) {}
+  }
+
+  function resetWidget(form) {
+    if (!window.turnstile) return;
+    for (var i = 0; i < widgets.length; i++) {
+      if (widgets[i].form === form) {
+        try { window.turnstile.reset(widgets[i].id); } catch (err) {}
+        return;
+      }
+    }
+    renderWidget(form);
+  }
+
+  function tokenFor(form) {
+    if (!SITEKEY) return '';
+    var slot = form.querySelector('.js-turnstile');
+    var id = slot && slot.getAttribute('data-widget-id');
+    if (!id || !window.turnstile || typeof window.turnstile.getResponse !== 'function') {
+      return '';
+    }
+    return window.turnstile.getResponse(id) || '';
+  }
+
   function wire(form) {
     var requestedKind = form.getAttribute('data-form');
     var kind = requestedKind === 'contact' || requestedKind === 'waitlist'
@@ -119,6 +182,14 @@
       data.set('form', kind);
       data.set('origin', window.location.origin);
       data.set('loaded_at', String(loadedAt));
+      if (SITEKEY) {
+        var token = tokenFor(form);
+        if (!token) {
+          say(form, MESSAGES.bot, 'error');
+          return;
+        }
+        data.set('turnstile_token', token);
+      }
 
       var body = new URLSearchParams();
       data.forEach(function (value, key) { body.append(key, value); });
@@ -145,6 +216,8 @@
             say(form, MESSAGES.rate_limited, 'error');
           } else if (result && result.error === 'too_long') {
             say(form, MESSAGES.too_long, 'error');
+          } else if (result && result.error === 'bot') {
+            say(form, MESSAGES.bot, 'error');
           } else {
             say(form, MESSAGES.failed, 'error');
           }
@@ -153,11 +226,28 @@
           say(form, MESSAGES.failed, 'error');
         })
         .then(function () {
+          resetWidget(form);
           if (button) { button.disabled = false; button.textContent = label; }
         });
     });
   }
 
-  var forms = document.querySelectorAll('form[data-form]');
-  for (var i = 0; i < forms.length; i++) { wire(forms[i]); }
+  loadTurnstile(function () {
+    var forms = document.querySelectorAll('form[data-form]');
+    for (var i = 0; i < forms.length; i++) {
+      wire(forms[i]);
+      if (!inClosedDialog(forms[i])) renderWidget(forms[i]);
+    }
+  });
+
+  document.addEventListener('aq:waitlist-opened', function (ev) {
+    var dialog = ev && ev.detail && ev.detail.dialog;
+    if (!dialog) return;
+    var form = dialog.querySelector('form[data-form]');
+    if (!form) return;
+    loadTurnstile(function () {
+      renderWidget(form);
+      resetWidget(form);
+    });
+  });
 })();

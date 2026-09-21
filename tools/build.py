@@ -110,6 +110,7 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         # homepage, the blog index and the post pages — can ever act on it.
         labs_src=f"{base}assets/js/labs.js?v={LABS_V}",
         form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
+        turnstile_sitekey=html.escape(CFG.get("turnstile_site_key", ""), quote=True),
         css_v=CSS_V, analytics=analytics_snippet(base),
         html_attrs=html_attrs, extra_css=extra_css,
         layout_open=layout_open, layout_close=layout_close,
@@ -269,6 +270,15 @@ LIKE_BAR = f"""  <div class="ft-only ft-like" data-like-bar hidden>
 """
 
 
+def turnstile_widget():
+    """Mount point for Cloudflare Turnstile. Empty when no site key is set,
+    so a local build without Turnstile still produces a working form."""
+    key = html.escape(CFG.get("turnstile_site_key", "") or "", quote=True)
+    if not key:
+        return ""
+    return f'<div class="js-turnstile" data-sitekey="{key}"></div>'
+
+
 def subscribe_block(privacy_class):
     """The memo signup under the post list on the blog index.
 
@@ -300,6 +310,7 @@ def subscribe_block(privacy_class):
           <button class="btn-ghost" type="submit">Subscribe</button>
         </div>
         <label class="consent"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
+        {turnstile_widget()}
         <div class="hp" aria-hidden="true"><label for="blog-memo-website">Website</label><input id="blog-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
       </form>
     </div>
@@ -563,7 +574,8 @@ def build():
                 testimonials=testimonial_slides("band"),
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
-                form_privacy_class="amp-block" if mask_forms else "")
+                form_privacy_class="amp-block" if mask_forms else "",
+                turnstile=turnstile_widget())
     ft_header, ft_footer = fresh_chrome(base="")
     variant = fill(read(os.path.join(T, "home-fresh-take.html")), base="",
                    year=YEAR,
@@ -571,7 +583,8 @@ def build():
                    testimonials=testimonial_slides("card"),
                    form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                              quote=True),
-                   form_privacy_class="amp-block" if mask_forms else "")
+                   form_privacy_class="amp-block" if mask_forms else "",
+                   turnstile=turnstile_widget())
     made.append(write("index.html", page(
         content=home,
         title="Career Programs & Counseling | AQ Career Consulting",

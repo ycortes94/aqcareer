@@ -41,8 +41,10 @@ Click the gear (**Project Settings**) in the left sidebar, scroll to
 | Property | Value |
 |---|---|
 | `RECIPIENT` | the address that should receive submissions |
+| `TURNSTILE_SECRET` | the Turnstile **secret** key from Cloudflare (not the site key) |
 
-Save. This is the only place that address is stored.
+Save. This is the only place those values are stored. The site key is public
+and lives in `site.json`; the secret must never go in this repository.
 
 *Optional:* to also log every submission to a spreadsheet as a backup, create
 a Google Sheet, copy the long ID out of its URL, and add a second property
@@ -59,8 +61,9 @@ a Google Sheet, copy the long ID out of its URL, and add a second property
 | Who has access | **Anyone** |
 
 Click **Deploy**. Google will ask you to authorize the script — it needs
-permission to send email as you. Approve it. ("Anyone" means anyone can
-*submit the form*; it does not let anyone read the script or the address.)
+permission to send email as you, and (once Turnstile is on) to fetch
+Cloudflare's verification URL. Approve it. ("Anyone" means anyone can
+*submit the form*; it does not let anyone read the script or the secrets.)
 
 Copy the **Web app URL**. It looks like:
 
@@ -110,13 +113,15 @@ decide what to drop:
 - Fields are length-capped (email 254, names 80, message 4000).
 - Rate limits: 3 submissions per email per hour, and 20 across the whole
   site per hour. Extra attempts get a polite error, not an email.
+- **Cloudflare Turnstile** issues a one-time token in the browser. The
+  script asks Cloudflare whether that token is real before it sends any
+  email. Direct POSTs to the `/exec` URL without a token are dropped.
 - Free Apps Script accounts can send roughly 100 emails a day. These limits
   sit well below that.
 
-If spam still gets through, the next step is a CAPTCHA such as [Cloudflare
-Turnstile](https://www.cloudflare.com/products/turnstile/) — worth adding
-only if it actually happens. A CAPTCHA needs a Cloudflare account and a
-check inside this script; it is not required for a quiet personal site.
+The Turnstile **site key** is in `site.json`. The **secret key** is a Script
+Property named `TURNSTILE_SECRET`. After changing the Apps Script, deploy a
+new version of the existing web app so the live endpoint picks it up.
 
 ## Changing the address later
 
