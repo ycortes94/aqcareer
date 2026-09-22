@@ -5,3 +5,17 @@ __pycache__/
 # Never commit exported contact or subscriber data — this repo is public.
 *.csv
 *.xlsx
+
+# Local credentials and keys. Client analytics keys live in site.json on
+# purpose; secrets (Amplitude secret key, Turnstile secret, form recipient)
+# do not belong in Git.
+.env
+.env.*
+!.env.example
+*.pem
+id_rsa
+id_rsa.pub
+*.p12
+*.pfx
+google-credentials.json
+service-account*.json
