@@ -216,10 +216,15 @@ recording; `amplitude.setOptOut(true)` and `statsigClient.shutdown()` are
 called first, but a reload is the only way to be certain nothing further is
 captured.
 
-### Effect on the fresh-take experiment
+### Effect on the homepage design experiment
+
+The active configuration is `homepage_three_designs`: `control` (34%),
+`fresh_take` (33%), and `raices` (33%). It was created in **setup** state;
+deploy the matching site code before starting assignment. The retired
+two-group `homepage_fresh_take` experiment remains stopped as historical data.
 
 A visitor who hasn't accepted never loads Statsig, so they can't be bucketed
-and always see the **control** homepage. That means the `homepage_fresh_take`
+and always see the **control** homepage. That means the `homepage_three_designs`
 experiment only ever sees consenting traffic — expect it to run slower than
 raw visitor numbers suggest, and read its result as applying to that
 population.
@@ -231,11 +236,13 @@ pageview buckets normally.
 
 ### The blog follows the same assignment, and logs no exposure
 
-The fresh-take design covers the blog index and the post pages as well as the
-homepage, so a reader given the fresh homepage doesn't then land on a
-control-styled blog. Those pages read the same `homepage_fresh_take`
-assignment — but ask for it with `{ disableExposureLog: true }`. Which page
-is which comes from `data-page` on `<html>`: `home`, `blog` or `post`.
+The `fresh_take` design covers the blog index and post pages as well as the
+homepage, so a reader given that homepage doesn't then land on a
+control-styled blog. The third `raices` arm deliberately uses the same
+editorial blog and post treatment; only its homepage is different. Those
+pages read the same `homepage_three_designs` assignment — but ask for it with
+`{ disableExposureLog: true }`. Which page is which comes from `data-page`
+on `<html>`: `home`, `blog` or `post`.
 
 That is deliberate. The experiment's exposed population is people who saw the
 homepage, and it has been running on that basis; adding everyone who arrives
@@ -257,7 +264,7 @@ custom event.
 | Concern | Who |
 |---|---|
 | Pageviews, sessions, forms, clicks, likes, Session Replay | **Amplitude SDK** |
-| Experiment assignment (`homepage_fresh_take`) | **Statsig SDK** |
+| Experiment assignment (`homepage_three_designs`) | **Statsig SDK** |
 | Pulse scorecard conversions | **Statsig `logEvent`** for a short allow-list only |
 | Variant breakdown in Amplitude charts | **Statsig → Amplitude integration: exposures only** |
 
@@ -283,7 +290,7 @@ Set on 2026-09-21 in
 | Setting | Value |
 |---|---|
 | Experiment exposures | on |
-| Config exposures | on — this is what `homepage_fresh_take` emits (`statsig::config_exposure`) |
+| Config exposures | on — this is what `homepage_three_designs` emits (`statsig::config_exposure`) |
 | Gate / layer / holdout / disabled exposures | off |
 | First exposures | off (enterprise feature, not enabled here) |
 | Send new events by default | **off** — this was forwarding every custom and `auto_capture::*` event |
@@ -469,7 +476,8 @@ outgoing payload to confirm what actually left the browser.
 #### Verified, 2026-09-21 — the fresh-take chrome and pinned sessions
 
 The fresh-take arm had never logged a single event, and the reason was not the
-tracking: `homepage_fresh_take` is **`assignment_stopped`** in Statsig, so
+tracking: the retired `homepage_fresh_take` experiment was
+**`assignment_stopped`** in Statsig, so
 `getExperiment()` answers `ruleID: assignmentPaused` with no
 `homepage_design` parameter at all and every visitor falls back to the
 `control` default. Nobody has been served the variant, so nothing could have
@@ -505,11 +513,11 @@ nothing is shared between visitors.
 
 **No `post_liked` has ever been logged, and that is the experiment, not the
 button.** The bar is built as `ft-only` (`LIKE_BAR` in `tools/build.py`), so
-only a visitor served the fresh-take arm can see it — and
-`homepage_fresh_take` has been `assignment_stopped` in Statsig, which hands
-every visitor the `control` default. Nobody has been given the layout the
-button lives on. Restart assignment and the events start arriving on their
-own; nothing in `likes.js` needs changing for that.
+only a visitor served the fresh-take or raices arm can see it. The retired
+`homepage_fresh_take` experiment had been `assignment_stopped`, which is why
+the button had no live traffic at the time of this check. The replacement
+`homepage_three_designs` experiment keeps the same behavior; nothing in
+`likes.js` needs changing when assignment starts.
 
 Until then the only way to reach the button is to pin the layout in Labs, so
 those presses log with `labs_pinned: true` and the weekly export filters them
@@ -612,15 +620,16 @@ is not, since it never leaves the browser.
 
 ## Statsig Labs (switching layouts by hand)
 
-Both designs ship in the same document — the homepage as two whole layouts,
-the blog index and a post page as two sets of chrome around one shared body —
-and Statsig decides which one you see. So checking the variant normally means hoping you were bucketed
-into it, and accepting measurement first. Labs pins one instead.
+All three homepage designs ship in the same document. The blog index and a
+post page still need only two visual treatments: `raices` intentionally
+follows the editorial `fresh_take` chrome there. Statsig decides which
+homepage you see. Labs pins one without waiting to be bucketed or accepting
+measurement first.
 
 It appears as a small **Statsig Labs** panel at the bottom-left of the
-homepage, the blog index and any post page, with a Control / Fresh take
-switch. Switching
-is instant: both designs are already in the DOM and CSS decides which is
+homepage, the blog index and any post page, with Control / Fresh take /
+Raíces choices. Switching
+is instant: all homepage designs are already in the DOM and CSS decides which is
 shown, so there is no reload and nothing to rebuild.
 
 Turning it on:
@@ -630,7 +639,7 @@ Turning it on:
 | `localhost`, `127.0.0.1`, `*.local` | on automatically |
 | `?labs=1` | on anywhere, remembered for that browser |
 | `?labs=0` | off again, also remembered — this beats the automatic on, so it works on localhost too |
-| `?design=fresh_take` / `?design=control` | pins a layout straight from the URL |
+| `?design=control` / `?design=fresh_take` / `?design=raices` | pins a layout straight from the URL |
 
 `?design=` is the shareable form: send someone a link to one arm and that is
 what they get. The pin is resolved by the inline script in `templates/base.html`
@@ -647,7 +656,7 @@ reference to it.
 
 It is invisible rather than secret, though: anyone who works out `?labs=1` can
 switch it on for their own browser. That reveals nothing they couldn't already
-get — both layouts ship in the homepage HTML either way, so the variant is
+get — all layouts ship in the homepage HTML either way, so each variant is
 readable from the page source or reachable by editing `data-home-design` in
 devtools — and because a pinned session is kept out of Statsig altogether and
 stamped `labs_pinned` in Amplitude, someone doing it cannot disturb the

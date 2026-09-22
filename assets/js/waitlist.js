@@ -9,9 +9,8 @@
  *
  * Each trigger is an ordinary <a href="#waitlist"> carrying
  * data-waitlist="open", so the link still points at the panel's id whatever
- * happens here. Both homepage layouts ship their own dialog — the control's
- * #waitlist and the variant's #ft-waitlist — because each is styled by its
- * own layout; the trigger's href says which one it opens.
+ * happens here. Each homepage layout ships its own dialog because each is
+ * styled by its own layout; the trigger's href says which one it opens.
  */
 (function () {
   'use strict';
@@ -113,12 +112,12 @@
      layout's id is honoured, and what opens is whichever layout is on show:
      the other one sits in a display:none block, where a dialog has nothing
      to paint and showModal() would do nothing visible. */
-  var HASH = { waitlist: true, 'ft-waitlist': true };
+  var HASH = { waitlist: true, 'ft-waitlist': true, 'rz-waitlist': true };
 
   function shownDialog() {
     var all = document.querySelectorAll('dialog.waitlist-dialog');
     for (var i = 0; i < all.length; i++) {
-      var layout = all[i].closest('#layout-control,#layout-fresh');
+      var layout = all[i].closest('#layout-control,#layout-fresh,#layout-raices');
       if (!layout || layout.getClientRects().length) return all[i];
     }
     return null;

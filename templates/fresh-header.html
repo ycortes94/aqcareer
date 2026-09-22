@@ -9,8 +9,8 @@
          grouping key, so it stays put even if the link's wording changes.
          The build checks both chromes carry it. -->
     <nav>
-      <a href="{{base}}#ft-about" data-nav="about">About</a>
-      <a href="{{base}}#ft-services" data-nav="services">Services</a>
+      <a href="{{base}}#{{section_prefix}}about" data-nav="about">About</a>
+      <a href="{{base}}#{{section_prefix}}services" data-nav="services">Services</a>
       <a href="{{base}}blog/"{{cur_blog}} data-nav="blog">POV Blog</a>
       <!-- A plain nav link like the other three, not a .btn: it gets the green
            box from aria-current when it is the section you are reading, the
@@ -20,7 +20,7 @@
            It carries data-nav as well, so a click here logs both: the CTA
            event the experiment reads, and the nav event that accounts for
            every item in the bar. Filter by one or the other, not both. -->
-      <a class="nav-cta" href="{{base}}#ft-connect" data-cta="primary" data-nav="connect">Connect</a>
+      <a class="nav-cta" href="{{base}}#{{section_prefix}}connect" data-cta="primary" data-nav="connect">Connect</a>
     </nav>
   </div>
 </header>

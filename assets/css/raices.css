@@ -1,0 +1,533 @@
+/* Raices arm — the homepage layout, plus the blog index and post page.
+   fresh-take.css supplies the shared chrome, form controls and testimonial
+   cards; this file gives the third design a warmer, more graphic identity.
+   Headings switch from the serif to heavy Mulish so the type reads as poster
+   rather than editorial, and colour does the rest of the work — no extra
+   webfont is loaded for this arm.
+
+   Rules are scoped to .rz, the class on every block of raices markup, so
+   they cannot restyle the layouts sitting beside them. The homepage is one
+   .rz block holding a whole document; the blog index and a post page have
+   two — the header and the footer — because what sits between them is a
+   single copy shared by all three designs. That shared content is styled off
+   html[data-home-design="raices"] instead; see the blog and post sections
+   lower down.
+
+   The palette lives on :root for the same reason fresh-take's does: both
+   halves of that split need it, and a .rz block set to display:contents
+   carries no box for the shared content to inherit a background from. */
+
+:root{
+  --rz-ink:#241a14;
+  --rz-paper:#fff7ec;
+  --rz-paper-2:#fbeada;
+  --rz-marigold:#f0a415;
+  --rz-rosa:#c3336c;
+  --rz-jade:#0d6a5a;
+  --rz-clay:#cf5430;
+  --rz-muted:#5b4a3e;
+  --rz-line:rgba(36,26,20,.14);
+  --rz-r:10px;
+  /* One strip of the woven motif. Reused as a divider, a card foot and a
+     rule under the section heads, so the pattern reads as intentional. */
+  --rz-weave:repeating-linear-gradient(90deg,
+    var(--rz-marigold) 0 30px, var(--rz-rosa) 30px 42px,
+    var(--rz-jade) 42px 76px, var(--rz-clay) 76px 88px);
+}
+
+html[data-home-design="raices"] body{
+  background:var(--rz-paper);
+  color:var(--rz-ink);
+}
+
+.rz{
+  background:var(--rz-paper);
+  color:var(--rz-ink);
+}
+.rz h1,.rz h2,.rz h3{
+  font-family:var(--ft-sans);font-weight:800;letter-spacing:-.032em;line-height:1.02
+}
+.rz .eyebrow{color:var(--rz-clay)}
+.rz .lede{color:var(--rz-muted)}
+.rz .btn{background:var(--rz-rosa);border-radius:6px;font-weight:700}
+.rz .btn:hover{background:#a72859}
+.rz .btn-text{color:var(--rz-ink);border-bottom-color:var(--rz-marigold)}
+.rz .btn-text:hover{border-bottom-color:var(--rz-rosa)}
+
+.rz .hdr{max-width:1240px}
+.rz .hdr nav a{color:var(--rz-ink)}
+.rz .hdr nav a[aria-current]{background:var(--rz-rosa);color:#fff}
+
+.rz-weave{height:8px;background:var(--rz-weave)}
+.rz-sig{
+  display:block;font-family:var(--ft-script);font-size:36px;line-height:1;
+  color:var(--rz-marigold)
+}
+
+/* ---------- hero ---------- */
+.rz-hero{padding:74px 0 66px}
+.rz-hero-grid{
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(290px,.85fr);
+  align-items:center;gap:70px
+}
+.rz-hero h1{
+  font-size:clamp(40px,4.9vw,64px);margin:16px 0 26px;isolation:isolate;
+  text-wrap:balance
+}
+/* A marigold brush behind one word. Sits under the glyphs rather than
+   around them, so the line still wraps and reads normally. */
+.rz-mark{position:relative;white-space:nowrap}
+.rz-mark::after{
+  content:"";position:absolute;z-index:-1;left:-.05em;right:-.05em;bottom:.07em;
+  height:.32em;background:var(--rz-marigold);border-radius:3px;
+  transform:rotate(-.7deg)
+}
+.rz-hero .lede{max-width:56ch;font-size:18px;line-height:1.7}
+.rz-hero .cta{margin-top:34px}
+
+.rz-portrait{position:relative;margin:0;isolation:isolate}
+.rz-portrait::before{
+  content:"";position:absolute;z-index:-1;inset:30px -24px 34px 30px;
+  background:var(--rz-marigold);border-radius:10px
+}
+.rz-portrait img{
+  display:block;width:100%;aspect-ratio:1/1.04;object-fit:cover;
+  object-position:50% 12%;background:var(--rz-paper-2);
+  border-radius:190px 190px 0 0
+}
+.rz-portrait figcaption{
+  background:var(--rz-ink);color:var(--rz-paper);padding:16px 22px 18px;
+  display:grid;gap:3px;border-radius:0 0 10px 10px
+}
+.rz-portrait figcaption strong{font-size:20px;font-weight:800;letter-spacing:-.015em}
+.rz-portrait figcaption span{
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#d3bda3
+}
+
+/* ---------- collaborators ---------- */
+.rz-trust{padding:40px 0;border-bottom:1px solid var(--rz-line)}
+.rz-trust .eyebrow{text-align:center}
+.rz-logo-row{
+  display:grid;grid-template-columns:repeat(4,1fr);align-items:center;gap:42px;
+  margin-top:24px
+}
+.rz-logo-row img{max-height:62px;max-width:150px;margin:auto;object-fit:contain}
+
+/* ---------- services ---------- */
+.rz-section-head{margin-bottom:40px;max-width:760px}
+.rz-section-head h2{font-size:clamp(32px,4.2vw,52px);margin:0 0 14px}
+.rz-section-head > p:last-child{color:var(--rz-muted);font-size:16.5px;margin:0}
+.rz-section-head::after{
+  content:"";display:block;width:132px;height:7px;margin-top:24px;
+  background:var(--rz-weave);border-radius:4px
+}
+.rz-services{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.rz-card{
+  position:relative;display:flex;flex-direction:column;min-height:330px;
+  padding:30px 28px 34px;border-radius:12px;overflow:hidden
+}
+.rz-card::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:7px;
+  background:var(--rz-weave);opacity:.85
+}
+.rz-card-marigold{background:var(--rz-marigold);color:var(--rz-ink)}
+.rz-card-rosa{background:var(--rz-rosa);color:#fff}
+.rz-card-jade{background:var(--rz-jade);color:#fff}
+.rz-num{
+  font:800 34px/1 var(--ft-sans);letter-spacing:-.02em;opacity:.45
+}
+.rz-card h3{font-size:28px;margin:44px 0 12px}
+.rz-card p{font-size:15px;line-height:1.66;margin:0 0 16px}
+.rz-card p:last-child{margin-bottom:0}
+.rz-card .rz-for{
+  min-height:46px;font-size:11.5px;font-weight:700;letter-spacing:.075em;
+  text-transform:uppercase;opacity:.78
+}
+/* The three cards share one call to action; the contact form asks which
+   engagement they want, so per-card links would only repeat the question. */
+.rz-services-cta{
+  display:flex;flex-wrap:wrap;align-items:center;gap:18px 26px;margin-top:34px
+}
+.rz-services-cta p{margin:0;max-width:46ch;color:var(--rz-muted);font-size:15.5px}
+
+/* ---------- about ---------- */
+.rz-about{background:var(--rz-ink);color:var(--rz-paper)}
+.rz-about-grid{
+  display:grid;grid-template-columns:.92fr 1.08fr;align-items:center;gap:68px
+}
+.rz-about-img{position:relative;margin:0;isolation:isolate}
+.rz-about-img::before{
+  content:"";position:absolute;z-index:-1;inset:-18px -18px 22px 22px;
+  background:var(--rz-jade);border-radius:12px
+}
+.rz-about-img img{
+  display:block;width:100%;aspect-ratio:4/3.4;object-fit:cover;border-radius:12px
+}
+.rz-about .eyebrow{color:var(--rz-marigold)}
+.rz-about h2{font-size:clamp(32px,3.8vw,48px);margin:14px 0 22px;color:var(--rz-paper)}
+.rz-about p{font-size:16.5px;line-height:1.78;color:#e4d6c6;margin:0 0 16px}
+.rz-about .rz-sig{margin:26px 0 8px}
+.rz-waitlist-link{
+  display:inline-block;color:var(--rz-paper);font-size:15px;font-weight:700;
+  text-decoration:none;border-bottom:2px solid var(--rz-marigold);padding-bottom:3px
+}
+.rz-waitlist-link:hover{border-bottom-color:var(--rz-rosa)}
+
+/* ---------- quote ---------- */
+.rz-quote{background:var(--rz-jade);color:#fff;padding:70px 0;text-align:center}
+.rz-quote p{
+  font-family:var(--ft-serif);font-style:italic;font-size:clamp(24px,3vw,38px);
+  line-height:1.34;max-width:19ch;margin:0 auto;color:#fff
+}
+.rz-quote .rz-sig{margin-top:22px;color:#ffd98a}
+
+/* ---------- dialog, testimonials, memo, connect ---------- */
+.rz .waitlist-panel{border-top:8px solid transparent;border-image:var(--rz-weave) 8}
+.rz .waitlist-dialog h2{font-size:30px}
+.rz .waitlist-dialog .btn{background:var(--rz-rosa)}
+
+/* .tcarousel carries the slide show/hide rules from fresh-take.css; the
+   .rz-testimonial class only recolours it. */
+.rz .rz-testimonial{max-width:840px;margin:0 auto}
+.rz .rz-testimonial .tcard{border-left:8px solid var(--rz-marigold);border-radius:10px}
+.rz .rz-testimonial .tcard .qm{color:var(--rz-marigold)}
+.rz .rz-testimonial .arrow{color:var(--rz-jade)}
+.rz .rz-testimonial .dots button{background:rgba(36,26,20,.22)}
+.rz .rz-testimonial .dots button[aria-selected="true"]{background:var(--rz-rosa)}
+
+.rz .memo{background:var(--rz-paper-2)}
+.rz .memo h2{font-size:clamp(28px,3.2vw,40px)}
+.rz .memo .btn{width:100%;justify-content:center}
+
+.rz-connect{background:var(--rz-paper-2);border-top:1px solid var(--rz-line)}
+.rz-connect h2{font-size:clamp(34px,4.2vw,50px);margin:14px 0}
+.rz-connect form{
+  background:#fff;padding:30px;border-radius:12px;
+  box-shadow:0 10px 30px rgba(36,26,20,.07)
+}
+
+@media (max-width:900px){
+  .rz-hero{padding:52px 0}
+  .rz-hero-grid{grid-template-columns:1fr;gap:46px}
+  .rz-portrait{max-width:430px;margin:auto}
+  .rz-about-grid{grid-template-columns:1fr;gap:44px}
+  .rz-about-img{order:2}
+  .rz-services{grid-template-columns:1fr}
+  .rz-card{min-height:0}
+  .rz-card h3{margin-top:28px}
+  .rz-card .rz-for{min-height:0}
+  .rz-logo-row{grid-template-columns:repeat(2,1fr);gap:30px}
+  .rz-testimonial .arrow.l{left:6px}
+  .rz-testimonial .arrow.r{right:6px}
+}
+
+@media (max-width:560px){
+  .rz-hero h1{font-size:38px}
+  .rz-portrait::before{inset:22px -14px 26px 22px}
+  .rz-about-img::before{inset:-12px -12px 16px 16px}
+  .rz-card{padding:26px 22px 30px}
+  .rz-connect form{padding:22px}
+  .rz-quote{padding:54px 0}
+}
+
+/* ---------- blog index ----------
+
+   One set of cards, restyled here for the raices arm rather than duplicated,
+   so each rule has to out-specify its site.css counterpart — which the
+   html[data-home-design="raices"] prefix does on its own.
+
+   The masthead the other arms centre on the page becomes a dark poster panel
+   with the woven strip along its foot, and the list below it picks up the
+   block colours the homepage's service cards run on. */
+
+html[data-home-design="raices"] .blog-head{
+  position:relative;overflow:hidden;max-width:var(--ft-maxw);
+  margin:36px auto 0;padding:48px 46px 46px;text-align:left;
+  background:var(--rz-ink);border-radius:var(--rz-r)
+}
+html[data-home-design="raices"] .blog-head::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:7px;
+  background:var(--rz-weave)
+}
+html[data-home-design="raices"] .blog-head .script-h{
+  font-family:var(--ft-sans);font-weight:800;font-size:clamp(38px,5.2vw,62px);
+  line-height:1;letter-spacing:-.035em;color:var(--rz-paper)
+}
+html[data-home-design="raices"] .blog-head p{
+  font-size:17px;line-height:1.7;color:#e4d6c6;max-width:54ch;margin:18px 0 0
+}
+html[data-home-design="raices"] .blog-feed{
+  max-width:var(--ft-maxw);margin:0 auto;padding-block:46px 84px
+}
+
+/* The covers are a mixed bag — a book jacket, a square logo, wide photos,
+   portraits. object-fit:cover fills the frame evenly but crops whatever
+   doesn't fit; contain shows each one whole and pads the difference, here
+   with the arm's second paper tone. */
+html[data-home-design="raices"] .pcard .thumb{
+  background:var(--rz-paper-2);border-radius:var(--rz-r)
+}
+html[data-home-design="raices"] .pcard .thumb img{object-fit:contain}
+/* Nothing to enlarge on hover once the whole image is already in view. */
+html[data-home-design="raices"] .pcard:hover .thumb img{transform:none}
+html[data-home-design="raices"] .pcard h2{
+  font-family:var(--ft-sans);font-weight:800;letter-spacing:-.028em;
+  line-height:1.14;color:var(--rz-ink)
+}
+html[data-home-design="raices"] .pcard:hover h2{color:var(--rz-rosa)}
+html[data-home-design="raices"] .pcard .excerpt{
+  line-height:1.72;color:var(--rz-muted)
+}
+html[data-home-design="raices"] .pcard .pmeta{
+  font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--rz-clay);display:flex;align-items:center;gap:14px
+}
+/* "Latest" becomes a tag rather than a line of small caps, which is the one
+   piece of furniture on the page that says which post is the new one. */
+html[data-home-design="raices"] .pcard .flag{
+  display:inline-block;font-size:11px;font-weight:800;letter-spacing:.18em;
+  text-transform:uppercase;color:#fff;background:var(--rz-rosa);
+  border-radius:4px;padding:5px 11px;margin:0 0 18px
+}
+
+/* The lead post carries the full cover, on the offset block the homepage
+   puts behind its portrait. Drawn as a box shadow rather than a pseudo
+   element because .thumb clips its children to contain the cover, and a
+   block drawn inside it would be clipped along with them. */
+html[data-home-design="raices"] .pcard.lead{
+  display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center;
+  padding-bottom:54px;border-bottom:0
+}
+html[data-home-design="raices"] .pcard.lead .thumb{
+  aspect-ratio:4/3;box-shadow:16px 16px 0 var(--rz-marigold)
+}
+html[data-home-design="raices"] .pcard.lead h2{font-size:clamp(28px,3.4vw,44px)}
+html[data-home-design="raices"] .pcard.lead .excerpt{font-size:16.5px;margin-top:16px}
+html[data-home-design="raices"] .pcard.lead .pmeta{margin-top:22px}
+
+/* The rest become separate cards rather than rows divided by a hairline, each
+   banded down one side. Four colours cycling, because with a single accent
+   ten of them read as a border instead of as part of the pattern. */
+html[data-home-design="raices"] .post-rows{display:grid;gap:14px;margin-top:0}
+html[data-home-design="raices"] .pcard.row{
+  display:grid;grid-template-columns:104px minmax(0,1fr);gap:26px;
+  align-items:center;padding:20px 26px;background:#fff;border:0;
+  border-left:7px solid var(--rz-marigold);border-radius:var(--rz-r);
+  transition:box-shadow .15s
+}
+html[data-home-design="raices"] .pcard.row:nth-child(4n+2){border-left-color:var(--rz-rosa)}
+html[data-home-design="raices"] .pcard.row:nth-child(4n+3){border-left-color:var(--rz-jade)}
+html[data-home-design="raices"] .pcard.row:nth-child(4n+4){border-left-color:var(--rz-clay)}
+html[data-home-design="raices"] .pcard.row:hover{
+  box-shadow:0 8px 24px rgba(36,26,20,.12)
+}
+html[data-home-design="raices"] .pcard.row .thumb{aspect-ratio:1;border-radius:6px}
+html[data-home-design="raices"] .pcard.row h2{font-size:20px}
+html[data-home-design="raices"] .pcard.row .excerpt{
+  font-size:14.5px;margin-top:8px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+html[data-home-design="raices"] .pcard.row .pmeta{margin-top:12px}
+
+/* The like tally. Prefixed for the same reason .ft-like is: it has to
+   out-specify the display:block that .ft-only reveals it with. */
+html[data-home-design="raices"] .ft-card-likes{
+  display:inline-flex;align-items:center;gap:5px;flex:none;letter-spacing:.04em
+}
+html[data-home-design="raices"] .ft-card-likes svg{
+  width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8
+}
+html[data-home-design="raices"] .ft-card-likes.is-liked{color:var(--rz-rosa)}
+html[data-home-design="raices"] .ft-card-likes.is-liked svg{fill:currentColor}
+
+/* The memo signup under the list — the homepage's band, shared with the
+   other designs like the cards above it, so this restates the treatments the
+   raices homepage's own memo form uses (.rz .memo, .inp, .check, .btn)
+   through the control's class names, because this markup is the control's.
+
+   Scoped to data-page="blog" rather than to .signup-band alone: the homepage
+   carries bands of its own inside #layout-control, and while this arm hides
+   that whole layout, nothing should depend on it staying hidden. */
+html[data-home-design="raices"][data-page="blog"] .signup-band{
+  background:var(--rz-paper-2);padding:74px 0 82px;
+  border-top:1px solid var(--rz-line)
+}
+html[data-home-design="raices"][data-page="blog"] .signup-grid{
+  max-width:var(--ft-maxw);gap:56px
+}
+html[data-home-design="raices"][data-page="blog"] .signup-grid h2{
+  font-family:var(--ft-sans);font-weight:800;font-size:clamp(28px,3.4vw,42px);
+  line-height:1.05;letter-spacing:-.03em;color:var(--rz-ink);margin:0 0 14px
+}
+html[data-home-design="raices"][data-page="blog"] .signup-grid p{
+  font-size:16px;color:var(--rz-muted)
+}
+/* The raices memo form runs label, field, consent, then a full-width button —
+   the control's runs label, then field and button side by side, with the
+   consent under them. Same markup either way, so the order is done here: the
+   form becomes the flex column, .subrow steps out of the way with
+   display:contents, and its two children take their places in it separately.
+   Every child needs an explicit order, including the .form-status paragraph
+   forms.js appends, or the unnumbered ones collect at the top. */
+html[data-home-design="raices"][data-page="blog"] .signup-grid form{
+  background:#fff;border-radius:var(--rz-r);padding:30px;
+  box-shadow:0 10px 30px rgba(36,26,20,.07);
+  display:flex;flex-direction:column
+}
+html[data-home-design="raices"][data-page="blog"] .subrow{display:contents}
+html[data-home-design="raices"][data-page="blog"] .field-label{
+  order:0;display:block;font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--rz-muted);margin-bottom:7px
+}
+html[data-home-design="raices"][data-page="blog"] .line-input{
+  order:1;border:1px solid var(--rz-line);border-radius:6px;background:#fff;
+  font-size:15px;padding:12px 13px;color:var(--rz-ink)
+}
+html[data-home-design="raices"][data-page="blog"] .line-input:focus{
+  outline:2px solid var(--rz-marigold);outline-offset:1px;
+  border-color:var(--rz-clay)
+}
+html[data-home-design="raices"][data-page="blog"] .consent{
+  order:2;align-items:flex-start;gap:10px;font-size:13px;color:var(--rz-muted);
+  margin:16px 0 18px
+}
+html[data-home-design="raices"][data-page="blog"] .consent input{
+  width:16px;height:16px;margin-top:2px;accent-color:var(--rz-rosa)
+}
+html[data-home-design="raices"][data-page="blog"] .btn-ghost{
+  order:3;width:100%;background:var(--rz-rosa);color:#fff;border:0;
+  border-radius:6px;font-family:var(--ft-sans);font-size:14px;font-weight:700;
+  padding:14px 26px;transition:background .15s
+}
+html[data-home-design="raices"][data-page="blog"] .btn-ghost:hover{background:#a72859}
+/* .rz .form-status doesn't reach this one — the shared cards sit outside both
+   .rz chrome blocks — so the arm's colours are repeated here. */
+html[data-home-design="raices"][data-page="blog"] .form-status{order:4}
+html[data-home-design="raices"][data-page="blog"] .form-status.is-ok{
+  color:var(--rz-jade);font-weight:700
+}
+html[data-home-design="raices"][data-page="blog"] .form-status.is-error{color:#8a2b20}
+
+@media (max-width:900px){
+  html[data-home-design="raices"] .blog-head{
+    margin-top:24px;padding:36px 28px 34px
+  }
+  html[data-home-design="raices"] .blog-feed{padding-block:32px 60px}
+  html[data-home-design="raices"][data-page="blog"] .signup-band{padding:52px 0 60px}
+  html[data-home-design="raices"] .pcard.lead{
+    grid-template-columns:1fr;gap:34px;padding-bottom:40px
+  }
+  html[data-home-design="raices"] .pcard.lead .thumb{
+    aspect-ratio:16/9;box-shadow:12px 12px 0 var(--rz-marigold)
+  }
+}
+@media (max-width:560px){
+  html[data-home-design="raices"] .pcard.row{
+    grid-template-columns:80px minmax(0,1fr);gap:18px;padding:16px 20px
+  }
+  html[data-home-design="raices"] .pcard.row h2{font-size:17.5px}
+  html[data-home-design="raices"] .pcard.row .excerpt{display:none}
+}
+
+/* ---------- post page ----------
+
+   The same split as the blog index: one article, restyled here for this arm.
+   The look follows the raices homepage — heavy Mulish for headings, warm
+   paper ground, a jade offset block behind the cover, and the woven strip
+   standing in for the rules the other arms draw. */
+
+html[data-home-design="raices"] .post{max-width:720px;padding:0 24px}
+
+html[data-home-design="raices"] .post-head{padding-block:62px 0;text-align:left}
+html[data-home-design="raices"] .post-head .pmeta{
+  font-family:var(--ft-sans);font-size:11.5px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--rz-clay)
+}
+html[data-home-design="raices"] .post-head h1{
+  font-family:var(--ft-sans);font-weight:800;font-size:clamp(34px,4.8vw,56px);
+  line-height:1.02;letter-spacing:-.034em;color:var(--rz-ink);margin:16px 0 24px
+}
+html[data-home-design="raices"] .post-head .byline{
+  position:relative;padding-top:20px;font-size:14px;color:var(--rz-muted)
+}
+html[data-home-design="raices"] .post-head .byline::before{
+  content:"";position:absolute;left:0;top:0;width:96px;height:6px;
+  background:var(--rz-weave);border-radius:3px
+}
+
+/* The offset block, as on the blog index: a box shadow on .cover, the frame
+   the build sizes to the image, so it tracks a book jacket or a logo as
+   closely as it does a full-width photograph. */
+html[data-home-design="raices"] .post-cover{
+  margin:44px auto 0;max-width:var(--ft-maxw)
+}
+html[data-home-design="raices"] .post-cover .cover{
+  border-radius:var(--rz-r);box-shadow:16px 16px 0 var(--rz-jade)
+}
+html[data-home-design="raices"] .post-cover img{border-radius:var(--rz-r)}
+
+html[data-home-design="raices"] .post-body{
+  padding-block:46px 20px;font-size:17px;line-height:1.8;color:var(--rz-ink)
+}
+html[data-home-design="raices"] .post-body h2,
+html[data-home-design="raices"] .post-body h3{
+  font-family:var(--ft-sans);font-weight:800;letter-spacing:-.028em;
+  line-height:1.12;color:var(--rz-ink)
+}
+html[data-home-design="raices"] .post-body h2{font-size:28px;margin:46px 0 14px}
+html[data-home-design="raices"] .post-body h3{font-size:22px;margin:34px 0 12px}
+html[data-home-design="raices"] .post-body a{
+  color:var(--rz-rosa);text-decoration:underline;text-underline-offset:3px;
+  text-decoration-thickness:1px
+}
+html[data-home-design="raices"] .post-body figure img{border-radius:var(--rz-r)}
+html[data-home-design="raices"] .post-body figcaption{
+  font-size:13px;color:var(--rz-muted);margin-top:10px;text-align:left
+}
+/* The pull quote, given the homepage's jade quote band in miniature. */
+html[data-home-design="raices"] .post-body blockquote{
+  margin:34px 0;padding:28px 30px;border-left:0;border-radius:var(--rz-r);
+  background:var(--rz-jade);color:#fff;font-family:var(--ft-serif);
+  font-style:italic;font-size:21px;line-height:1.4
+}
+html[data-home-design="raices"] .post-body blockquote p:last-child{margin-bottom:0}
+html[data-home-design="raices"] .post-body blockquote a{color:#ffd98a}
+
+/* The like bar. fresh-take.css carries its shape unprefixed, so only the
+   colours are restated here. */
+html[data-home-design="raices"] .ft-like{
+  max-width:720px;margin:0 auto;padding:28px 24px 4px;
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap
+}
+html[data-home-design="raices"] .ft-like-btn{
+  border-radius:6px;border-color:var(--rz-line);color:var(--rz-rosa)
+}
+html[data-home-design="raices"] .ft-like-btn:hover{
+  background:var(--rz-paper-2);border-color:var(--rz-rosa)
+}
+html[data-home-design="raices"] .ft-like-btn:focus-visible{outline-color:var(--rz-marigold)}
+html[data-home-design="raices"] .ft-like-btn[aria-pressed="true"]{
+  background:var(--rz-rosa);border-color:var(--rz-rosa);color:#fff
+}
+html[data-home-design="raices"] .ft-like-note{color:var(--rz-muted)}
+
+html[data-home-design="raices"] .post-nav{
+  position:relative;max-width:720px;margin-top:28px;padding:26px 24px 76px;
+  border-top:0;font-family:var(--ft-sans);font-size:14px
+}
+html[data-home-design="raices"] .post-nav::before{
+  content:"";position:absolute;left:24px;right:24px;top:0;height:6px;
+  background:var(--rz-weave);border-radius:3px
+}
+html[data-home-design="raices"] .post-nav a{
+  color:var(--rz-jade);font-weight:700;text-decoration:none
+}
+html[data-home-design="raices"] .post-nav a:hover{
+  text-decoration:underline;text-underline-offset:3px
+}
+
+@media (max-width:900px){
+  html[data-home-design="raices"] .post-head{padding-block:42px 0}
+  html[data-home-design="raices"] .post-body{font-size:16.5px}
+  html[data-home-design="raices"] .post-cover .cover{box-shadow:10px 10px 0 var(--rz-jade)}
+}

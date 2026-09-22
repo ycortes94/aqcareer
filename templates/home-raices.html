@@ -1,0 +1,179 @@
+<!-- Raices homepage: the third homepage_three_designs arm. Same editorial
+     chrome as fresh-take, but a warmer and more graphic treatment that draws
+     on the cultural themes Alina writes about. Organization services lead;
+     the 2027 counseling list stays a dialog.
+     No outcomes are claimed here; those need owner-approved case studies. -->
+<div id="layout-raices" class="ft rz" data-section-prefix="rz-">
+<a class="skip" href="#rz-main">Skip to content</a>
+{{raices_header}}
+
+<main id="rz-main">
+
+  <section class="rz-hero">
+    <div class="wrap rz-hero-grid">
+      <div class="rz-hero-copy">
+        <p class="eyebrow">Sacramento &middot; Career development consulting</p>
+        <h1>Career programs people see <span class="rz-mark">themselves</span> in.</h1>
+        <p class="lede">If you're building something for your students, your staff, or your community, I'll help you shape it &mdash; curriculum, workshops, and sessions that take identity and lived experience seriously.</p>
+        <div class="cta">
+          <a class="btn" href="#rz-services" data-cta="hero">See how we could work together &rarr;</a>
+          <a class="btn-text" href="#rz-connect" data-cta="primary">Tell me about your project</a>
+        </div>
+      </div>
+      <figure class="rz-portrait">
+        <img src="{{base}}assets/img/headshot.webp" alt="Alina Quintana" width="1080" height="1080">
+        <figcaption>
+          <strong>Alina Quintana</strong>
+          <span>National Certified Counselor</span>
+          <span>Certified Career Counselor</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <div class="rz-weave" role="presentation"></div>
+
+  <section class="rz-trust" aria-label="Who I've worked with">
+    <div class="wrap">
+      <p class="eyebrow">Who I've worked with</p>
+      <div class="rz-logo-row">
+        <img src="{{base}}assets/img/trim-logo-kplaunch.png" alt="KP Launch">
+        <img src="{{base}}assets/img/trim-logo-compton.png" alt="Compton College">
+        <img src="{{base}}assets/img/trim-logo-ucdavis.png" alt="UC Davis Internship and Career Center">
+        <img src="{{base}}assets/img/trim-logo-sacstate.png" alt="Sacramento State Career Center">
+      </div>
+    </div>
+  </section>
+
+  <section class="pad wrap" id="rz-services">
+    <div class="rz-section-head">
+      <p class="eyebrow">Working together</p>
+      <h2>Support built around your people and your program.</h2>
+      <p>Start with one piece, or we can build something larger together.</p>
+    </div>
+    <div class="rz-services">
+      <article class="rz-card rz-card-marigold">
+        <span class="rz-num">01</span>
+        <h3>Curriculum design</h3>
+        <p class="rz-for">For colleges, public agencies, and community programs</p>
+        <p>We'll build career curriculum that fits your audience, your setting, and what you want people to walk away with.</p>
+      </article>
+      <article class="rz-card rz-card-rosa">
+        <span class="rz-num">02</span>
+        <h3>Workshops</h3>
+        <p class="rz-for">For cohorts, teams, and first-generation initiatives</p>
+        <p>I facilitate sessions that make room for honest reflection and send people out with something they can use the next day.</p>
+      </article>
+      <article class="rz-card rz-card-jade">
+        <span class="rz-num">03</span>
+        <h3>Speaking</h3>
+        <p class="rz-for">For conferences, campuses, and community events</p>
+        <p>I speak about career, culture, labor, first-generation identity, and what economic mobility really asks of people.</p>
+      </article>
+    </div>
+    <div class="rz-services-cta">
+      <a class="btn" href="#rz-connect" data-cta="primary">Start a conversation &rarr;</a>
+      <p>Not sure which one fits? Tell me what you're working on and we'll figure it out together.</p>
+    </div>
+  </section>
+
+  <section class="rz-about pad" id="rz-about">
+    <div class="wrap rz-about-grid">
+      <figure class="rz-about-img">
+        <img src="{{base}}assets/img/whatido.jpg" alt="Alina working with a client" width="864" height="720">
+      </figure>
+      <div class="rz-about-copy">
+        <p class="eyebrow">A little about me</p>
+        <h2>Hi &mdash; I'm Alina.</h2>
+        <p>I'm a National Certified Counselor and Certified Career Counselor based in Sacramento, California. My work brings together career development, curriculum design, and facilitation, all pointed at the same thing: making the path to a good living less dependent on who you already know.</p>
+        <p>In 2027, I'm opening my practice to a small number of individuals who want career guidance that takes their identity, culture, and values seriously. If that sounds like you, I'd love to hear from you.</p>
+        <span class="rz-sig">alina quintana</span>
+        <a class="rz-waitlist-link" href="#rz-waitlist" data-waitlist="open">Join the 2027 interest list &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="waitlist-dialog" id="rz-waitlist" aria-labelledby="rz-waitlist-title">
+    <div class="waitlist-panel">
+      <button class="waitlist-close" type="button" data-waitlist="close" aria-label="Close">&times;</button>
+      <p class="eyebrow">Individual career counseling</p>
+      <h2 id="rz-waitlist-title">Join the 2027 interest list</h2>
+      <p class="waitlist-note">I'm planning to open career counseling to a small number of clients in Q3 2027. Add your name and I'll let you know when spots open. Joining the list doesn't reserve an appointment.</p>
+      <form action="{{form_endpoint}}" method="post" data-form="waitlist" class="{{form_privacy_class}}">
+        <input type="hidden" name="form" value="waitlist">
+        <div class="two">
+          <div class="fr"><label class="lbl" for="rz-wait-first">First name</label><input class="inp" id="rz-wait-first" name="first_name" type="text" autocomplete="given-name" maxlength="80"></div>
+          <div class="fr"><label class="lbl" for="rz-wait-last">Last name</label><input class="inp" id="rz-wait-last" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
+        </div>
+        <div class="fr"><label class="lbl" for="rz-wait-email">Email address</label><input class="inp" id="rz-wait-email" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, email me about 2027 career counseling availability.</label>
+        {{turnstile}}
+        <div class="hp" aria-hidden="true"><label for="rz-wait-website">Website</label><input id="rz-wait-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button class="btn" type="submit">Join the interest list</button>
+      </form>
+    </div>
+  </dialog>
+
+  <section class="rz-quote">
+    <div class="wrap">
+      <p>A fulfilling career is not about making a living, it's about making a life.</p>
+      <span class="rz-sig">alina quintana</span>
+    </div>
+  </section>
+
+  <section class="pad wrap" aria-label="Client testimonials">
+    <div class="tcarousel rz-testimonial" data-carousel>
+      <button class="arrow l" aria-label="Previous testimonial" data-step="-1">&#8249;</button>
+      <button class="arrow r" aria-label="Next testimonial" data-step="1">&#8250;</button>
+{{testimonials}}
+      <div class="dots" role="tablist" aria-label="Choose testimonial"></div>
+    </div>
+  </section>
+
+  <section class="memo pad">
+    <div class="wrap memo-grid">
+      <div>
+        <p class="eyebrow">From my desk</p>
+        <h2>The Career Disruptor Memo</h2>
+        <p>Every so often I write about career mobility, culture, and building a working life on your own terms. No schedule, no filler.</p>
+      </div>
+      <form action="{{form_endpoint}}" method="post" id="rz-memo-form" data-form="memo" class="{{form_privacy_class}}">
+        <input type="hidden" name="form" value="memo">
+        <label class="lbl" for="rz-memo-email">Email address</label>
+        <input class="inp" id="rz-memo-email" name="email" type="email" required autocomplete="email" maxlength="254">
+        <label class="check"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
+        {{turnstile}}
+        <div class="hp" aria-hidden="true"><label for="rz-memo-website">Website</label><input id="rz-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button class="btn" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="pad rz-connect" id="rz-connect">
+    <div class="wrap connect-grid">
+      <div>
+        <p class="eyebrow">Let's talk</p>
+        <h2>Tell me what you're building.</h2>
+        <p class="lede">Tell me who you're serving, what you hope they walk away with, and the kind of support you have in mind. I'll get back to you about fit and next steps.</p>
+      </div>
+      <form class="{{form_privacy_class}}" action="{{form_endpoint}}" method="post" data-form="contact">
+        <input type="hidden" name="form" value="contact">
+        <div class="two">
+          <div class="fr"><label class="lbl" for="rz-fn">First Name</label><input class="inp" id="rz-fn" name="first_name" type="text" required autocomplete="given-name" maxlength="80"></div>
+          <div class="fr"><label class="lbl" for="rz-ln">Last Name</label><input class="inp" id="rz-ln" name="last_name" type="text" autocomplete="family-name" maxlength="80"></div>
+        </div>
+        <div class="fr"><label class="lbl" for="rz-em">Email</label><input class="inp" id="rz-em" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <div class="fr"><label class="lbl" for="rz-org">Organization <span>(optional)</span></label><input class="inp" id="rz-org" name="organization" type="text" autocomplete="organization" maxlength="120"></div>
+        <div class="fr"><label class="lbl" for="rz-interest">I'm interested in</label><select class="inp" id="rz-interest" name="inquiry_type" required><option value="">Choose one</option><option value="Curriculum contract">Curriculum contract</option><option value="Workshop">Workshop</option><option value="Speaking">Speaking</option><option value="Partnership or other project">Partnership or other project</option><option value="Individual counseling question">Individual counseling question</option></select></div>
+        <div class="fr"><label class="lbl" for="rz-msg">How can I help?</label><textarea class="inp" id="rz-msg" name="message" required maxlength="4000"></textarea></div>
+        <div class="hp" aria-hidden="true"><label for="rz-c-website">Website</label><input id="rz-c-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        {{turnstile}}
+        <button class="btn" type="submit">Send message</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+{{raices_footer}}
+</div>
