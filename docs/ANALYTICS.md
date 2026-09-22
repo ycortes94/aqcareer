@@ -39,13 +39,13 @@ This site's data goes to:
 
 | | Project |
 |---|---|
-| Amplitude | **AQ Career Site** (project `630492`) |
-| Statsig | **Yosimy Test Project** |
+| Amplitude | **AQ Career Site** |
+| Statsig | the Statsig project whose **client** key is in `site.json` |
 
-Check before pasting a key — one from an unrelated or shared project
-silently mixes this site's visitor traffic into someone else's analytics.
-The Statsig key currently configured is a `client-` key validated against
-Statsig's initialize endpoint.
+Do not paste a key from a personal or shared test project — that silently
+mixes this site's visitor traffic into someone else's analytics. Confirm the
+project name in each console before committing a key. The Statsig key currently
+configured is a `client-` key validated against Statsig's initialize endpoint.
 
 ## Session Replay
 
@@ -282,10 +282,10 @@ user as Replay and product events.
 
 #### Statsig → Amplitude Event Filtering
 
-Set on 2026-09-21 in
-[Yosimy Test Project → Integrations → Amplitude](https://console.statsig.com/7mxCrruFNbq8sowJtiFrEu/integrations)
-→ **Event Filtering**. The outgoing connection stays **enabled** (API key for
-**AQ Career Site**); only exposures cross the wire:
+Set on 2026-09-21 in the Statsig console under
+**Project Settings → Integrations → Amplitude → Event Filtering**. The outgoing
+connection stays **enabled** (API key for **AQ Career Site**); only exposures
+cross the wire:
 
 | Setting | Value |
 |---|---|
