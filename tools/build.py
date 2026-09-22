@@ -24,6 +24,7 @@ with open(os.path.join(ROOT, "site.json"), encoding="utf-8") as f:
 
 SITE = CFG["url"].rstrip("/")
 YEAR = dt.date.today().year
+BLOG_PAGE_SIZE = 6
 
 
 def asset_v(rel):
@@ -44,6 +45,7 @@ AN_V = asset_v("assets/js/analytics.js")
 LABS_V = asset_v("assets/js/labs.js")
 LIKES_V = asset_v("assets/js/likes.js")
 WAITLIST_V = asset_v("assets/js/waitlist.js")
+PAGING_V = asset_v("assets/js/paging.js")
 
 # Fraunces is the variant's heading face and is only fetched by pages that
 # ship the fresh-take layout.
@@ -119,7 +121,7 @@ def editorial_chrome(base, cur_blog=""):
 def page(*, content, title, desc, canonical, base, ogtype="website",
          ogimage=None, cur_home="", cur_blog="", extra_js="",
          html_attrs="", extra_css="", layout_open="", layout_close="",
-         variant_layout="", chrome_top=""):
+         variant_layout="", chrome_top="", extra_head=""):
     return fill(
         read(os.path.join(T, "base.html")),
         content=content, title=html.escape(title, quote=True),
@@ -134,6 +136,7 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         turnstile_sitekey=html.escape(CFG.get("turnstile_site_key", ""), quote=True),
         css_v=CSS_V, analytics=analytics_snippet(base),
         html_attrs=html_attrs, extra_css=extra_css,
+        extra_head=extra_head,
         layout_open=layout_open, layout_close=layout_close,
         variant_layout=variant_layout, chrome_top=chrome_top,
     )
@@ -601,21 +604,23 @@ def build():
         f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>')))
 
     # ---------- blog index ----------
-    # The newest post leads at full width; the rest follow as a compact list.
+    # Six posts per page keeps the index useful as the archive grows. The
+    # newest post on each page leads at full width; the rest follow as a
+    # compact list.
     # The cover art across these posts is a mix of photos, book jackets and
     # logos, so thumbnails are contained rather than cropped — see the .thumb
     # rules in site.css.
     counts = like_counts({p["slug"] for p in posts})
 
-    def post_card(p, kind):
+    def post_card(p, kind, base, latest=False):
         """One index card. kind is "lead" for the newest post, "row" for the
         rest; both keep .pcard and data-post so post_card_clicked still fires
         with the position it was in — see assets/js/analytics.js."""
-        thumb = (f'<div class="thumb"><img src="../{p["cover"].lstrip("/")}" '
+        thumb = (f'<div class="thumb"><img src="{base}{p["cover"].lstrip("/")}" '
                  f'alt="" loading="lazy"></div>') if p["cover"] else ""
-        flag = '<p class="flag">Latest</p>\n          ' if kind == "lead" else ""
+        flag = '<p class="flag">Latest</p>\n          ' if latest else ""
         return (
-            f'      <a class="pcard {kind}" href="../post/{p["slug"]}/" '
+            f'      <a class="pcard {kind}" href="{base}post/{p["slug"]}/" '
             f'data-post="{html.escape(p["slug"], quote=True)}">\n'
             f'        {thumb}\n'
             f'        <div class="pbody">\n'
@@ -627,36 +632,125 @@ def build():
             f'        </div>\n'
             f'      </a>')
 
-    feed = ""
-    if posts:
-        rows = "\n".join(post_card(p, "row") for p in posts[1:])
-        feed = ('  <div class="blog-feed wrap">\n'
-                + post_card(posts[0], "lead") + "\n"
-                + (f'    <div class="post-rows">\n{rows}\n    </div>\n'
-                   if rows else "")
-                + '  </div>\n')
-    blog = ('  <section class="blog-head wrap">\n'
-            '    <h1 class="script-h">POV Blog</h1>\n'
-            f'    <p>{html.escape(CFG["blog_tagline"])}</p>\n'
-            '  </section>\n\n'
-            + feed
-            + subscribe_block("amp-block" if mask_forms else ""))
-    # All three designs, the same way the post pages do it: one set of cards
-    # inside one set of chrome per arm, restyled by CSS rather than duplicated.
-    blog_top, blog_bottom = editorial_chrome("../", ' aria-current="page"')
-    made.append(write("blog/index.html", page(
-        content=blog, title="POV Blog | AQ Career Consulting",
-        desc=CFG["blog_tagline"], canonical=f"{SITE}/blog/", base="../",
-        cur_blog=' aria-current="page"',
-        html_attrs=' class="home-exp exp-pending" data-page="blog"',
-        extra_css=FT_HEAD.format(base="../", v=FT_CSS_V) + "\n" +
-        RZ_HEAD.format(base="../", v=RZ_CSS_V),
-        chrome_top=blog_top,
-        variant_layout=blog_bottom,
-        # forms.js as well as likes.js now: the memo signup at the foot of the
-        # list needs it, or it posts by leaving the page.
-        extra_js=(f'<script src="../assets/js/forms.js?v={JS_V}"></script>\n'
-                  f'<script src="../assets/js/likes.js?v={LIKES_V}"></script>'))))
+    def blog_href(page_number, base):
+        suffix = f"page/{page_number}/" if page_number > 1 else ""
+        return f"{base}blog/{suffix}"
+
+    def pagination(current, total, base):
+        """Compact, accessible pagination that stays short for large archives.
+
+        Every link carries data-blog-page. assets/js/paging.js swaps the
+        page in rather than following it, and logs blog_page_changed itself;
+        the attribute is also what keeps analytics.js's catch-all off these
+        links, so one click still produces one event."""
+        if total <= 1:
+            return ""
+        if total <= 7:
+            shown = list(range(1, total + 1))
+        elif current <= 4:
+            shown = [1, 2, 3, 4, 5, total]
+        elif current >= total - 3:
+            shown = [1, total - 4, total - 3, total - 2, total - 1, total]
+        else:
+            shown = [1, current - 1, current, current + 1, total]
+
+        items = []
+        previous = None
+        for number in shown:
+            if previous is not None and number - previous > 1:
+                items.append('<span class="blog-page-gap" aria-hidden="true">&hellip;</span>')
+            if number == current:
+                items.append(
+                    f'<span class="blog-page-number" aria-current="page">{number}</span>')
+            else:
+                items.append(
+                    f'<a class="blog-page-number" href="{blog_href(number, base)}" '
+                    f'data-blog-page="{number}" '
+                    f'aria-label="Page {number}">{number}</a>')
+            previous = number
+
+        older = (
+            f'<a class="blog-page-direction" href="{blog_href(current + 1, base)}" '
+            f'data-blog-page="{current + 1}">'
+            'Older posts &rarr;</a>' if current < total else
+            '<span class="blog-page-direction is-disabled">Older posts &rarr;</span>')
+        newer = (
+            f'<a class="blog-page-direction" href="{blog_href(current - 1, base)}" '
+            f'data-blog-page="{current - 1}">'
+            '&larr; Newer posts</a>' if current > 1 else
+            '<span class="blog-page-direction is-disabled">&larr; Newer posts</span>')
+        return (
+            '    <nav class="blog-pagination" aria-label="Blog pages">\n'
+            f'      {newer}\n'
+            f'      <div class="blog-page-numbers">{"".join(items)}</div>\n'
+            f'      {older}\n'
+            '    </nav>\n')
+
+    page_count = max(1, (len(posts) + BLOG_PAGE_SIZE - 1) // BLOG_PAGE_SIZE)
+    blog_pages = []
+    for page_number in range(1, page_count + 1):
+        page_posts = posts[
+            (page_number - 1) * BLOG_PAGE_SIZE:page_number * BLOG_PAGE_SIZE]
+        base = "../" if page_number == 1 else "../../../"
+        output = ("blog/index.html" if page_number == 1 else
+                  f"blog/page/{page_number}/index.html")
+        canonical = (f"{SITE}/blog/" if page_number == 1 else
+                     f"{SITE}/blog/page/{page_number}/")
+
+        feed = ""
+        if page_posts:
+            rows = "\n".join(
+                post_card(p, "row", base) for p in page_posts[1:])
+            feed = ('  <div class="blog-feed wrap">\n'
+                    + post_card(page_posts[0], "lead", base,
+                                latest=page_number == 1) + "\n"
+                    + (f'    <div class="post-rows">\n{rows}\n    </div>\n'
+                       if rows else "")
+                    + pagination(page_number, page_count, base)
+                    + '  </div>\n')
+
+        page_label = (
+            f' <span class="blog-page-label">Page {page_number} of '
+            f'{page_count}</span>' if page_number > 1 else "")
+        blog = ('  <section class="blog-head wrap">\n'
+                '    <h1 class="script-h">POV Blog</h1>\n'
+                f'    <p>{html.escape(CFG["blog_tagline"])}{page_label}</p>\n'
+                '  </section>\n\n'
+                + feed
+                + subscribe_block("amp-block" if mask_forms else ""))
+
+        # All three designs, the same way the post pages do it: one set of
+        # cards inside one set of chrome per arm, restyled rather than copied.
+        blog_top, blog_bottom = editorial_chrome(
+            base, ' aria-current="page"')
+        title = ("POV Blog | AQ Career Consulting" if page_number == 1 else
+                 f"POV Blog — Page {page_number} | AQ Career Consulting")
+        head_links = []
+        if page_number > 1:
+            head_links.append(
+                f'<link rel="prev" href="{blog_pages[-1]}">')
+        if page_number < page_count:
+            head_links.append(
+                f'<link rel="next" href="{SITE}/blog/page/{page_number + 1}/">')
+        made.append(write(output, page(
+            content=blog, title=title, desc=CFG["blog_tagline"],
+            canonical=canonical, base=base, extra_head="\n".join(head_links),
+            cur_blog=' aria-current="page"',
+            html_attrs=' class="home-exp exp-pending" data-page="blog"',
+            extra_css=FT_HEAD.format(base=base, v=FT_CSS_V) + "\n" +
+            RZ_HEAD.format(base=base, v=RZ_CSS_V),
+            chrome_top=blog_top,
+            variant_layout=blog_bottom,
+            # forms.js as well as likes.js: the memo signup at the foot of
+            # each page needs it, or it posts by leaving the page. paging.js
+            # only where there is a second page to reach, so a one-page
+            # archive ships nothing it cannot use.
+            extra_js=(
+                f'<script src="{base}assets/js/forms.js?v={JS_V}"></script>\n'
+                f'<script src="{base}assets/js/likes.js?v={LIKES_V}"></script>'
+                + (f'\n<script src="{base}assets/js/paging.js?v={PAGING_V}">'
+                   '</script>' if page_count > 1 else "")))))
+        blog_pages.append(canonical)
 
     # ---------- posts ----------
     # Every post sits at the same depth, so one fill of the editorial chrome
@@ -768,8 +862,10 @@ def build():
         f'<description>{html.escape(CFG["blog_tagline"])}</description>'
         f'<language>en-us</language>{items}</channel></rss>\n'))
 
-    urls = [(SITE + "/", "1.0"), (SITE + "/blog/", "0.8"),
-            (SITE + "/privacy/", "0.3")] + \
+    urls = [(SITE + "/", "1.0")] + \
+           [(url, "0.8" if n == 0 else "0.6")
+            for n, url in enumerate(blog_pages)] + \
+           [(SITE + "/privacy/", "0.3")] + \
            [(f'{SITE}/post/{p["slug"]}/', "0.6") for p in posts]
     made.append(write("sitemap.xml",
         '<?xml version="1.0" encoding="UTF-8"?>\n'
