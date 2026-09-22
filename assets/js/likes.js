@@ -125,6 +125,10 @@
 
   function wire() {
     paintCards();
+    /* The blog index swaps a page of cards in without a reload — see
+       assets/js/paging.js. The new ones carry the published total with this
+       visitor's own like missing, so repaint when it says so. */
+    document.addEventListener('aq:cards-swapped', paintCards);
 
     var bar = document.querySelector('[data-like-bar]');
     var btn = bar && bar.querySelector('[data-like]');
