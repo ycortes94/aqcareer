@@ -1,8 +1,8 @@
 /* Statsig Labs — a development-only switch for the fresh-take experiment.
  *
- * Why this exists: the homepage ships both layouts in the same document, and
- * a post page ships both sets of chrome around one article. Which you see is
- * decided by the `homepage_fresh_take` experiment in Statsig.
+ * Why this exists: the homepage ships all layouts in the same document, and
+ * a post page ships one set of chrome per design around one article. Which
+ * you see is decided by the `homepage_three_designs` experiment in Statsig.
  * That makes the variant awkward to look at on purpose — you get whichever arm
  * you were bucketed into, and only after accepting measurement. This pins one.
  *
@@ -15,8 +15,8 @@
  *   - automatic on localhost / 127.0.0.1 / *.local
  *   - ?labs=1  turns it on anywhere and remembers it for that browser
  *   - ?labs=0  turns it off again and forgets the pin
- *   - ?design=fresh_take / ?design=control  pins a layout straight from a URL,
- *     which is the shareable form: send someone a link to one arm.
+ *   - ?design=control / fresh_take / raices pins a layout straight from a
+ *     URL, which is the shareable form: send someone a link to one arm.
  *
  * It is off for everyone else, so a visitor never sees the panel.
  *
@@ -37,7 +37,8 @@
   var HIDE_KEY = 'aq_labs_hidden';
   var DESIGNS = [
     { id: 'control', label: 'Control' },
-    { id: 'fresh_take', label: 'Fresh take' }
+    { id: 'fresh_take', label: 'Fresh take' },
+    { id: 'raices', label: 'Ra\u00edces' }
   ];
 
   function store(patch) {
@@ -92,7 +93,7 @@
       'border:0;border-radius:999px;padding:9px 15px;box-shadow:0 2px 10px rgba(0,0,0,.28)}' +
     '.aq-labs .dot{width:7px;height:7px;border-radius:50%;background:#7ee0c2;flex:none}' +
     '.aq-labs .dot.off{background:#8a9a94}' +
-    '.aq-labs .panel{width:232px;background:#fff;border:1px solid rgba(1,66,53,.16);' +
+    '.aq-labs .panel{width:300px;background:#fff;border:1px solid rgba(1,66,53,.16);' +
       'border-radius:10px;padding:13px;box-shadow:0 8px 30px rgba(0,0,0,.2)}' +
     '.aq-labs .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}' +
     '.aq-labs .ttl{font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-size:10.5px;color:#4c5b56}' +

@@ -29,17 +29,18 @@
    blocked, errors, or never arrives, the page must still reveal itself.
    analytics.js calls window.__aqReveal(design) once it knows the variant.
 
-   The class is still home-exp and the attribute still data-home-design:
-   the experiment in Statsig is homepage_fresh_take, and post pages now
-   follow whatever it assigned rather than running an experiment of their
-   own. Renaming either here would only hide that shared identity. */
+   The class is home-exp and the attribute is data-home-design: the Statsig
+   experiment is homepage_three_designs, and post pages follow whatever it
+   assigned rather than running an experiment of their own. */
 (function(){
   var h=document.documentElement;
   if(!h.classList.contains('home-exp')) return;
   var done=false,t;
   function reveal(d){
     if(done) return; done=true; clearTimeout(t);
-    h.setAttribute('data-home-design', d==='fresh_take'?'fresh_take':'control');
+    var designs={control:1,fresh_take:1,raices:1};
+    d=designs[d]?d:'control';
+    h.setAttribute('data-home-design',d);
     h.classList.remove('exp-pending');
   }
   /* Labs: a layout pinned for development. Resolved here, inline, before
@@ -58,7 +59,7 @@
        localhost, where you may well want to watch the real assignment run. */
     if(toggle==='0'){ st={enabled:false}; }
     else if(toggle==='1'){ st=st||{}; st.enabled=true; }
-    if(wanted==='control'||wanted==='fresh_take'){
+    if(wanted==='control'||wanted==='fresh_take'||wanted==='raices'){
       st=st||{}; st.enabled=true; st.design=wanted;
     }
     if(st) localStorage.setItem(KEY,JSON.stringify(st));

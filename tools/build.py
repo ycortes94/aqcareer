@@ -38,6 +38,7 @@ def asset_v(rel):
 
 CSS_V = asset_v("assets/css/site.css")
 FT_CSS_V = asset_v("assets/css/fresh-take.css")
+RZ_CSS_V = asset_v("assets/css/raices.css")
 JS_V = asset_v("assets/js/forms.js")
 AN_V = asset_v("assets/js/analytics.js")
 LABS_V = asset_v("assets/js/labs.js")
@@ -51,6 +52,7 @@ FT_HEAD = (
     'wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">\n'
     '<link rel="stylesheet" href="{base}assets/css/fresh-take.css?v={v}">'
 )
+RZ_HEAD = '<link rel="stylesheet" href="{base}assets/css/raices.css?v={v}">'
 
 
 def analytics_snippet(base):
@@ -83,7 +85,7 @@ def fill(tpl, **kw):
     return re.sub(r"\{\{[a-z_]+\}\}", "", tpl)   # blank any unused token
 
 
-def fresh_chrome(base, cur_blog=""):
+def fresh_chrome(base, cur_blog="", section_prefix="ft-"):
     """The fresh-take header and footer, as a (header, footer) pair.
 
     One source for both layouts that use them: the variant homepage, where
@@ -91,8 +93,27 @@ def fresh_chrome(base, cur_blog=""):
     in its own .ft block around the shared article."""
     def part(name):
         return fill(read(os.path.join(T, name)), base=base, year=YEAR,
-                    cur_blog=cur_blog)
+                    cur_blog=cur_blog, section_prefix=section_prefix)
     return part("fresh-header.html"), part("fresh-footer.html")
+
+
+def editorial_chrome(base, cur_blog=""):
+    """Both editorial chromes for a page that shares one copy of its content.
+
+    The blog index and the post pages carry their content once and wrap it in
+    one set of chrome per design, so fresh-take and raices each need a header
+    and a footer of their own here — the section anchors differ, and so does
+    the styling hook. CSS reveals whichever pair matches the assigned arm; see
+    the .ft-chrome / .rz-chrome rules in site.css.
+
+    Returns the two blocks that go above and below the content."""
+    ft_head, ft_foot = fresh_chrome(base, cur_blog=cur_blog)
+    rz_head, rz_foot = fresh_chrome(base, cur_blog=cur_blog,
+                                    section_prefix="rz-")
+    return (f'<div class="ft ft-chrome">\n{ft_head}\n</div>\n'
+            f'<div class="ft rz rz-chrome">\n{rz_head}\n</div>',
+            f'<div class="ft ft-chrome">\n{ft_foot}\n</div>\n'
+            f'<div class="ft rz rz-chrome">\n{rz_foot}\n</div>')
 
 
 def page(*, content, title, desc, canonical, base, ogtype="website",
@@ -430,85 +451,53 @@ CAROUSEL_JS = """<script>
 </script>"""
 
 SECTION_SPY_JS = """<script>
-/* Section tracking for the fresh-take header: the link for whatever section
-   you are reading gets the same green box the current page's link gets.
-   Homepage only, because that is the only page carrying the ft- sections —
-   from the blog or a post those same links navigate here instead.
-
-   Scoped to the fresh-take nav and its ft- ids: both experiment arms live in
-   this one document, and the control arm keeps its own plain nav.
-
-   aria-current="location" is the in-page counterpart of the "page" value
-   stamped on POV Blog, and fresh-take.css highlights either. This only ever
-   adds and removes "location", so it can never clobber a real "page". */
+/* Section tracking for each editorial homepage arm. data-section-prefix on
+   the layout keeps one copy of this logic working for both ft-* and rz-*
+   anchors while the control keeps its own plain nav. */
 (function(){
-  var nav=document.querySelector('.ft .hdr nav');
-  if(!nav) return;
-  var marks=[].slice.call(nav.querySelectorAll('a[href*="#ft-"]')).map(function(a){
-    return {link:a, section:document.getElementById(a.getAttribute('href').split('#')[1])};
-  }).filter(function(m){ return m.section });
-  if(!marks.length) return;
-
-  // Where down the viewport the page counts as being "read", as a fraction.
-  // paint() measures against it and the observer below watches it, so the
-  // two cannot drift apart.
   var LINE=0.4;
+  [].forEach.call(document.querySelectorAll('[data-section-prefix]'),function(layout){
+    var nav=layout.querySelector('.hdr nav');
+    var prefix=layout.getAttribute('data-section-prefix');
+    if(!nav||!prefix) return;
+    var marks=[].slice.call(nav.querySelectorAll('a[href*="#'+prefix+'"]')).map(function(a){
+      return {link:a,section:document.getElementById(a.getAttribute('href').split('#')[1])};
+    }).filter(function(m){return m.section});
+    if(!marks.length) return;
 
-  var queued=false;
-  function paint(){
-    queued=false;
-    // Nothing to light while this arm is the hidden one.
-    if(!nav.getClientRects().length) return;
-    /* Of the sections whose top has crossed the line, the lowest wins — the
-       one just entered — so a section keeps the highlight through the
-       unanchored stretches below it (partners, testimonials, the memo form)
-       instead of blinking off. Positions are measured live on every paint,
-       not cached in document order: the first paint can run while this arm is
-       still hidden, and every offset inside a display:none block reads 0. */
-    var line=window.innerHeight*LINE, cur=null, best=-Infinity;
-    marks.forEach(function(m){
-      var top=m.section.getBoundingClientRect().top;
-      if(top<=line && top>best){ best=top; cur=m }
-    });
-    marks.forEach(function(m){
-      if(m===cur) m.link.setAttribute('aria-current','location');
-      else if(m.link.getAttribute('aria-current')==='location') m.link.removeAttribute('aria-current');
-    });
-  }
-  /* Two paints per burst: one on the next frame so the highlight keeps up
-     while you scroll, and one shortly after the last trigger so the settled
-     geometry gets the last word. */
-  var tail;
-  function schedule(){
-    if(!queued){ queued=true; requestAnimationFrame(paint) }
-    clearTimeout(tail); tail=setTimeout(paint,120);
-  }
-  /* The observer, not the scroll event, is what makes this reliable. A
-     programmatic jump — an anchor click, a restored scroll position — does
-     not always emit a scroll event, and a missed event would strand the
-     highlight on the section just left. Crossing the line is itself an
-     intersection change, so this fires either way. rootMargin collapses the
-     root to a zero-height line at LINE, the very line paint() measures. */
-  if(window.IntersectionObserver){
-    var io=new IntersectionObserver(schedule,{
-      rootMargin:(-LINE*100)+'% 0px '+(-(1-LINE)*100)+'% 0px'
-    });
-    marks.forEach(function(m){ io.observe(m.section) });
-  }
-  // Keeps it smooth during an ordinary drag, and re-measures after reflows.
-  addEventListener('scroll',schedule,{passive:true});
-  addEventListener('resize',schedule);
-  addEventListener('load',schedule);
-  /* The arm is revealed asynchronously — by Labs inline, or by analytics.js
-     once Statsig answers — so the first paint can land while the nav is still
-     hidden, with no scroll afterwards to correct it. Repainting when <html>
-     flips covers that, and a visitor landing deep on a #ft- link, without
-     reaching into base.html's single __aqReveal slot. */
-  if(window.MutationObserver){
-    new MutationObserver(schedule).observe(document.documentElement,
-      {attributes:true, attributeFilter:['class','data-home-design']});
-  }
-  schedule();
+    var queued=false,tail;
+    function paint(){
+      queued=false;
+      if(!nav.getClientRects().length) return;
+      var line=window.innerHeight*LINE,cur=null,best=-Infinity;
+      marks.forEach(function(m){
+        var top=m.section.getBoundingClientRect().top;
+        if(top<=line&&top>best){best=top;cur=m}
+      });
+      marks.forEach(function(m){
+        if(m===cur) m.link.setAttribute('aria-current','location');
+        else if(m.link.getAttribute('aria-current')==='location') m.link.removeAttribute('aria-current');
+      });
+    }
+    function schedule(){
+      if(!queued){queued=true;requestAnimationFrame(paint)}
+      clearTimeout(tail);tail=setTimeout(paint,120);
+    }
+    if(window.IntersectionObserver){
+      var io=new IntersectionObserver(schedule,{
+        rootMargin:(-LINE*100)+'% 0px '+(-(1-LINE)*100)+'% 0px'
+      });
+      marks.forEach(function(m){io.observe(m.section)});
+    }
+    addEventListener('scroll',schedule,{passive:true});
+    addEventListener('resize',schedule);
+    addEventListener('load',schedule);
+    if(window.MutationObserver){
+      new MutationObserver(schedule).observe(document.documentElement,
+        {attributes:true,attributeFilter:['class','data-home-design']});
+    }
+    schedule();
+  });
 })();
 </script>"""
 
@@ -585,16 +574,26 @@ def build():
                                              quote=True),
                    form_privacy_class="amp-block" if mask_forms else "",
                    turnstile=turnstile_widget())
+    rz_header, rz_footer = fresh_chrome(base="", section_prefix="rz-")
+    raices = fill(read(os.path.join(T, "home-raices.html")), base="",
+                 year=YEAR,
+                 raices_header=rz_header, raices_footer=rz_footer,
+                 testimonials=testimonial_slides("card"),
+                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
+                                           quote=True),
+                 form_privacy_class="amp-block" if mask_forms else "",
+                 turnstile=turnstile_widget())
     made.append(write("index.html", page(
         content=home,
         title="Career Programs & Counseling | AQ Career Consulting",
         desc=CFG["description"], canonical=SITE + "/", base="",
         cur_home=' aria-current="page"',
         html_attrs=' class="home-exp exp-pending" data-page="home"',
-        extra_css=FT_HEAD.format(base="", v=FT_CSS_V),
+        extra_css=FT_HEAD.format(base="", v=FT_CSS_V) + "\n" +
+        RZ_HEAD.format(base="", v=RZ_CSS_V),
         layout_open='<div id="layout-control">',
         layout_close='</div>',
-        variant_layout=variant,
+        variant_layout=variant + "\n" + raices,
         # No tag for labs.js on purpose: the inline gate in base.html injects
         # it, and only for a browser that has Labs switched on.
         extra_js=CAROUSEL_JS + SECTION_SPY_JS +
@@ -602,51 +601,68 @@ def build():
         f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>')))
 
     # ---------- blog index ----------
+    # The newest post leads at full width; the rest follow as a compact list.
+    # The cover art across these posts is a mix of photos, book jackets and
+    # logos, so thumbnails are contained rather than cropped — see the .thumb
+    # rules in site.css.
     counts = like_counts({p["slug"] for p in posts})
-    cards = []
-    for p in posts:
+
+    def post_card(p, kind):
+        """One index card. kind is "lead" for the newest post, "row" for the
+        rest; both keep .pcard and data-post so post_card_clicked still fires
+        with the position it was in — see assets/js/analytics.js."""
         thumb = (f'<div class="thumb"><img src="../{p["cover"].lstrip("/")}" '
                  f'alt="" loading="lazy"></div>') if p["cover"] else ""
-        # data-post names the post for post_card_clicked, so the event says
-        # which one was opened without the slug being parsed back out of the
-        # href — see assets/js/analytics.js.
-        cards.append(
-            f'      <a class="pcard" href="../post/{p["slug"]}/" '
+        flag = '<p class="flag">Latest</p>\n          ' if kind == "lead" else ""
+        return (
+            f'      <a class="pcard {kind}" href="../post/{p["slug"]}/" '
             f'data-post="{html.escape(p["slug"], quote=True)}">\n'
-            f'{("        " + thumb) if thumb else ""}\n'
-            f'        <h2>{html.escape(p["title"])}</h2>\n'
-            f'        <p class="excerpt">{html.escape(p["excerpt"])}</p>\n'
-            f'        <div class="pmeta"><span>{p["nice"]} &middot; {p["mins"]} min read</span>'
+            f'        {thumb}\n'
+            f'        <div class="pbody">\n'
+            f'          {flag}<h2>{html.escape(p["title"])}</h2>\n'
+            f'          <p class="excerpt">{html.escape(p["excerpt"])}</p>\n'
+            f'          <div class="pmeta">'
+            f'<span>{p["nice"]} &middot; {p["mins"]} min read</span>'
             f'{like_count(p["slug"], counts)}</div>\n'
+            f'        </div>\n'
             f'      </a>')
+
+    feed = ""
+    if posts:
+        rows = "\n".join(post_card(p, "row") for p in posts[1:])
+        feed = ('  <div class="blog-feed wrap">\n'
+                + post_card(posts[0], "lead") + "\n"
+                + (f'    <div class="post-rows">\n{rows}\n    </div>\n'
+                   if rows else "")
+                + '  </div>\n')
     blog = ('  <section class="blog-head wrap">\n'
             '    <h1 class="script-h">POV Blog</h1>\n'
             f'    <p>{html.escape(CFG["blog_tagline"])}</p>\n'
             '  </section>\n\n'
-            '  <div class="posts wrap">\n' + "\n".join(cards) + "\n  </div>\n"
+            + feed
             + subscribe_block("amp-block" if mask_forms else ""))
-    # Both designs, the same way the post pages do it: one set of cards
-    # between two sets of chrome, restyled by CSS rather than duplicated.
-    bh, bf = fresh_chrome(base="../", cur_blog=' aria-current="page"')
+    # All three designs, the same way the post pages do it: one set of cards
+    # inside one set of chrome per arm, restyled by CSS rather than duplicated.
+    blog_top, blog_bottom = editorial_chrome("../", ' aria-current="page"')
     made.append(write("blog/index.html", page(
         content=blog, title="POV Blog | AQ Career Consulting",
         desc=CFG["blog_tagline"], canonical=f"{SITE}/blog/", base="../",
         cur_blog=' aria-current="page"',
         html_attrs=' class="home-exp exp-pending" data-page="blog"',
-        extra_css=FT_HEAD.format(base="../", v=FT_CSS_V),
-        chrome_top=f'<div class="ft ft-chrome">\n{bh}\n</div>',
-        variant_layout=f'<div class="ft ft-chrome">\n{bf}\n</div>',
+        extra_css=FT_HEAD.format(base="../", v=FT_CSS_V) + "\n" +
+        RZ_HEAD.format(base="../", v=RZ_CSS_V),
+        chrome_top=blog_top,
+        variant_layout=blog_bottom,
         # forms.js as well as likes.js now: the memo signup at the foot of the
         # list needs it, or it posts by leaving the page.
         extra_js=(f'<script src="../assets/js/forms.js?v={JS_V}"></script>\n'
                   f'<script src="../assets/js/likes.js?v={LIKES_V}"></script>'))))
 
     # ---------- posts ----------
-    # Every post sits at the same depth, so one fill of the fresh-take chrome
+    # Every post sits at the same depth, so one fill of the editorial chrome
     # serves all of them.
-    ph, pf = fresh_chrome(base="../../", cur_blog=' aria-current="page"')
-    post_chrome_top = f'<div class="ft ft-chrome">\n{ph}\n</div>'
-    post_chrome_bottom = f'<div class="ft ft-chrome">\n{pf}\n</div>'
+    post_chrome_top, post_chrome_bottom = \
+        editorial_chrome("../../", ' aria-current="page"')
     for n, p in enumerate(posts):
         body = size_body_images(p["body"]) \
             .replace('src="/assets/', 'src="../../assets/')
@@ -679,10 +695,10 @@ def build():
             + LIKE_BAR +
             f'  <nav class="post-nav post">{"".join(links)}</nav>\n'
             f'  <script type="application/ld+json">{ld}</script>\n')
-        # The post page carries both designs, like the homepage — but with one
-        # copy of the article between two sets of chrome rather than two whole
-        # layouts, so a post's text isn't in the page twice. data-post names
-        # the post for the like button and for post_viewed.
+        # The post page carries every design, like the homepage — but with one
+        # copy of the article inside a set of chrome per arm rather than whole
+        # layouts, so a post's text isn't in the page three times. data-post
+        # names the post for the like button and for post_viewed.
         made.append(write(f'post/{p["slug"]}/index.html', page(
             content=content, title=f'{p["title"]} | AQ Career Consulting',
             desc=p["excerpt"], canonical=f'{SITE}/post/{p["slug"]}/',
@@ -691,7 +707,8 @@ def build():
             cur_blog=' aria-current="page"',
             html_attrs=(' class="home-exp exp-pending"'
                         f' data-page="post" data-post="{html.escape(p["slug"], quote=True)}"'),
-            extra_css=FT_HEAD.format(base="../../", v=FT_CSS_V),
+            extra_css=FT_HEAD.format(base="../../", v=FT_CSS_V) + "\n" +
+            RZ_HEAD.format(base="../../", v=RZ_CSS_V),
             chrome_top=post_chrome_top, variant_layout=post_chrome_bottom,
             extra_js=f'<script src="../../assets/js/likes.js?v={LIKES_V}"></script>')))
 

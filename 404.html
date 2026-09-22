@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/css/site.css?v=709830d1">
+<link rel="stylesheet" href="/assets/css/site.css?v=92b80199">
 
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="/feed.xml">
 <noscript><style>html.exp-pending body{visibility:visible!important}
@@ -29,17 +29,18 @@
    blocked, errors, or never arrives, the page must still reveal itself.
    analytics.js calls window.__aqReveal(design) once it knows the variant.
 
-   The class is still home-exp and the attribute still data-home-design:
-   the experiment in Statsig is homepage_fresh_take, and post pages now
-   follow whatever it assigned rather than running an experiment of their
-   own. Renaming either here would only hide that shared identity. */
+   The class is home-exp and the attribute is data-home-design: the Statsig
+   experiment is homepage_three_designs, and post pages follow whatever it
+   assigned rather than running an experiment of their own. */
 (function(){
   var h=document.documentElement;
   if(!h.classList.contains('home-exp')) return;
   var done=false,t;
   function reveal(d){
     if(done) return; done=true; clearTimeout(t);
-    h.setAttribute('data-home-design', d==='fresh_take'?'fresh_take':'control');
+    var designs={control:1,fresh_take:1,raices:1};
+    d=designs[d]?d:'control';
+    h.setAttribute('data-home-design',d);
     h.classList.remove('exp-pending');
   }
   /* Labs: a layout pinned for development. Resolved here, inline, before
@@ -58,7 +59,7 @@
        localhost, where you may well want to watch the real assignment run. */
     if(toggle==='0'){ st={enabled:false}; }
     else if(toggle==='1'){ st=st||{}; st.enabled=true; }
-    if(wanted==='control'||wanted==='fresh_take'){
+    if(wanted==='control'||wanted==='fresh_take'||wanted==='raices'){
       st=st||{}; st.enabled=true; st.design=wanted;
     }
     if(st) localStorage.setItem(KEY,JSON.stringify(st));
@@ -78,7 +79,7 @@
      invisible to visitors — it isn't in the page they receive at all. */
   if(labs){
     var ls=document.createElement('script');
-    ls.src='/assets/js/labs.js?v=45e231eb'; ls.async=true;
+    ls.src='/assets/js/labs.js?v=dc690124'; ls.async=true;
     document.head.appendChild(ls);
   }
 })();
@@ -151,7 +152,7 @@
 
 
 <script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
-<script src="/assets/js/analytics.js?v=e9a0299c"></script>
+<script src="/assets/js/analytics.js?v=c8aa5e23"></script>
 
 </body>
 </html>

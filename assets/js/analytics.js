@@ -55,7 +55,7 @@
     statsig: 'https://cdn.jsdelivr.net/npm/@statsig/js-client@3.33.5/build/statsig-js-client.min.js'
   };
 
-  /* Events Statsig needs for homepage_fresh_take Pulse. Everything else is
+  /* Events Statsig needs for homepage_three_designs Pulse. Everything else is
      Amplitude-only so the Statsig → Amplitude integration cannot inflate
      charts when it forwards product events. Keep this list in sync with the
      experiment's primary/secondary metrics. */
@@ -171,16 +171,15 @@
     });
   }
 
-  var HOME_EXP = 'homepage_fresh_take';
+  var HOME_EXP = 'homepage_three_designs';
   var HOME_PARAM = 'homepage_design';
   var REVEAL_MS = 2500;
   var revealTimer = null;
   var revealedDesign = null;
 
-  /* The fresh-take design covers the homepage, the blog index and the post
-     pages. All three ask the same experiment which arm this visitor is in,
-     so a reader given the fresh homepage doesn't then land on a
-     control-styled blog. data-page says which of the three this is. */
+  /* Each non-control arm carries its own blog index and post page. All three
+     page kinds ask the same experiment, so a visitor keeps a coherent design.
+     data-page names the page kind. */
   function pageKind() {
     return document.documentElement.getAttribute('data-page') || '';
   }
@@ -284,7 +283,8 @@
     var html = document.documentElement;
     if (!html.classList.contains('home-exp')) return;
     if (revealedDesign) return;   // first reveal wins; never swap under a reader
-    revealedDesign = design === 'fresh_take' ? 'fresh_take' : 'control';
+    revealedDesign = design === 'fresh_take' || design === 'raices'
+      ? design : 'control';
     // The real reveal lives in an inline script in the page head, so that a
     // blocked or failed analytics.js can't leave the page hidden. Defer to it.
     if (typeof window.__aqReveal === 'function') {
@@ -527,11 +527,21 @@
     remapHash(design);
   }
 
-  // The variant's sections carry ft- prefixed ids, so a link written against
-  // the control's anchors has to be pointed at the equivalent section.
+  // Variant sections carry prefixed ids, so a link written against the
+  // control's anchors has to be pointed at the equivalent visible section.
   function remapHash(design) {
-    if (design !== 'fresh_take') return;
-    var map = { services: 'ft-services', connect: 'ft-connect', about: 'ft-about', main: 'ft-main' };
+    if (design !== 'fresh_take' && design !== 'raices') return;
+    var prefix = design === 'raices' ? 'rz-' : 'ft-';
+    var map = {
+      services: prefix + 'services',
+      connect: prefix + 'connect',
+      about: prefix + 'about',
+      main: prefix + 'main',
+      'ft-services': prefix + 'services',
+      'ft-connect': prefix + 'connect',
+      'ft-about': prefix + 'about',
+      'ft-main': prefix + 'main'
+    };
     var id = (window.location.hash || '').replace('#', '');
     if (!map[id]) return;
     var target = document.getElementById(map[id]);

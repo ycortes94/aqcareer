@@ -67,7 +67,7 @@
     };
     if (pinned) meta.labs_pinned = true;
     try {
-      // Amplitude only — likes are not Pulse metrics for homepage_fresh_take.
+      // Amplitude only — likes are not Pulse metrics for the homepage test.
       if (window.amplitude && typeof window.amplitude.track === 'function') {
         window.amplitude.track(name, meta);
       }

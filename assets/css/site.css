@@ -17,17 +17,21 @@ body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);font-weig
 /* Fresh-take experiment: hold paint until Statsig assigns a group, then
    show only the matching layout. Fallback is the current (control) site.
 
-   The homepage ships both layouts whole, one wrapper each. A post page
-   instead ships one article between two sets of chrome, because duplicating
-   the article to give each design its own copy would put every post's text
-   in the page twice. So the switch has two halves: whole layouts, and
-   chrome. Pages that carry neither (the blog index, privacy, 404) are
-   unaffected by any of this and stay on the control design. */
+   The homepage ships all layouts whole, one wrapper each. The blog index and
+   a post page instead ship one copy of the content with a set of chrome per
+   design around it, because duplicating the article to give each design its
+   own copy would put every post's text in the page three times. So the
+   switch has two halves: whole layouts, and chrome. Pages that carry neither
+   (privacy, 404) are unaffected by any of this and stay on the control
+   design. */
 html.home-exp.exp-pending body{visibility:hidden}
-#layout-fresh,.ft-chrome{display:none}
+#layout-fresh,#layout-raices,.ft-chrome,.rz-chrome{display:none}
 html[data-home-design="fresh_take"] #layout-control{display:none}
 html[data-home-design="fresh_take"] #layout-fresh{display:block}
 html[data-home-design="fresh_take"] .site-chrome{display:none}
+html[data-home-design="raices"] #layout-control{display:none}
+html[data-home-design="raices"] #layout-raices{display:block}
+html[data-home-design="raices"] .site-chrome{display:none}
 /* display:contents, not block: the fresh-take header is sticky, and a sticky
    element travels only within its own parent's box. Inside a wrapper div that
    is exactly header-height it would have nowhere to go and would scroll away,
@@ -35,13 +39,15 @@ html[data-home-design="fresh_take"] .site-chrome{display:none}
    box of its own the wrapper leaves the header parented to <body>, and the
    .ft class on it still passes the variant's type and colour down. */
 html[data-home-design="fresh_take"] .ft-chrome{display:contents}
-/* Fresh-take-only furniture inside the shared article — the like bar. */
+html[data-home-design="raices"] .rz-chrome{display:contents}
+/* Editorial-only furniture inside the shared article — the like bar. Both
+   non-control arms show it, so it keeps the .ft- prefix it was built with. */
 .ft-only{display:none}
-html[data-home-design="fresh_take"] .ft-only{display:block}
+html:is([data-home-design="fresh_take"],[data-home-design="raices"]) .ft-only{display:block}
 /* Same trap as .aq-consent below: the rule above is an author rule and would
    otherwise outrank the browser's [hidden]{display:none}, showing the like
    bar before likes.js has decided it can work at all. */
-html[data-home-design="fresh_take"] .ft-only[hidden]{display:none}
+html:is([data-home-design="fresh_take"],[data-home-design="raices"]) .ft-only[hidden]{display:none}
 /* height:auto matters now that the build stamps intrinsic width and height
    on the post images: those attributes are presentational hints, so without
    it an image narrowed by max-width keeps its full pixel height and comes
@@ -227,15 +233,47 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
 .blog-head{padding-block:48px 10px;text-align:center}
 .blog-head .script-h{font-size:56px;color:var(--green-mid)}
 .blog-head p{font-size:15px;color:#444;margin:14px auto 0;max-width:56ch}
-.posts{padding-block:34px 70px;display:grid;grid-template-columns:repeat(3,1fr);gap:40px 30px}
-.pcard{display:flex;flex-direction:column;text-decoration:none}
-.pcard .thumb{aspect-ratio:3/2;overflow:hidden;background:#eef2f1}
-.pcard .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .35s}
-.pcard:hover .thumb img{transform:scale(1.04)}
-.pcard h2{font-size:19px;font-weight:400;line-height:1.35;margin:18px 0 10px;color:#141414}
+/* Newest post leads, the rest follow as a list. Cover art here ranges from
+   photographs to book jackets to logos, so every thumbnail is contained on a
+   tint rather than cropped — cropping turned the logos into abstract slabs. */
+.blog-feed{padding-block:30px 70px}
+.pcard{text-decoration:none;display:block;color:inherit}
+.pcard .thumb{overflow:hidden;background:#eef2f1;border-radius:4px}
+.pcard .thumb img{width:100%;height:100%;object-fit:contain;transition:transform .35s}
+.pcard:hover .thumb img{transform:scale(1.03)}
+.pcard h2{font-weight:400;line-height:1.3;color:#141414;margin:0}
 .pcard:hover h2{color:var(--green-deep)}
-.pcard .excerpt{font-size:14px;line-height:1.7;color:#4a4a4a;margin:0}
-.pcard .pmeta{margin-top:14px;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--green-mid)}
+.pcard .excerpt{font-size:14.5px;line-height:1.7;color:#4a4a4a;margin:10px 0 0}
+.pcard .pmeta{
+  margin-top:14px;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--green-mid);display:flex;align-items:center;gap:14px
+}
+.pcard .flag{
+  font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--green-mid);margin:0 0 10px
+}
+
+.pcard.lead{
+  display:grid;grid-template-columns:1.05fr .95fr;gap:38px;align-items:center;
+  padding-bottom:34px;border-bottom:1px solid #e3ebe8
+}
+.pcard.lead .thumb{aspect-ratio:4/3}
+.pcard.lead h2{font-size:30px;line-height:1.2}
+.pcard.lead .excerpt{font-size:16px}
+
+.post-rows{display:grid;gap:2px;margin-top:6px}
+.pcard.row{
+  display:grid;grid-template-columns:104px minmax(0,1fr);gap:24px;
+  align-items:center;padding:22px 0;border-bottom:1px solid #eef2f1
+}
+.pcard.row .thumb{aspect-ratio:1;background:#f4f7f6}
+.pcard.row .pbody{max-width:84ch}
+.pcard.row h2{font-size:18px}
+.pcard.row .excerpt{
+  margin-top:7px;font-size:14px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+.pcard.row .pmeta{margin-top:10px}
 
 /* ---------- single post ---------- */
 .post{max-width:760px;margin:0 auto;padding:0 28px}
@@ -327,7 +365,8 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
 
 /* ---------- responsive ---------- */
 @media (max-width:980px){
-  .posts{grid-template-columns:repeat(2,1fr)}
+  .pcard.lead{grid-template-columns:1fr;gap:22px}
+  .pcard.lead .thumb{aspect-ratio:16/9}
 }
 @media (max-width:880px){
   .hdr{grid-template-columns:1fr auto}
@@ -349,6 +388,7 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
   .connect .script-h{font-size:52px}
   .quote p{font-size:20px}
   .green-card{padding:34px 26px}
-  .posts{grid-template-columns:1fr;gap:34px}
+  .pcard.lead h2{font-size:25px}
+  .pcard.row{grid-template-columns:76px minmax(0,1fr);gap:16px}
   .post-body{font-size:16px}
 }
