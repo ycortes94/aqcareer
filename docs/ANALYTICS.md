@@ -190,11 +190,11 @@ markup without touching the JS.
 
 **The site ships two chromes.** The control one is in
 `templates/base.html` (used by the control homepage, the control post page,
-and every page with no variant at all); the fresh-take one is in
-`templates/fresh-header.html` and `templates/fresh-footer.html`, which the
-variant homepage, the fresh-take blog index and the fresh-take post page all
-include. A site-wide
-feature has to be in **both**, or half of the traffic silently loses it —
+and every page with no variant at all); the editorial one is in
+`templates/fresh-header.html` and `templates/fresh-footer.html`, which both
+non-control homepages and the blog index and post pages include — once per
+arm, filled with that arm's section-anchor prefix. A site-wide
+feature has to be in **both**, or most of the traffic silently loses it —
 which is how the variant first shipped without the opt-out link.
 
 `tools/build.py` refuses to build if either is missing one, via the
@@ -236,13 +236,12 @@ pageview buckets normally.
 
 ### The blog follows the same assignment, and logs no exposure
 
-The `fresh_take` design covers the blog index and post pages as well as the
-homepage, so a reader given that homepage doesn't then land on a
-control-styled blog. The third `raices` arm deliberately uses the same
-editorial blog and post treatment; only its homepage is different. Those
-pages read the same `homepage_three_designs` assignment — but ask for it with
-`{ disableExposureLog: true }`. Which page is which comes from `data-page`
-on `<html>`: `home`, `blog` or `post`.
+Each non-control design covers the blog index and post pages as well as the
+homepage, so a reader given one of those homepages doesn't then land on a
+control-styled blog. `fresh_take` and `raices` each carry their own blog and
+post treatment. Those pages read the same `homepage_three_designs` assignment
+— but ask for it with `{ disableExposureLog: true }`. Which page is which
+comes from `data-page` on `<html>`: `home`, `blog` or `post`.
 
 That is deliberate. The experiment's exposed population is people who saw the
 homepage, and it has been running on that basis; adding everyone who arrives
@@ -273,8 +272,9 @@ custom event.
 `waitlist_joined`.
 
 **Amplitude only:** `home_viewed` / `blog_viewed` / `post_viewed`,
-`element_clicked`, `nav_link_clicked`, `post_card_clicked`, `form_submitted`,
-`waitlist_opened`, `post_liked` / `post_unliked`, plus Amplitude autocapture.
+`element_clicked`, `nav_link_clicked`, `post_card_clicked`,
+`blog_page_changed`, `form_submitted`, `waitlist_opened`, `post_liked` /
+`post_unliked`, plus Amplitude autocapture.
 
 **Identity:** Statsig initializes first; Amplitude then inits with
 `deviceId` set to Statsig's `stableID`, so forwarded exposures join the same
@@ -319,6 +319,7 @@ downloads, web vitals), these are logged by hand. Every one carries
 | `element_clicked` | any button or link with no more specific event | `element_type`, `element_text`, `element_id`, `element_location`, `link_type`, `link_url`, `page` | Amplitude |
 | `nav_link_clicked` | any nav link, `[data-nav]` | `nav_item`, `nav_label`, `nav_location` | Amplitude |
 | `post_card_clicked` | a card on the blog index | `post` (the slug), `post_title`, `card_position` | Amplitude |
+| `blog_page_changed` | the blog index, when paging swaps a page in without a reload | `blog_page` (the page arrived at) | Amplitude |
 | `hero_cta_clicked` | `[data-cta="hero"]` | | Amplitude + Statsig (Pulse) |
 | `cta_clicked` | `[data-cta="primary"]` | | Amplitude + Statsig (Pulse) |
 | `waitlist_opened` | the 2027 interest list dialog, when it opens | `source` (`link` / `hash`), `page` | Amplitude |
@@ -342,6 +343,23 @@ the blog and subscribed there counts. That is a genuine conversion rather
 than a measurement error, but it means the metric changed meaning on the day
 the blog form shipped — compare periods across that date with care, and split
 by `page` if you want the homepage-only number the earlier data represents.
+
+**Paging the blog index no longer reloads it**, and that moves three
+numbers. `assets/js/paging.js` fetches `/blog/page/N/` and swaps the cards
+in, so:
+
+- `blog_viewed` is now **once per visit to the index**, not once per page
+  of it. `blog_page_changed` is where the depth went; sum the two if you
+  want the old shape of the number.
+- `card_position` counts within the page on screen, so a card on page 2 is
+  positions 1–6 again rather than 7–12. Split by `blog_page` from the
+  `blog_page_changed` before it if you need the position in the archive.
+- `element_clicked`'s `link_url` on the blog index reads `/privacy/` rather
+  than `../privacy/` once a visitor has paged: the script rewrites the
+  page's own links so they survive the URL change. `link_url` was already
+  depth-relative and so already differed between the home page, the index
+  and a post, which is why it reports the href as written — this makes one
+  of those cases the tidier one rather than breaking a scheme.
 
 Through 2026-09-18 every hand-logged event went to both SDKs, and Statsig
 autocapture was on. That, plus the Statsig → Amplitude integration, duplicated
@@ -385,7 +403,7 @@ produces one event** — the most specific one that fits:
 | A nav link (`[data-nav]`) | `nav_link_clicked` |
 | A CTA (`[data-cta]`) | `hero_cta_clicked` / `cta_clicked` |
 | A post card on the blog index | `post_card_clicked` |
-| A control that owns its event — the like button, the form submit buttons | that control's event, nothing else |
+| A control that owns its event — the like button, the form submit buttons, the blog's pagination links | that control's event, nothing else |
 | The consent buttons, the Labs panel | nothing: measurement UI and development furniture, not the site |
 | **Anything else clickable** — buttons, links, `[role="button"]` | `element_clicked` |
 
@@ -505,9 +523,9 @@ nothing. Target the visible form.
 
 ### Likes
 
-The fresh-take post page has a like button and the fresh-take blog index
-shows a tally on each card; the control design has neither. This is a static
-site with nowhere to POST a count to, so a like is remembered in the
+Both non-control post pages have a like button and both non-control blog
+indexes show a tally on each card; the control design has neither. This is a
+static site with nowhere to POST a count to, so a like is remembered in the
 visitor's own browser under **`aq_likes_v1`** (`{"<slug>":"<ISO date>"}`) and
 nothing is shared between visitors.
 
@@ -581,9 +599,9 @@ whatever share of visitors decline.
 
 Presses made while a Labs layout was pinned are filtered out, with
 `labs_pinned is not true` on both queries. The like button ships on the
-fresh-take post page only, so pinning is how anyone working on that layout
-reaches it, and their presses are development rather than readers. `is not`
-keeps events where the property is unset, which is every real visitor —
+non-control post pages only, so pinning is how anyone working on those
+layouts reaches it, and their presses are development rather than readers.
+`is not` keeps events where the property is unset, which is every real visitor —
 checked against the project on 2026-09-21, where 5 `element_clicked` split
 into 4 unset and 1 pinned.
 
@@ -620,11 +638,10 @@ is not, since it never leaves the browser.
 
 ## Statsig Labs (switching layouts by hand)
 
-All three homepage designs ship in the same document. The blog index and a
-post page still need only two visual treatments: `raices` intentionally
-follows the editorial `fresh_take` chrome there. Statsig decides which
-homepage you see. Labs pins one without waiting to be bucketed or accepting
-measurement first.
+All three homepage designs ship in the same document, and the blog index and
+a post page ship one copy of their content inside a set of chrome per arm.
+Statsig decides which you see. Labs pins one without waiting to be bucketed
+or accepting measurement first.
 
 It appears as a small **Statsig Labs** panel at the bottom-left of the
 homepage, the blog index and any post page, with Control / Fresh take /

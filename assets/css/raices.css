@@ -54,9 +54,27 @@ html[data-home-design="raices"] body{
 .rz .btn-text{color:var(--rz-ink);border-bottom-color:var(--rz-marigold)}
 .rz .btn-text:hover{border-bottom-color:var(--rz-rosa)}
 
+/* The shared sticky header is tinted for fresh-take's cream; matched to this
+   arm's paper so it doesn't read as a band across the top of the page. */
+.rz header{background:rgba(255,247,236,.93);border-bottom-color:var(--rz-line)}
 .rz .hdr{max-width:1240px}
 .rz .hdr nav a{color:var(--rz-ink)}
 .rz .hdr nav a[aria-current]{background:var(--rz-rosa);color:#fff}
+
+/* The footer keeps fresh-take's shape and takes this arm's colours: the dark
+   ground is the same ink the about band uses, with the woven strip along the
+   top so the page ends the way the sections inside it are divided. */
+.rz footer{position:relative;background:var(--rz-ink)}
+.rz footer::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:7px;
+  background:var(--rz-weave)
+}
+.rz footer .mark .sub{color:#d3bda3}
+.rz .fcred{color:#e4d6c6}
+.rz .fh{color:var(--rz-marigold)}
+.rz .fnav a{color:#e4d6c6}
+.rz .fbot{border-top-color:rgba(255,255,255,.14);color:#c3ad97}
+.rz .fmeta a,.rz .fmeta .consent-link{color:#c3ad97}
 
 .rz-weave{height:8px;background:var(--rz-weave)}
 .rz-sig{
@@ -240,9 +258,14 @@ html[data-home-design="raices"] body{
    with the woven strip along its foot, and the list below it picks up the
    block colours the homepage's service cards run on. */
 
+/* A box on the page, not a band across it, so the width is the column minus
+   the gutter .wrap would have spent on padding — left as padding, the ink
+   ground ran to the edge of the screen at anything under the column width,
+   with the corner radius clipped off at both ends. */
 html[data-home-design="raices"] .blog-head{
-  position:relative;overflow:hidden;max-width:var(--ft-maxw);
-  margin:36px auto 0;padding:48px 46px 46px;text-align:left;
+  position:relative;overflow:hidden;
+  width:calc(100% - 56px);max-width:calc(var(--ft-maxw) - 56px);
+  margin:36px auto 0;padding:46px 38px 44px;text-align:left;
   background:var(--rz-ink);border-radius:var(--rz-r)
 }
 html[data-home-design="raices"] .blog-head::after{
@@ -328,6 +351,25 @@ html[data-home-design="raices"] .pcard.row .excerpt{
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
 }
 html[data-home-design="raices"] .pcard.row .pmeta{margin-top:12px}
+html[data-home-design="raices"] .blog-page-label{color:var(--rz-marigold)}
+html[data-home-design="raices"] .blog-pagination{
+  border-top:6px solid transparent;border-image:var(--rz-weave) 6;
+  font-family:var(--ft-sans)
+}
+html[data-home-design="raices"] .blog-page-direction{
+  color:var(--rz-jade);font-weight:700
+}
+html[data-home-design="raices"] .blog-page-number{
+  color:var(--rz-ink);border-color:var(--rz-line);border-radius:6px;
+  background:#fff
+}
+html[data-home-design="raices"] a.blog-page-number:hover{
+  background:var(--rz-paper-2)
+}
+html[data-home-design="raices"] .blog-page-number[aria-current="page"]{
+  background:var(--rz-rosa);border-color:var(--rz-rosa);color:#fff
+}
+html[data-home-design="raices"] .blog-page-gap{color:var(--rz-muted)}
 
 /* The like tally. Prefixed for the same reason .ft-like is: it has to
    out-specify the display:block that .ft-only reveals it with. */
@@ -367,8 +409,9 @@ html[data-home-design="raices"][data-page="blog"] .signup-grid p{
    consent under them. Same markup either way, so the order is done here: the
    form becomes the flex column, .subrow steps out of the way with
    display:contents, and its two children take their places in it separately.
-   Every child needs an explicit order, including the .form-status paragraph
-   forms.js appends, or the unnumbered ones collect at the top. */
+   Every child needs an explicit order, including the Turnstile mount and the
+   .form-status paragraph forms.js appends, or the unnumbered ones collect at
+   the top — which put the challenge between the label and its field. */
 html[data-home-design="raices"][data-page="blog"] .signup-grid form{
   background:#fff;border-radius:var(--rz-r);padding:30px;
   box-shadow:0 10px 30px rgba(36,26,20,.07);
@@ -394,15 +437,16 @@ html[data-home-design="raices"][data-page="blog"] .consent{
 html[data-home-design="raices"][data-page="blog"] .consent input{
   width:16px;height:16px;margin-top:2px;accent-color:var(--rz-rosa)
 }
+html[data-home-design="raices"][data-page="blog"] .js-turnstile{order:3}
 html[data-home-design="raices"][data-page="blog"] .btn-ghost{
-  order:3;width:100%;background:var(--rz-rosa);color:#fff;border:0;
+  order:4;width:100%;background:var(--rz-rosa);color:#fff;border:0;
   border-radius:6px;font-family:var(--ft-sans);font-size:14px;font-weight:700;
   padding:14px 26px;transition:background .15s
 }
 html[data-home-design="raices"][data-page="blog"] .btn-ghost:hover{background:#a72859}
 /* .rz .form-status doesn't reach this one — the shared cards sit outside both
    .rz chrome blocks — so the arm's colours are repeated here. */
-html[data-home-design="raices"][data-page="blog"] .form-status{order:4}
+html[data-home-design="raices"][data-page="blog"] .form-status{order:5}
 html[data-home-design="raices"][data-page="blog"] .form-status.is-ok{
   color:var(--rz-jade);font-weight:700
 }
@@ -410,7 +454,7 @@ html[data-home-design="raices"][data-page="blog"] .form-status.is-error{color:#8
 
 @media (max-width:900px){
   html[data-home-design="raices"] .blog-head{
-    margin-top:24px;padding:36px 28px 34px
+    margin-top:24px;padding:34px 26px 32px
   }
   html[data-home-design="raices"] .blog-feed{padding-block:32px 60px}
   html[data-home-design="raices"][data-page="blog"] .signup-band{padding:52px 0 60px}
@@ -427,6 +471,11 @@ html[data-home-design="raices"][data-page="blog"] .form-status.is-error{color:#8
   }
   html[data-home-design="raices"] .pcard.row h2{font-size:17.5px}
   html[data-home-design="raices"] .pcard.row .excerpt{display:none}
+  /* The card's own padding costs this row ~50px the other arms keep, which
+     was enough to wrap the read time onto a line of its own. */
+  html[data-home-design="raices"] .pcard.row .pmeta{
+    font-size:10.5px;letter-spacing:.07em;gap:10px
+  }
 }
 
 /* ---------- post page ----------
@@ -444,8 +493,8 @@ html[data-home-design="raices"] .post-head .pmeta{
   text-transform:uppercase;color:var(--rz-clay)
 }
 html[data-home-design="raices"] .post-head h1{
-  font-family:var(--ft-sans);font-weight:800;font-size:clamp(34px,4.8vw,56px);
-  line-height:1.02;letter-spacing:-.034em;color:var(--rz-ink);margin:16px 0 24px
+  font-family:var(--ft-sans);font-weight:800;font-size:clamp(32px,4.4vw,52px);
+  line-height:1.04;letter-spacing:-.034em;color:var(--rz-ink);margin:16px 0 24px
 }
 html[data-home-design="raices"] .post-head .byline{
   position:relative;padding-top:20px;font-size:14px;color:var(--rz-muted)
@@ -457,12 +506,14 @@ html[data-home-design="raices"] .post-head .byline::before{
 
 /* The offset block, as on the blog index: a box shadow on .cover, the frame
    the build sizes to the image, so it tracks a book jacket or a logo as
-   closely as it does a full-width photograph. */
+   closely as it does a full-width photograph. Marigold on both, rather than
+   a colour per page — the covers range from a green book jacket to a white
+   logo, and it is the one accent that stays visible behind all of them. */
 html[data-home-design="raices"] .post-cover{
   margin:44px auto 0;max-width:var(--ft-maxw)
 }
 html[data-home-design="raices"] .post-cover .cover{
-  border-radius:var(--rz-r);box-shadow:16px 16px 0 var(--rz-jade)
+  border-radius:var(--rz-r);box-shadow:16px 16px 0 var(--rz-marigold)
 }
 html[data-home-design="raices"] .post-cover img{border-radius:var(--rz-r)}
 
@@ -529,5 +580,5 @@ html[data-home-design="raices"] .post-nav a:hover{
 @media (max-width:900px){
   html[data-home-design="raices"] .post-head{padding-block:42px 0}
   html[data-home-design="raices"] .post-body{font-size:16.5px}
-  html[data-home-design="raices"] .post-cover .cover{box-shadow:10px 10px 0 var(--rz-jade)}
+  html[data-home-design="raices"] .post-cover .cover{box-shadow:10px 10px 0 var(--rz-marigold)}
 }
