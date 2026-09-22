@@ -236,7 +236,17 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
 /* Newest post leads, the rest follow as a list. Cover art here ranges from
    photographs to book jackets to logos, so every thumbnail is contained on a
    tint rather than cropped — cropping turned the logos into abstract slabs. */
-.blog-feed{padding-block:30px 70px}
+/* scroll-margin-top for the same reason [id] has it: paging.js brings the
+   list up to the top of the screen after it swaps a page in, and the sticky
+   header would otherwise sit over the first post. */
+.blog-feed{padding-block:30px 70px;scroll-margin-top:92px}
+/* Set while the next page is in flight. On a slow connection the click
+   would otherwise look like it did nothing at all. */
+.blog-feed[aria-busy="true"]{opacity:.5;transition:opacity .15s}
+/* paging.js hands focus to the list so the keyboard carries on from the
+   first new post. It is tabindex="-1" and unreachable by Tab, so the ring
+   would only ever mark a move the script made. */
+.blog-feed:focus{outline:none}
 .pcard{text-decoration:none;display:block;color:inherit}
 .pcard .thumb{overflow:hidden;background:#eef2f1;border-radius:4px}
 .pcard .thumb img{width:100%;height:100%;object-fit:contain;transition:transform .35s}
@@ -274,6 +284,30 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
 }
 .pcard.row .pmeta{margin-top:10px}
+.blog-page-label{
+  display:block;font-size:11px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--green-mid);margin-top:10px
+}
+.blog-pagination{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:20px;
+  margin-top:42px;padding-top:24px;border-top:1px solid #e3ebe8;
+  font-size:13px
+}
+.blog-page-direction{color:var(--green-deep);font-weight:600;text-decoration:none}
+.blog-page-direction:last-child{text-align:right}
+.blog-page-direction:hover{text-decoration:underline;text-underline-offset:3px}
+.blog-page-direction.is-disabled{visibility:hidden}
+.blog-page-numbers{display:flex;align-items:center;justify-content:center;gap:7px}
+.blog-page-number{
+  min-width:34px;height:34px;padding:0 8px;border:1px solid #d9e3e0;
+  display:grid;place-items:center;color:var(--green-deep);text-decoration:none
+}
+a.blog-page-number:hover{background:#eef2f1}
+.blog-page-number[aria-current="page"]{
+  background:var(--green-deep);border-color:var(--green-deep);color:#fff;
+  font-weight:700
+}
+.blog-page-gap{padding-inline:2px;color:#71807b}
 
 /* ---------- single post ---------- */
 .post{max-width:760px;margin:0 auto;padding:0 28px}
@@ -391,4 +425,9 @@ footer.site .copy{color:#9dc2b8;font-size:12px}
   .pcard.lead h2{font-size:25px}
   .pcard.row{grid-template-columns:76px minmax(0,1fr);gap:16px}
   .post-body{font-size:16px}
+}
+@media (max-width:560px){
+  .blog-pagination{grid-template-columns:1fr 1fr;gap:18px 12px}
+  .blog-page-numbers{grid-column:1/-1;grid-row:1}
+  .blog-page-direction{grid-row:2}
 }

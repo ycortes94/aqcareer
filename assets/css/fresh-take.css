@@ -384,6 +384,22 @@ html[data-home-design="fresh_take"] .pcard.row .excerpt{
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
 }
 html[data-home-design="fresh_take"] .pcard.row .pmeta{margin-top:12px}
+html[data-home-design="fresh_take"] .blog-page-label{color:var(--ft-green-mid)}
+html[data-home-design="fresh_take"] .blog-pagination{
+  border-top-color:rgba(1,66,53,.14);font-family:var(--ft-sans)
+}
+html[data-home-design="fresh_take"] .blog-page-direction,
+html[data-home-design="fresh_take"] .blog-page-number{color:var(--ft-green)}
+html[data-home-design="fresh_take"] .blog-page-number{
+  border-color:rgba(1,66,53,.2);border-radius:var(--ft-r)
+}
+html[data-home-design="fresh_take"] a.blog-page-number:hover{
+  background:var(--ft-green-soft)
+}
+html[data-home-design="fresh_take"] .blog-page-number[aria-current="page"]{
+  background:var(--ft-green);border-color:var(--ft-green);color:#fff
+}
+html[data-home-design="fresh_take"] .blog-page-gap{color:var(--ft-muted)}
 
 /* The like tally. Prefixed for the same reason .ft-like is: it has to
    out-specify the display:block that .ft-only reveals it with. */
@@ -424,8 +440,9 @@ html[data-home-design="fresh_take"][data-page="blog"] .signup-grid p{
    the consent under them. Same markup either way, so the order is done here:
    the form becomes the flex column, .subrow steps out of the way with
    display:contents, and its two children take their places in it separately.
-   Every child needs an explicit order, including the .form-status paragraph
-   forms.js appends, or the unnumbered ones collect at the top. */
+   Every child needs an explicit order, including the Turnstile mount and the
+   .form-status paragraph forms.js appends, or the unnumbered ones collect at
+   the top — which put the challenge between the label and its field. */
 html[data-home-design="fresh_take"][data-page="blog"] .signup-grid form{
   background:#fff;border-radius:var(--ft-r);padding:28px;
   display:flex;flex-direction:column
@@ -449,8 +466,9 @@ html[data-home-design="fresh_take"][data-page="blog"] .consent{
 html[data-home-design="fresh_take"][data-page="blog"] .consent input{
   width:16px;height:16px;margin-top:2px;accent-color:var(--ft-green)
 }
+html[data-home-design="fresh_take"][data-page="blog"] .js-turnstile{order:3}
 html[data-home-design="fresh_take"][data-page="blog"] .btn-ghost{
-  order:3;width:100%;background:var(--ft-green);color:#fff;border:0;
+  order:4;width:100%;background:var(--ft-green);color:#fff;border:0;
   border-radius:var(--ft-r);font-family:var(--ft-sans);font-size:14px;
   font-weight:600;padding:14px 26px;transition:background .15s
 }
@@ -459,7 +477,7 @@ html[data-home-design="fresh_take"][data-page="blog"] .btn-ghost:hover{
 }
 /* .ft .form-status doesn't reach this one — the shared body sits outside both
    .ft chrome blocks — so the variant's colours are repeated here. */
-html[data-home-design="fresh_take"][data-page="blog"] .form-status{order:4}
+html[data-home-design="fresh_take"][data-page="blog"] .form-status{order:5}
 html[data-home-design="fresh_take"][data-page="blog"] .form-status.is-ok{
   color:var(--ft-green);font-weight:600
 }
