@@ -1,4 +1,6 @@
-/* The 2027 career counseling interest list, as a dialog.
+/* The 2027 career counseling interest list, as a dialog — and, on a post
+ * page, the Career Disruptor Memo signup, which uses the same dialog and the
+ * same handling with a different form inside.
  *
  * The panel is a <dialog> in the markup rather than a section this script
  * hides: closed, a <dialog> is display:none in the browser's own stylesheet,
@@ -11,6 +13,8 @@
  * data-waitlist="open", so the link still points at the panel's id whatever
  * happens here. Each homepage layout ships its own dialog because each is
  * styled by its own layout; the trigger's href says which one it opens.
+ * A dialog carrying data-dialog="memo" is the memo signup, and opening it
+ * logs memo_opened rather than waitlist_opened.
  */
 (function () {
   'use strict';
@@ -64,10 +68,13 @@
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');
     focusFirstField(dialog);
+    /* Same event name for either dialog: forms.js listens for it to render
+       the Turnstile widget, and cares only which dialog opened. */
     try {
       document.dispatchEvent(new CustomEvent('aq:waitlist-opened', { detail: { dialog: dialog } }));
     } catch (err) {}
-    log('waitlist_opened', { source: source || 'link' });
+    var kind = dialog.getAttribute('data-dialog') === 'memo' ? 'memo' : 'waitlist';
+    log(kind + '_opened', { source: source || 'link' });
   }
 
   function close(dialog) {
@@ -112,7 +119,7 @@
      layout's id is honoured, and what opens is whichever layout is on show:
      the other one sits in a display:none block, where a dialog has nothing
      to paint and showModal() would do nothing visible. */
-  var HASH = { waitlist: true, 'ft-waitlist': true, 'rz-waitlist': true };
+  var WAITLIST_HASH = { waitlist: true, 'ft-waitlist': true, 'rz-waitlist': true };
 
   function shownDialog() {
     var all = document.querySelectorAll('dialog.waitlist-dialog');
@@ -123,9 +130,18 @@
     return null;
   }
 
+  /* Any other hash — /post/…/#post-memo — opens the dialog with that id, and
+     only a dialog: an ordinary section that happens to share the name is
+     left to the browser to scroll to. */
+  function dialogForHash(id) {
+    if (WAITLIST_HASH[id]) return shownDialog();
+    var found = id ? document.getElementById(id) : null;
+    return (found && found.tagName === 'DIALOG' &&
+            found.classList.contains('waitlist-dialog')) ? found : null;
+  }
+
   function openFromHash() {
-    if (!HASH[(window.location.hash || '').slice(1)]) return;
-    open(shownDialog(), 'hash');
+    open(dialogForHash((window.location.hash || '').slice(1)), 'hash');
   }
 
   /* Not before the experiment has picked a layout: until then the variant is

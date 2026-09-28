@@ -3,8 +3,9 @@
  * Every form posts to a Google Apps Script web app, which emails the
  * submission on: the Career Disruptor Memo signup, the 2027 counseling
  * interest list, and the contact form on the homepage, plus the memo signup
- * again at the foot of the blog index. The endpoint URL is injected by the
- * build from site.json (form_endpoint).
+ * again at the foot of the blog index and in the dialog a post's Subscribe
+ * button opens. The endpoint URL is injected by the build from site.json
+ * (form_endpoint).
  *
  * Progressive enhancement: without JavaScript the forms still submit
  * normally to the same endpoint, they just leave the page to do it.
