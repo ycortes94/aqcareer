@@ -544,6 +544,61 @@ html[data-home-design="raices"] .post-body blockquote{
 html[data-home-design="raices"] .post-body blockquote p:last-child{margin-bottom:0}
 html[data-home-design="raices"] .post-body blockquote a{color:#ffd98a}
 
+/* The Subscribe button in a post body, and the memo dialog it opens. Shared
+   article, outside the .rz chrome blocks, so the homepage's .rz .btn and
+   .rz .waitlist-panel don't reach them: fresh-take's shape is restated with
+   this arm's colours, the way the blog index's memo form is above. */
+html[data-home-design="raices"] .post-body .post-cta{
+  background:var(--rz-rosa);color:#fff;text-decoration:none;border-radius:6px;
+  font-family:var(--ft-sans);font-size:14px;font-weight:700;letter-spacing:.01em;
+  padding:14px 26px;transition:background .15s
+}
+html[data-home-design="raices"] .post-body .post-cta:hover{background:#a72859}
+html[data-home-design="raices"] .memo-dialog::backdrop{background:rgba(36,26,20,.6)}
+html[data-home-design="raices"] .memo-dialog .waitlist-panel{
+  background:#fff;border-radius:var(--ft-r);padding:38px 36px 34px;
+  border-top:8px solid transparent;border-image:var(--rz-weave) 8;
+  font-family:var(--ft-sans);color:var(--rz-ink)
+}
+html[data-home-design="raices"] .memo-dialog .signup-kicker{
+  letter-spacing:.2em;color:var(--rz-clay);margin:0
+}
+html[data-home-design="raices"] .memo-dialog h2{
+  font-family:var(--ft-sans);font-weight:800;font-size:30px;line-height:1.05;
+  letter-spacing:-.032em;color:var(--rz-ink);margin:12px 0 14px
+}
+html[data-home-design="raices"] .memo-dialog .waitlist-note{
+  color:var(--rz-muted);font-size:16px;margin:0 0 24px
+}
+html[data-home-design="raices"] .memo-dialog .waitlist-close{
+  font-family:var(--ft-sans);color:var(--rz-rosa)
+}
+html[data-home-design="raices"] .memo-dialog .field-label{
+  display:block;font-size:12px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--rz-muted);margin-bottom:7px
+}
+html[data-home-design="raices"] .memo-dialog .signup-input{
+  border:1px solid var(--rz-line);border-radius:6px;
+  font-size:15px;padding:12px 13px;color:var(--rz-ink)
+}
+html[data-home-design="raices"] .memo-dialog .signup-input:focus{
+  outline:2px solid var(--rz-marigold);outline-offset:1px;border-color:var(--rz-clay)
+}
+html[data-home-design="raices"] .memo-dialog .consent{
+  align-items:flex-start;gap:10px;font-size:13px;color:var(--rz-muted);margin:14px 0 18px
+}
+html[data-home-design="raices"] .memo-dialog .consent input{
+  width:16px;height:16px;margin-top:2px;accent-color:var(--rz-rosa)
+}
+html[data-home-design="raices"] .memo-dialog .btn-solid{
+  background:var(--rz-rosa);border-radius:6px;font-family:var(--ft-sans);
+  font-size:14px;font-weight:700;letter-spacing:.01em;padding:14px 26px;
+  transition:background .15s
+}
+html[data-home-design="raices"] .memo-dialog .btn-solid:hover{background:#a72859}
+html[data-home-design="raices"] .memo-dialog .form-status.is-ok{color:var(--rz-jade);font-weight:700}
+html[data-home-design="raices"] .memo-dialog .form-status.is-error{color:#8a2b20}
+
 /* The like bar. fresh-take.css carries its shape unprefixed, so only the
    colours are restated here. */
 html[data-home-design="raices"] .ft-like{

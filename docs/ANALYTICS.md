@@ -273,8 +273,8 @@ custom event.
 
 **Amplitude only:** `home_viewed` / `blog_viewed` / `post_viewed`,
 `element_clicked`, `nav_link_clicked`, `post_card_clicked`,
-`blog_page_changed`, `form_submitted`, `waitlist_opened`, `post_liked` /
-`post_unliked`, plus Amplitude autocapture.
+`blog_page_changed`, `form_submitted`, `waitlist_opened`, `memo_opened`,
+`post_liked` / `post_unliked`, plus Amplitude autocapture.
 
 **Identity:** Statsig initializes first; Amplitude then inits with
 `deviceId` set to Statsig's `stableID`, so forwarded exposures join the same
@@ -323,18 +323,21 @@ downloads, web vitals), these are logged by hand. Every one carries
 | `hero_cta_clicked` | `[data-cta="hero"]` | | Amplitude + Statsig (Pulse) |
 | `cta_clicked` | `[data-cta="primary"]` | | Amplitude + Statsig (Pulse) |
 | `waitlist_opened` | the 2027 interest list dialog, when it opens | `source` (`link` / `hash`), `page` | Amplitude |
+| `memo_opened` | the memo signup dialog on a post page, when a Subscribe button in the body opens it | `source` (`link` / `hash`), `page` | Amplitude |
 | `form_submitted` | any form, on a submit the browser accepted | `form` (`contact` / `newsletter` / `waitlist`), `page` | Amplitude |
 | `connect_form_submitted` | contact form, on success | `page` | Amplitude + Statsig (Pulse) |
-| `newsletter_subscribed` | either memo form, on success | `page` | Amplitude + Statsig (Pulse) |
+| `newsletter_subscribed` | any memo form, on success | `page` | Amplitude + Statsig (Pulse) |
 | `waitlist_joined` | 2027 counseling interest form, on success | `page` | Amplitude + Statsig (Pulse) |
 | `post_liked` / `post_unliked` | the like button | `post` (the slug) | Amplitude |
 
-**The memo signup is on two pages, and `page` is how you tell them apart.**
-It sits on the home page and again at the foot of the blog index, both
-posting to the same list, both logging `newsletter_subscribed`. `page` is
-`home` or `blog`, derived from `data-page` on `<html>` exactly as
-`element_clicked`'s is, so the conversion can be read per surface or as one
-total.
+**The memo signup is on three kinds of page, and `page` is how you tell them
+apart.** It sits on the home page, again at the foot of the blog index, and
+as a dialog on every post page — opened by a Subscribe button in the body of
+the posts that carry one — all posting to the same list, all logging
+`newsletter_subscribed`. `page` is `home`, `blog` or `post`, derived from
+`data-page` on `<html>` exactly as `element_clicked`'s is, so the conversion
+can be read per surface or as one total. On a post page, `memo_opened` →
+`form_submitted` → `newsletter_subscribed` reads as a funnel.
 
 Worth knowing before reading the experiment: `newsletter_subscribed` is a
 Pulse conversion, so the blog index is now a **second way for an exposed

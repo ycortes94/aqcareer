@@ -342,6 +342,47 @@ def subscribe_block(privacy_class):
 """
 
 
+def memo_dialog(privacy_class):
+    """The memo signup as a dialog, on every post page.
+
+    Two posts came out of Wix with a Subscribe button in the body that
+    pointed at the old homepage — a link that dies with the Wix site. Each is
+    now <a href="#post-memo" data-waitlist="open">, and this is what it
+    opens: the same list and the same endpoint as the other memo forms,
+    asked of a reader who has just finished a post instead of sending them
+    off the page to find it.
+
+    Built on the 2027 interest list's dialog rather than a shape of its own —
+    the same <dialog> element, the same classes, the same waitlist.js
+    handling — so it inherits everything already worked out there: no flash
+    before script arrives, base.html's <noscript> fallback that lays it out
+    as a static block, Turnstile rendered only once it opens. data-dialog
+    tells waitlist.js to log memo_opened rather than waitlist_opened.
+
+    Shipped once per post page, outside the .ft / .rz chrome blocks like the
+    article itself, so fresh-take.css and raices.css restyle it through
+    data-home-design the way they do the blog index's memo form. Its ids are
+    its own — see subscribe_block for why."""
+    endpoint = html.escape(CFG.get("form_endpoint", ""), quote=True)
+    return f"""  <dialog class="waitlist-dialog memo-dialog" id="post-memo" data-dialog="memo" aria-labelledby="post-memo-title">
+    <div class="waitlist-panel">
+      <button class="waitlist-close" type="button" data-waitlist="close" aria-label="Close">&times;</button>
+      <p class="signup-kicker">Career Disruptor Memo</p>
+      <h2 id="post-memo-title">Receive the Career Disruptor Memo</h2>
+      <p class="waitlist-note">Occasional notes like this one, sent straight to your inbox. Ask to be removed at any time.</p>
+      <form action="{endpoint}" method="post" id="post-memo-form" data-form="memo" class="{privacy_class}">
+        <input type="hidden" name="form" value="memo">
+        <div class="fgrp"><label class="field-label" for="post-memo-email">Email address</label><input class="signup-input" id="post-memo-email" name="email" type="email" required autocomplete="email" maxlength="254"></div>
+        <label class="consent"><input type="checkbox" name="consent" value="yes" required> Yes, send me the Career Disruptor Memo.</label>
+        {turnstile_widget()}
+        <div class="hp" aria-hidden="true"><label for="post-memo-website">Website</label><input id="post-memo-website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+        <button class="btn-solid signup-submit" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </dialog>
+"""
+
+
 def like_counts(slugs):
     """Published like totals, from content/likes.json.
 
@@ -786,6 +827,9 @@ def build():
             '  </div>\n' + cover +
             f'  <div class="post-body post">\n{body}  </div>\n'
             '  </article>\n'
+            # Straight after the article, so the <noscript> fallback lays the
+            # signup out where a Subscribe button in the body points.
+            + memo_dialog("amp-block" if mask_forms else "")
             + LIKE_BAR +
             f'  <nav class="post-nav post">{"".join(links)}</nav>\n'
             f'  <script type="application/ld+json">{ld}</script>\n')
@@ -804,7 +848,13 @@ def build():
             extra_css=FT_HEAD.format(base="../../", v=FT_CSS_V) + "\n" +
             RZ_HEAD.format(base="../../", v=RZ_CSS_V),
             chrome_top=post_chrome_top, variant_layout=post_chrome_bottom,
-            extra_js=f'<script src="../../assets/js/likes.js?v={LIKES_V}"></script>')))
+            # forms.js and waitlist.js for the memo dialog: one to open it,
+            # the other so its form posts in place rather than leaving the
+            # page. Same pair the homepage loads for the interest list.
+            extra_js=(
+                f'<script src="../../assets/js/forms.js?v={JS_V}"></script>\n'
+                f'<script src="../../assets/js/waitlist.js?v={WAITLIST_V}"></script>\n'
+                f'<script src="../../assets/js/likes.js?v={LIKES_V}"></script>'))))
 
     # ---------- privacy ----------
     pv = CFG.get("privacy") or {}

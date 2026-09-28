@@ -1,16 +1,23 @@
 # Connecting the forms
 
-Four forms need somewhere to send submissions — three on the home page:
+Five forms need somewhere to send submissions — three on the home page:
 
 - the **Career Disruptor Memo** signup
 - the **2027 career counseling interest list**, which opens as a dialog from
   the Career Counseling service (see `assets/js/waitlist.js`)
 - the **let's connect** contact form at the bottom
 
-and one at the foot of the blog index:
+one at the foot of the blog index:
 
 - the **Career Disruptor Memo** signup again, the same list and the same
   endpoint, asked of readers who reached the end of the post list
+
+and one on every post page:
+
+- the **Career Disruptor Memo** signup once more, as a dialog opened by a
+  Subscribe button in the body of a post (the same dialog machinery as the
+  interest list). Only posts whose body carries the button offer it; see
+  `content/posts/_TEMPLATE.html` for the markup.
 
 A GitHub Pages site is static — it can't send email by itself. The handler is
 a small Google Apps Script web app that runs on Alina's own Google account:
@@ -88,8 +95,9 @@ python3 tools/build.py && git add -A && git commit -m "Connect forms" && git pus
 **6. Test it**
 
 Open the live site, submit each form, and confirm an email arrives for every
-one — including the memo signup on `/blog/`, which posts to the same endpoint
-as the home page's but is a separate form that can break on its own. The
+one — including the memo signup on `/blog/` and the Subscribe dialog on a
+post page, which post to the same endpoint as the home page's but are
+separate forms that can break on their own. The
 contact form sets `reply-to` to the visitor's address, so replying in Gmail
 goes straight back to them.
 

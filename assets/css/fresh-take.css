@@ -574,6 +574,62 @@ html[data-home-design="fresh_take"] .post-body blockquote{
 }
 html[data-home-design="fresh_take"] .post-body blockquote p:last-child{margin-bottom:0}
 
+/* The Subscribe button in a post body, and the memo dialog it opens. Both
+   sit in the shared article outside the .ft chrome blocks, so .ft .btn and
+   .ft .waitlist-* above don't reach them; the variant's treatment is
+   restated here through data-home-design, the way the blog index's memo
+   form is, reached through the control's class names because this markup
+   is the control's. */
+html[data-home-design="fresh_take"] .post-body .post-cta{
+  background:var(--ft-green);color:#fff;text-decoration:none;border-radius:var(--ft-r);
+  font-family:var(--ft-sans);font-size:14px;font-weight:600;letter-spacing:.01em;
+  padding:14px 26px;transition:background .15s
+}
+html[data-home-design="fresh_take"] .post-body .post-cta:hover{background:var(--ft-green-mid)}
+html[data-home-design="fresh_take"] .memo-dialog::backdrop{background:rgba(1,66,53,.6)}
+html[data-home-design="fresh_take"] .memo-dialog .waitlist-panel{
+  background:#fff;border-radius:var(--ft-r);padding:38px 36px 34px;
+  font-family:var(--ft-sans);color:var(--ft-ink)
+}
+html[data-home-design="fresh_take"] .memo-dialog .signup-kicker{
+  letter-spacing:.2em;color:var(--ft-green-mid);margin:0
+}
+html[data-home-design="fresh_take"] .memo-dialog h2{
+  font-family:var(--ft-serif);font-weight:400;font-size:clamp(26px,3vw,34px);
+  letter-spacing:-.01em;color:var(--ft-ink);margin:12px 0 14px
+}
+html[data-home-design="fresh_take"] .memo-dialog .waitlist-note{
+  color:var(--ft-muted);font-size:16px;margin:0 0 24px
+}
+html[data-home-design="fresh_take"] .memo-dialog .waitlist-close{
+  font-family:var(--ft-sans);color:var(--ft-green)
+}
+html[data-home-design="fresh_take"] .memo-dialog .field-label{
+  display:block;font-size:12px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ft-muted);margin-bottom:7px
+}
+html[data-home-design="fresh_take"] .memo-dialog .signup-input{
+  border:1px solid rgba(1,66,53,.25);border-radius:var(--ft-r);
+  font-size:15px;padding:12px 13px;color:var(--ft-ink)
+}
+html[data-home-design="fresh_take"] .memo-dialog .signup-input:focus{
+  outline:2px solid var(--ft-green-mid);outline-offset:1px;border-color:var(--ft-green)
+}
+html[data-home-design="fresh_take"] .memo-dialog .consent{
+  align-items:flex-start;gap:10px;font-size:13px;color:var(--ft-muted);margin:14px 0 18px
+}
+html[data-home-design="fresh_take"] .memo-dialog .consent input{
+  width:16px;height:16px;margin-top:2px;accent-color:var(--ft-green)
+}
+html[data-home-design="fresh_take"] .memo-dialog .btn-solid{
+  background:var(--ft-green);border-radius:var(--ft-r);font-family:var(--ft-sans);
+  font-size:14px;font-weight:600;letter-spacing:.01em;padding:14px 26px;
+  transition:background .15s
+}
+html[data-home-design="fresh_take"] .memo-dialog .btn-solid:hover{background:var(--ft-green-mid)}
+html[data-home-design="fresh_take"] .memo-dialog .form-status.is-ok{color:var(--ft-green);font-weight:600}
+html[data-home-design="fresh_take"] .memo-dialog .form-status.is-error{color:#8a2b20}
+
 /* ---------- likes ----------
    Hidden until likes.js takes over, so the control is never dead: without
    JavaScript there is nothing to click, the same way the footer's tracking
