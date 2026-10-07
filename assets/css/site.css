@@ -440,7 +440,9 @@ a.blog-page-number:hover{background:#eef2f1}
   .portrait{order:-1}
   .logos{grid-template-columns:repeat(2,1fr)}
   .srow{grid-template-columns:26px 1fr;gap:16px}
-  .srow p{grid-column:2}
+  /* The copy sits under the title. Career Counseling wraps its paragraph
+     and links in .service-copy; the other rows are a bare paragraph. */
+  .srow p,.srow .service-copy{grid-column:2}
   .testi .inner{padding:52px 26px 44px}
   .arrow{font-size:26px}
   .arrow.l{left:2px}
