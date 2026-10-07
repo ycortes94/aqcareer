@@ -19,7 +19,7 @@ any arm with Labs — see [docs/ANALYTICS.md](docs/ANALYTICS.md#statsig-labs-swi
 |---|---|
 | Change home page text | Edit `templates/home.html` (control), `templates/home-fresh-take.html`, and/or `templates/home-raices.html`, then rebuild |
 | Change testimonials | Edit `content/testimonials.json`, then rebuild |
-| Refresh the Instagram grid | Save square crops (~640px) in `assets/img/instagram/` and list them in `content/instagram.json`, then rebuild. A reel also needs its `.mp4` next to the crop, named in `video`. It's a snapshot, not a live feed |
+| Refresh the Instagram grid | A daily Action does this once `INSTAGRAM_ACCESS_TOKEN` is set. Run `python3 tools/refresh_instagram.py` for a manual refresh — see [docs/INSTAGRAM.md](docs/INSTAGRAM.md) |
 | Replace the Packages and Investment PDF | Overwrite `assets/files/packages-and-investment.pdf` — all three homepages link to it |
 | Change a blog post | Edit `content/posts/<slug>.html`, then rebuild |
 | Add a blog post | See below |
@@ -128,6 +128,8 @@ assets/img/logo-originals/   untrimmed partner logos, kept for re-cropping
 tools/build.py          the build
 tools/refresh_likes.py  pulls like counts from Amplitude into content/likes.json
 .github/workflows/refresh-likes.yml   runs that weekly and commits the result
+tools/refresh_instagram.py   downloads and validates the latest Instagram media
+.github/workflows/refresh-instagram.yml   runs that daily and commits the result
 tools/form-endpoint.gs  the form handler (paste into Google Apps Script)
 tools/recolor_headshot.py   one-off: recolour the hero portrait backdrop
 tools/extract_wix.py    one-time Wix migration; kept for reference
