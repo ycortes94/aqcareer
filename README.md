@@ -19,6 +19,8 @@ any arm with Labs — see [docs/ANALYTICS.md](docs/ANALYTICS.md#statsig-labs-swi
 |---|---|
 | Change home page text | Edit `templates/home.html` (control), `templates/home-fresh-take.html`, and/or `templates/home-raices.html`, then rebuild |
 | Change testimonials | Edit `content/testimonials.json`, then rebuild |
+| Refresh the Instagram grid | A daily Action does this once `INSTAGRAM_ACCESS_TOKEN` is set. Run `python3 tools/refresh_instagram.py` for a manual refresh — see [docs/INSTAGRAM.md](docs/INSTAGRAM.md) |
+| Replace the Packages and Investment PDF | Overwrite `assets/files/packages-and-investment.pdf` — all three homepages link to it |
 | Change a blog post | Edit `content/posts/<slug>.html`, then rebuild |
 | Add a blog post | See below |
 | Change colors, type, spacing | Edit `assets/css/site.css`, then rebuild so the cache-busting `?v=` updates |
@@ -105,6 +107,7 @@ templates/privacy.html  privacy page content
 content/posts.json      post metadata, newest first
 content/likes.json      like counts shown on the blog index (generated)
 content/testimonials.json   quotes on the homepages
+content/instagram.json  posts in the homepage Instagram grid
 content/posts/*.html    post bodies (source of truth)
 content/posts/_TEMPLATE.html   starting point for a new post
 site.json               URL, form endpoint, Turnstile site key, analytics keys
@@ -112,17 +115,21 @@ assets/css/site.css     shared styles
 assets/css/fresh-take.css        fresh-take variant
 assets/css/raices.css            Raíces variant
 assets/js/forms.js      form submission + Turnstile
-assets/js/waitlist.js   2027 counseling interest dialog
+assets/js/waitlist.js   counseling interest dialog
 assets/js/paging.js     in-place blog pagination
 assets/js/likes.js      like button on non-control post pages
 assets/js/labs.js       Statsig Labs panel (injected only when Labs is on)
 assets/js/analytics.js  Amplitude + Statsig loader, consent banner
 assets/img/             images
 assets/img/blog/        post images
+assets/img/instagram/   Instagram grid crops
+assets/files/           downloadable files (Packages and Investment PDF)
 assets/img/logo-originals/   untrimmed partner logos, kept for re-cropping
 tools/build.py          the build
 tools/refresh_likes.py  pulls like counts from Amplitude into content/likes.json
 .github/workflows/refresh-likes.yml   runs that weekly and commits the result
+tools/refresh_instagram.py   downloads and validates the latest Instagram media
+.github/workflows/refresh-instagram.yml   runs that daily and commits the result
 tools/form-endpoint.gs  the form handler (paste into Google Apps Script)
 tools/recolor_headshot.py   one-off: recolour the hero portrait backdrop
 tools/extract_wix.py    one-time Wix migration; kept for reference

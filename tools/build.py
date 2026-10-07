@@ -46,6 +46,7 @@ LABS_V = asset_v("assets/js/labs.js")
 LIKES_V = asset_v("assets/js/likes.js")
 WAITLIST_V = asset_v("assets/js/waitlist.js")
 PAGING_V = asset_v("assets/js/paging.js")
+IG_V = asset_v("assets/js/instagram.js")
 
 # Fraunces is the variant's heading face and is only fetched by pages that
 # ship the fresh-take layout.
@@ -462,6 +463,38 @@ def testimonial_slides(style):
                 f'      </div>')
     return "\n".join(out)
 
+
+def instagram_tiles():
+    """The recent-posts grid under "Follow me on Instagram".
+
+    A snapshot, not a live feed. The posts, their square crops and the reel
+    files are committed in content/instagram.json and assets/img/instagram/.
+    A reel plays in the tile (see assets/js/instagram.js); refreshing the
+    grid means replacing those files by hand. Every arm renders the same
+    tiles and styles them through its own section class."""
+    items = json.load(open(os.path.join(C, "instagram.json"),
+                           encoding="utf-8"))
+    out = []
+    for p in items:
+        alt = html.escape(p["alt"], quote=True)
+        poster = p["image"].lstrip("/")
+        clip = p.get("video")
+        if isinstance(clip, str) and clip:
+            badge = ('<span class="ig-reel" aria-hidden="true">'
+                     '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
+                     '</span>')
+            media = (f'<video muted loop playsinline preload="none" '
+                     f'poster="{poster}"><source src="{clip.lstrip("/")}" '
+                     f'type="video/mp4"></video>')
+        else:
+            badge = ""
+            media = (f'<img src="{poster}" alt="{alt}" width="640" '
+                     f'height="640" loading="lazy">')
+        out.append(
+            f'        <a class="ig-tile" href="{html.escape(p["link"], quote=True)}" '
+            f'aria-label="{alt}" target="_blank" rel="noopener">{media}{badge}</a>')
+    return "\n".join(out)
+
 CAROUSEL_JS = """<script>
 /* Every carousel on the page, not just the first: the homepage carries both
    experiment layouts in one document, so each arm has its own and each needs
@@ -605,6 +638,7 @@ def build():
     mask_forms = (an.get("session_replay") or {}).get("mask_forms", True)
     home = fill(read(os.path.join(T, "home.html")), base="",
                 testimonials=testimonial_slides("band"),
+                instagram=instagram_tiles(),
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
                 form_privacy_class="amp-block" if mask_forms else "",
@@ -614,6 +648,7 @@ def build():
                    year=YEAR,
                    fresh_header=ft_header, fresh_footer=ft_footer,
                    testimonials=testimonial_slides("card"),
+                   instagram=instagram_tiles(),
                    form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                              quote=True),
                    form_privacy_class="amp-block" if mask_forms else "",
@@ -623,6 +658,7 @@ def build():
                  year=YEAR,
                  raices_header=rz_header, raices_footer=rz_footer,
                  testimonials=testimonial_slides("card"),
+                 instagram=instagram_tiles(),
                  form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                            quote=True),
                  form_privacy_class="amp-block" if mask_forms else "",
@@ -642,7 +678,8 @@ def build():
         # it, and only for a browser that has Labs switched on.
         extra_js=CAROUSEL_JS + SECTION_SPY_JS +
         f'\n<script src="assets/js/forms.js?v={JS_V}"></script>'
-        f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>')))
+        f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>'
+        f'\n<script src="assets/js/instagram.js?v={IG_V}"></script>')))
 
     # ---------- blog index ----------
     # Six posts per page keeps the index useful as the archive grows. The
