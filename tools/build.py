@@ -46,6 +46,7 @@ LABS_V = asset_v("assets/js/labs.js")
 LIKES_V = asset_v("assets/js/likes.js")
 WAITLIST_V = asset_v("assets/js/waitlist.js")
 PAGING_V = asset_v("assets/js/paging.js")
+IG_V = asset_v("assets/js/instagram.js")
 
 # Fraunces is the variant's heading face and is only fetched by pages that
 # ship the fresh-take layout.
@@ -466,25 +467,32 @@ def testimonial_slides(style):
 def instagram_tiles():
     """The recent-posts grid under "Follow me on Instagram".
 
-    A snapshot, not a live feed: Wix ran a widget against Instagram's API,
-    which needs a server-side token this site doesn't have. The posts and
-    their square crops are committed in content/instagram.json and
-    assets/img/instagram/, so refreshing the grid means replacing those by
-    hand. Every arm renders the same tiles and styles them through its own
-    section class."""
+    A snapshot, not a live feed. The posts, their square crops and the reel
+    files are committed in content/instagram.json and assets/img/instagram/.
+    A reel plays in the tile (see assets/js/instagram.js); refreshing the
+    grid means replacing those files by hand. Every arm renders the same
+    tiles and styles them through its own section class."""
     items = json.load(open(os.path.join(C, "instagram.json"),
                            encoding="utf-8"))
     out = []
     for p in items:
         alt = html.escape(p["alt"], quote=True)
-        badge = ('<span class="ig-reel" aria-hidden="true">'
-                 '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
-                 '</span>') if p.get("video") else ""
+        poster = p["image"].lstrip("/")
+        clip = p.get("video")
+        if isinstance(clip, str) and clip:
+            badge = ('<span class="ig-reel" aria-hidden="true">'
+                     '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
+                     '</span>')
+            media = (f'<video muted loop playsinline preload="none" '
+                     f'poster="{poster}"><source src="{clip.lstrip("/")}" '
+                     f'type="video/mp4"></video>')
+        else:
+            badge = ""
+            media = (f'<img src="{poster}" alt="{alt}" width="640" '
+                     f'height="640" loading="lazy">')
         out.append(
             f'        <a class="ig-tile" href="{html.escape(p["link"], quote=True)}" '
-            f'target="_blank" rel="noopener">'
-            f'<img src="{p["image"].lstrip("/")}" alt="{alt}" width="640" '
-            f'height="640" loading="lazy">{badge}</a>')
+            f'aria-label="{alt}" target="_blank" rel="noopener">{media}{badge}</a>')
     return "\n".join(out)
 
 CAROUSEL_JS = """<script>
@@ -670,7 +678,8 @@ def build():
         # it, and only for a browser that has Labs switched on.
         extra_js=CAROUSEL_JS + SECTION_SPY_JS +
         f'\n<script src="assets/js/forms.js?v={JS_V}"></script>'
-        f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>')))
+        f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>'
+        f'\n<script src="assets/js/instagram.js?v={IG_V}"></script>')))
 
     # ---------- blog index ----------
     # Six posts per page keeps the index useful as the archive grows. The

@@ -129,8 +129,11 @@ nav.main a:hover{background:#eef4f2}
    only sets the section around them. */
 .ig-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
 .ig-tile{position:relative;display:block;aspect-ratio:1;overflow:hidden;background:#eee}
-.ig-tile img{display:block;width:100%;height:100%;object-fit:cover;transition:transform .3s,opacity .2s}
+.ig-tile img,.ig-tile video{display:block;width:100%;height:100%;object-fit:cover}
+.ig-tile img{transition:transform .3s,opacity .2s}
 .ig-tile:hover img{transform:scale(1.04);opacity:.9}
+.ig-tile video{background:#111}
+.ig-tile.is-playing .ig-reel{opacity:0}
 .ig-tile:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 .ig-reel{position:absolute;top:8px;right:8px;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.45)}
 .ig-reel svg{width:12px;height:12px;fill:#fff}

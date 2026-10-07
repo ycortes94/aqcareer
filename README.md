@@ -19,7 +19,7 @@ any arm with Labs — see [docs/ANALYTICS.md](docs/ANALYTICS.md#statsig-labs-swi
 |---|---|
 | Change home page text | Edit `templates/home.html` (control), `templates/home-fresh-take.html`, and/or `templates/home-raices.html`, then rebuild |
 | Change testimonials | Edit `content/testimonials.json`, then rebuild |
-| Refresh the Instagram grid | Save square crops (~640px) in `assets/img/instagram/`, list them in `content/instagram.json`, then rebuild. It's a snapshot, not a live feed |
+| Refresh the Instagram grid | Save square crops (~640px) in `assets/img/instagram/` and list them in `content/instagram.json`, then rebuild. A reel also needs its `.mp4` next to the crop, named in `video`. It's a snapshot, not a live feed |
 | Replace the Packages and Investment PDF | Overwrite `assets/files/packages-and-investment.pdf` — all three homepages link to it |
 | Change a blog post | Edit `content/posts/<slug>.html`, then rebuild |
 | Add a blog post | See below |
