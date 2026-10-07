@@ -462,6 +462,31 @@ def testimonial_slides(style):
                 f'      </div>')
     return "\n".join(out)
 
+
+def instagram_tiles():
+    """The recent-posts grid under "Follow me on Instagram".
+
+    A snapshot, not a live feed: Wix ran a widget against Instagram's API,
+    which needs a server-side token this site doesn't have. The posts and
+    their square crops are committed in content/instagram.json and
+    assets/img/instagram/, so refreshing the grid means replacing those by
+    hand. Every arm renders the same tiles and styles them through its own
+    section class."""
+    items = json.load(open(os.path.join(C, "instagram.json"),
+                           encoding="utf-8"))
+    out = []
+    for p in items:
+        alt = html.escape(p["alt"], quote=True)
+        badge = ('<span class="ig-reel" aria-hidden="true">'
+                 '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>'
+                 '</span>') if p.get("video") else ""
+        out.append(
+            f'        <a class="ig-tile" href="{html.escape(p["link"], quote=True)}" '
+            f'target="_blank" rel="noopener">'
+            f'<img src="{p["image"].lstrip("/")}" alt="{alt}" width="640" '
+            f'height="640" loading="lazy">{badge}</a>')
+    return "\n".join(out)
+
 CAROUSEL_JS = """<script>
 /* Every carousel on the page, not just the first: the homepage carries both
    experiment layouts in one document, so each arm has its own and each needs
@@ -605,6 +630,7 @@ def build():
     mask_forms = (an.get("session_replay") or {}).get("mask_forms", True)
     home = fill(read(os.path.join(T, "home.html")), base="",
                 testimonials=testimonial_slides("band"),
+                instagram=instagram_tiles(),
                 form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                           quote=True),
                 form_privacy_class="amp-block" if mask_forms else "",
@@ -614,6 +640,7 @@ def build():
                    year=YEAR,
                    fresh_header=ft_header, fresh_footer=ft_footer,
                    testimonials=testimonial_slides("card"),
+                   instagram=instagram_tiles(),
                    form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                              quote=True),
                    form_privacy_class="amp-block" if mask_forms else "",
@@ -623,6 +650,7 @@ def build():
                  year=YEAR,
                  raices_header=rz_header, raices_footer=rz_footer,
                  testimonials=testimonial_slides("card"),
+                 instagram=instagram_tiles(),
                  form_endpoint=html.escape(CFG.get("form_endpoint", ""),
                                            quote=True),
                  form_privacy_class="amp-block" if mask_forms else "",

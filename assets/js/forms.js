@@ -23,7 +23,7 @@
 
   var MESSAGES = {
     memo: 'Thank you — you’re on the list for the first memo.',
-    waitlist: 'Thank you — you’re on the 2027 career counseling interest list.',
+    waitlist: 'Thank you — you’re on the career counseling interest list.',
     contact: 'Thank you — your message is on its way. Alina will be in touch.',
     invalid_email: 'That email address doesn’t look right. Mind checking it?',
     rate_limited: 'That was sent a few times already. Please wait a bit and try again, or reach Alina on ' +
