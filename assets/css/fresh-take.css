@@ -149,6 +149,7 @@ html[data-home-design="fresh_take"] body{
   font-weight:700;text-decoration:none;border-bottom:1px solid rgba(1,66,53,.3)
 }
 .ft .card-link:hover{border-color:var(--ft-green)}
+.ft .card-link + .card-link{margin-top:10px}
 .ft .pill{
   display:inline-block;align-self:flex-start;background:var(--ft-green-soft);color:var(--ft-green);
   font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
@@ -159,6 +160,12 @@ html[data-home-design="fresh_take"] body{
 .ft .plogos{display:grid;grid-template-columns:repeat(4,1fr);gap:38px 30px;align-items:center;justify-items:center;margin-top:34px}
 .ft .plogos img{width:100%;max-width:165px;height:56px;object-fit:contain;filter:grayscale(1);opacity:.62;transition:filter .2s,opacity .2s}
 .ft .plogos img:hover{filter:none;opacity:1}
+
+.ft .ig{text-align:left}
+.ft .ig-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 24px;margin-bottom:30px}
+.ft .ig-head h2{font-size:clamp(28px,3.2vw,40px);margin:0}
+.ft .ig-head .card-link{margin-top:0}
+.ft .ig-tile{border-radius:var(--ft-r)}
 
 /* Testimonials: this arm's own cards, shown one at a time. The slides carry
    the same words as the control — build.py renders both arms from
