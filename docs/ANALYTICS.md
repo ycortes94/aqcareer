@@ -276,9 +276,14 @@ custom event.
 `blog_page_changed`, `form_submitted`, `waitlist_opened`, `memo_opened`,
 `post_liked` / `post_unliked`, plus Amplitude autocapture.
 
-**Identity:** Statsig initializes first; Amplitude then inits with
-`deviceId` set to Statsig's `stableID`, so forwarded exposures join the same
-user as Replay and product events.
+**Identity:** One anonymous id is both the stable ID and the device ID.
+Statsig is initialized with that value as `customIDs.stableID` and
+`customIDs.deviceID`; Amplitude is then initialized with it as `deviceId`.
+An existing Statsig stable ID wins, so `homepage_three_designs` is not
+rebucketed. Forwarded exposures join Replay and product events on that id.
+There is no user ID until `window.aqIdentity.setUserId(id)` or
+`__AQ_ANALYTICS__.user_id` supplies one — the same string is then set as
+Statsig `userID` and Amplitude `user_id`. An empty user ID is never sent.
 
 #### Statsig → Amplitude Event Filtering
 
@@ -373,7 +378,7 @@ dual-write.
 
 Worth knowing, because it silently cost this site every design pageview it
 ever recorded. `startTracking()` loads **Statsig first**, so Amplitude can
-take Statsig's `stableID` as its `deviceId`; the `*_viewed` events fire the
+take the shared stable ID as its `deviceId`; the `*_viewed` events fire the
 moment the assignment lands, which is a beat *before* Amplitude is fetched.
 Sent straight through, they found `window.amplitude` undefined and vanished.
 `home_viewed`, `blog_viewed` and `post_viewed` were in the code, in the docs
