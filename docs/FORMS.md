@@ -113,7 +113,10 @@ The endpoint is public — GitHub Pages cannot hide it — so the script has to
 decide what to drop:
 
 - Each form has a hidden **honeypot** field. Bots fill it; humans can't see
-  it. Those submissions are dropped silently.
+  it. Those submissions are dropped — the bot is answered with the same
+  success it would get for a real submission, so it doesn't retry, but no
+  email is sent. The reply carries `skipped: "honeypot"`, which tells the
+  page not to log a conversion event for it.
 - The script checks the submission came from the site's own domain (when
   JavaScript sent an `origin`).
 - JavaScript also sends `loaded_at`. A POST that arrives in under two seconds

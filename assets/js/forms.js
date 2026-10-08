@@ -207,10 +207,15 @@
           if (result && result.ok) {
             form.reset();
             say(form, MESSAGES[kind], 'ok');
-            var successEvent = kind === 'contact'
-              ? 'connect_form_submitted'
-              : (kind === 'waitlist' ? 'waitlist_joined' : 'newsletter_subscribed');
-            log(successEvent);
+            // A honeypot hit answers ok so the bot doesn't retry, and sets
+            // `skipped`. Show the same success, but don't count it — these
+            // are the conversion metrics the homepage experiment reads.
+            if (!result.skipped) {
+              var successEvent = kind === 'contact'
+                ? 'connect_form_submitted'
+                : (kind === 'waitlist' ? 'waitlist_joined' : 'newsletter_subscribed');
+              log(successEvent);
+            }
           } else if (result && result.error === 'invalid_email') {
             say(form, MESSAGES.invalid_email, 'error');
           } else if (result && result.error === 'rate_limited') {

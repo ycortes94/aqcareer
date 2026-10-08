@@ -43,6 +43,11 @@
     d=designs[d]?d:'control';
     h.setAttribute('data-home-design',d);
     h.classList.remove('exp-pending');
+    /* Publish what the visitor is actually looking at. This timeout fires
+       before analytics.js's own, so without this that file cannot tell a
+       reveal has happened and would log an exposure for a variant the page
+       can no longer show. */
+    window.__aqRevealed=d;
   }
   /* Labs: a layout pinned for development. Resolved here, inline, before
      anything else loads, so the pinned layout paints first time with no
@@ -301,7 +306,7 @@
 
 
 <script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
-<script src="../assets/js/analytics.js?v=7d97f73b"></script>
+<script src="../assets/js/analytics.js?v=b6d2ffea"></script>
 
 </body>
 </html>
