@@ -52,8 +52,12 @@ function doPost(e) {
 
     // Honeypot: a field hidden from humans. Anything that fills it is a bot.
     // Return success so the bot doesn't retry, but send nothing.
+    //
+    // `skipped` tells the page this was not a real submission, so it doesn't
+    // log a conversion for it. Without that, every bot that trips the honeypot
+    // inflates the conversion metric the homepage experiment reads.
     if (p.website) {
-      return ok({ ok: true });
+      return ok({ ok: true, skipped: 'honeypot' });
     }
 
     // Reject submissions that didn't come from the site. Origin is omitted

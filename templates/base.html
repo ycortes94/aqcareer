@@ -43,6 +43,11 @@
     d=designs[d]?d:'control';
     h.setAttribute('data-home-design',d);
     h.classList.remove('exp-pending');
+    /* Publish what the visitor is actually looking at. This timeout fires
+       before analytics.js's own, so without this that file cannot tell a
+       reveal has happened and would log an exposure for a variant the page
+       can no longer show. */
+    window.__aqRevealed=d;
   }
   /* Labs: a layout pinned for development. Resolved here, inline, before
      anything else loads, so the pinned layout paints first time with no

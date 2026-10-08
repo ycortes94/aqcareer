@@ -301,10 +301,30 @@
     } catch (err) {}
   }
 
+  /* What the visitor is actually looking at, or null if nothing has been
+     revealed yet.
+
+     The inline gate in templates/base.html owns the reveal and runs its own
+     2s fallback, which fires before this file's 2.5s one. Tracking the reveal
+     only in revealedDesign here would miss that, and in the gap we would ask
+     Statsig for an assignment and log an exposure for a variant the page can
+     no longer show. Ask the gate instead. */
+  function shownDesign() {
+    var shown = window.__aqRevealed || revealedDesign;
+    if (shown === 'fresh_take' || shown === 'raices' || shown === 'control') {
+      return shown;
+    }
+    return null;
+  }
+
   function revealDesign(design) {
     var html = document.documentElement;
     if (!html.classList.contains('home-exp')) return;
-    if (revealedDesign) return;   // first reveal wins; never swap under a reader
+    var already = shownDesign();
+    if (already) {
+      revealedDesign = already;   // first reveal wins; never swap under a reader
+      return;
+    }
     revealedDesign = design === 'fresh_take' || design === 'raices'
       ? design : 'control';
     // The real reveal lives in an inline script in the page head, so that a
@@ -515,10 +535,13 @@
     }
 
     var design = 'control';
-    // Consent given part-way through a pageview: the page is already showing
-    // control, so that is the design this visit saw. Report it as such rather
-    // than asking Statsig for a variant we can no longer honour.
-    if (!revealedDesign && client && typeof client.getExperiment === 'function') {
+    // Already showing a layout, either because consent arrived part-way
+    // through the pageview or because assignment lost the race with the
+    // reveal timeout. Either way that is the design this visit saw: report
+    // it rather than asking Statsig for a variant we can no longer honour,
+    // since asking would log an exposure for a variant nobody was shown.
+    var shown = shownDesign();
+    if (!shown && client && typeof client.getExperiment === 'function') {
       /* Only the homepage logs an exposure. The experiment's exposed
          population is people who saw the homepage, and it has been running
          on that basis; adding everyone who arrives straight onto a post from
@@ -532,8 +555,8 @@
       if (exp && typeof exp.get === 'function') {
         design = exp.get(HOME_PARAM, 'control') || 'control';
       }
-    } else if (revealedDesign) {
-      design = revealedDesign;
+    } else if (shown) {
+      design = shown;
     }
     revealDesign(design);
     logViewed(design);
