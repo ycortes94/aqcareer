@@ -28,6 +28,11 @@
  *    Amplitude owns product analytics and Session Replay. Statsig owns
  *    experiment assignment and a small set of Pulse conversion events.
  *    The Statsig → Amplitude integration should forward exposures only.
+ *  - One anonymous id is the stable ID and the device ID on both SDKs.
+ *    Statsig's already-stored stable ID wins, so the running experiment
+ *    is not rebucketed. A user ID is optional and stays unset until
+ *    window.aqIdentity.setUserId() or __AQ_ANALYTICS__.user_id provides one;
+ *    the same string is then set on both SDKs.
  */
 (function () {
   'use strict';
@@ -122,7 +127,7 @@
     });
   }
 
-  function startAmplitude(deviceId) {
+  function startAmplitude(identity) {
     var key = CFG.amplitude_api_key;
     if (!key) return Promise.resolve();
 
@@ -163,11 +168,28 @@
           webVitals: true
         }
       };
-      // Same ID Statsig uses for assignment (stableID), so forwarded exposures
-      // join to the same Amplitude user / Session Replay as product events.
-      if (deviceId) initOpts.deviceId = deviceId;
+      // deviceId init option outranks the AMP_ cookie. That cookie is a
+      // different id whenever Statsig and Amplitude were ever started apart,
+      // and forwarded exposures join on device_id === stableID.
+      if (identity && identity.deviceId) initOpts.deviceId = identity.deviceId;
 
-      window.amplitude.init(key, undefined, initOpts);
+      var userId = identity && identity.userId ? identity.userId : undefined;
+      var ready = window.amplitude.init(key, userId, initOpts);
+      if (!ready || typeof ready.then !== 'function') ready = Promise.resolve();
+      return ready.then(function () {
+        // Init already prefers the option, but a plugin that read the cookie
+        // first would keep the old id. Say it again once the client exists.
+        try {
+          if (identity && identity.deviceId &&
+              window.amplitude.getDeviceId() !== identity.deviceId) {
+            window.amplitude.setDeviceId(identity.deviceId);
+          }
+          if (identity && identity.userId &&
+              window.amplitude.getUserId() !== identity.userId) {
+            window.amplitude.setUserId(identity.userId);
+          }
+        } catch (err) {}
+      });
     });
   }
 
@@ -560,26 +582,240 @@
     return '';
   }
 
+  /* ---------- shared identity ----------
+     Statsig forwards exposures with stableID as Amplitude's device_id, and
+     with userID as Amplitude's user_id. Those only join the events this page
+     sends if both SDKs were handed the same strings.
+
+     stable ID and device ID are one value. homepage_three_designs assigns
+     on Statsig's stable ID, so a stored one wins over Amplitude's cookie
+     and over an id we minted on an earlier visit.
+     Passing it in customIDs.stableID makes the SDK keep it (setOverride)
+     instead of minting a second one. customIDs.deviceID carries the same
+     string so a device-level id type added later is the same person.
+
+     user ID stays off the user object until something sets it. An empty
+     string would collapse every anonymous visitor into one Statsig bucket. */
+
+  var IDENTITY_KEY = 'aq_identity_v1';
+  var currentIdentity = null;
+  var pendingUserId = '';
+
+  function cleanId(value) {
+    if (typeof value !== 'string') return '';
+    return value.trim();
+  }
+
+  function djb2(str) {
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash = hash & hash;
+    }
+    return String(hash >>> 0);
+  }
+
+  function newAnonId() {
+    try {
+      if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+        return window.crypto.randomUUID();
+      }
+    } catch (err) {}
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  function readStorage(key) {
+    try { return window.localStorage.getItem(key); } catch (err) { return null; }
+  }
+
+  function parseStoredString(raw) {
+    if (!raw) return '';
+    try {
+      var parsed = JSON.parse(raw);
+      if (typeof parsed === 'string') return cleanId(parsed);
+    } catch (err) {}
+    return '';
+  }
+
+  // Same key the JS client writes: statsig.stable_id.<djb2("k:"+sdkKey)>.
+  // The value is JSON.stringify(id), which is how Storage.setItem persists it.
+  function readStoredStatsigStableId(sdkKey) {
+    if (!sdkKey) return '';
+    return parseStoredString(readStorage('statsig.stable_id.' + djb2('k:' + sdkKey)));
+  }
+
+  function readCookie(name) {
+    var parts;
+    try { parts = (document.cookie || '').split(';'); } catch (err) { return ''; }
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].replace(/^\s+/, '');
+      if (part.indexOf(name + '=') === 0) return part.substring(name.length + 1);
+    }
+    return '';
+  }
+
+  function parseAmpIdentity(raw, encoded) {
+    if (!raw) return null;
+    var json = raw;
+    if (encoded) {
+      // The SDK tries the cookie plain, then percent-decoded, because some
+      // browsers encode the base64 before storing it.
+      json = ampCookieJson(raw) || ampCookieJson(safeDecode(raw));
+      if (!json) return null;
+    }
+    try {
+      var obj = JSON.parse(json);
+      if (!obj || typeof obj !== 'object') return null;
+      return {
+        deviceId: cleanId(obj.deviceId),
+        userId: cleanId(obj.userId)
+      };
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function safeDecode(value) {
+    try { return decodeURIComponent(value); } catch (err) { return ''; }
+  }
+
+  function ampCookieJson(raw) {
+    if (!raw) return '';
+    try { return decodeURIComponent(atob(raw)); } catch (err) { return ''; }
+  }
+
+  // Browser SDK 2 stores identity in AMP_<first 10 of the api key>,
+  // base64(encodeURIComponent(JSON)) in the cookie, plain JSON in
+  // localStorage. The legacy cookie is amp_<first 6>, device id first.
+  function readStoredAmplitudeIdentity(apiKey) {
+    var empty = { deviceId: '', userId: '' };
+    if (!apiKey) return empty;
+    var modern = 'AMP_' + apiKey.substring(0, 10);
+    var fromCookie = parseAmpIdentity(readCookie(modern), true);
+    if (fromCookie && (fromCookie.deviceId || fromCookie.userId)) return fromCookie;
+    var fromStore = parseAmpIdentity(readStorage(modern), false);
+    if (fromStore && (fromStore.deviceId || fromStore.userId)) return fromStore;
+    var legacy = readCookie('amp_' + apiKey.substring(0, 6));
+    if (!legacy) return empty;
+    try { legacy = decodeURIComponent(legacy); } catch (err) {}
+    return { deviceId: cleanId(legacy.split('.')[0]), userId: '' };
+  }
+
+  function readOurIdentity() {
+    try {
+      var raw = readStorage(IDENTITY_KEY);
+      if (!raw) return null;
+      var stored = JSON.parse(raw);
+      if (!stored || !cleanId(stored.stableId)) return null;
+      return {
+        stableId: cleanId(stored.stableId),
+        deviceId: cleanId(stored.deviceId),
+        userId: cleanId(stored.userId)
+      };
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function writeOurIdentity(identity) {
+    try {
+      window.localStorage.setItem(IDENTITY_KEY, JSON.stringify({
+        stableId: identity.stableId,
+        deviceId: identity.deviceId,
+        userId: identity.userId || null
+      }));
+    } catch (err) {}
+  }
+
+  function resolveIdentity() {
+    var statsigId = readStoredStatsigStableId(CFG.statsig_client_key);
+    var amp = readStoredAmplitudeIdentity(CFG.amplitude_api_key);
+    var ours = readOurIdentity();
+    var shared = statsigId ||
+      (ours && ours.stableId) ||
+      amp.deviceId ||
+      newAnonId();
+    // User id only comes from an explicit setUserId() or from config.
+    // Amplitude's cookie is not a source: this site has never set one, and
+    // an empty string must not be sent (Statsig would treat it as a real id).
+    var userId = cleanId(pendingUserId) ||
+      cleanId(CFG.user_id) ||
+      (ours && ours.userId) ||
+      '';
+    var identity = {
+      stableId: shared,
+      deviceId: shared,
+      userId: userId
+    };
+    writeOurIdentity(identity);
+    return identity;
+  }
+
+  function statsigUser(identity) {
+    var user = {
+      customIDs: {
+        stableID: identity.stableId,
+        deviceID: identity.deviceId
+      }
+    };
+    if (identity.userId) user.userID = identity.userId;
+    return user;
+  }
+
+  function applyUserId(userId) {
+    var id = cleanId(userId);
+    pendingUserId = id;
+    if (!currentIdentity) return;
+    currentIdentity.userId = id;
+    currentIdentity.deviceId = currentIdentity.stableId;
+    writeOurIdentity(currentIdentity);
+    try {
+      if (window.amplitude && typeof window.amplitude.setUserId === 'function') {
+        window.amplitude.setUserId(id || undefined);
+      }
+    } catch (err) {}
+    try {
+      if (window.statsigClient &&
+          typeof window.statsigClient.updateUserAsync === 'function') {
+        window.statsigClient.updateUserAsync(statsigUser(currentIdentity));
+      }
+    } catch (err) {}
+  }
+
   function startStatsig() {
+    var identity = resolveIdentity();
+    currentIdentity = identity;
     var key = CFG.statsig_client_key;
     if (!key) {
       applyDesignExperiment(null);
-      return Promise.resolve('');
+      return Promise.resolve(identity);
     }
 
     return load(SRC.statsig).then(function () {
       if (!window.Statsig) {
         applyDesignExperiment(null);
-        return '';
+        return identity;
       }
       var StatsigClient = window.Statsig.StatsigClient;
-      var client = new StatsigClient(key, {});
+      var client = new StatsigClient(key, statsigUser(identity));
 
       // No runStatsigAutoCapture — Amplitude owns pageviews, clicks, forms.
       window.statsigClient = client;
       return client.initializeAsync().then(function () {
+        // If the SDK kept a different stable ID than the one we passed,
+        // follow it. Assignment already happened against that id.
+        var actual = statsigStableId(client);
+        if (actual && actual !== identity.stableId) {
+          identity.stableId = actual;
+          identity.deviceId = actual;
+          writeOurIdentity(identity);
+          try { client.updateUserAsync(statsigUser(identity)); } catch (err) {}
+        }
         applyDesignExperiment(client);
-        return statsigStableId(client);
+        return identity;
       });
     });
   }
@@ -592,16 +828,17 @@
     // Bound here, not at load: with measurement declined there is no listener
     // on the page at all.
     wireClicks();
-    // Statsig first so Amplitude can init with the same stableID as deviceId.
+    // Statsig first so Amplitude inits with the same stable ID / device ID.
     // Parallel init used to race and leave exposures unjoinable to Replay.
     startStatsig()
       .catch(function (e) {
         console.warn('[analytics] statsig:', e.message);
         applyDesignExperiment(null);
-        return '';
+        return currentIdentity || resolveIdentity();
       })
-      .then(function (stableId) {
-        return startAmplitude(stableId).catch(function (e) {
+      .then(function (identity) {
+        currentIdentity = identity || currentIdentity || resolveIdentity();
+        return startAmplitude(currentIdentity).catch(function (e) {
           console.warn('[analytics] amplitude:', e.message);
         });
       })
@@ -794,6 +1031,23 @@
     revealFallback();
     return;
   }
+
+  window.aqIdentity = {
+    getStableId: function () {
+      return currentIdentity ? currentIdentity.stableId : '';
+    },
+    getDeviceId: function () {
+      return currentIdentity ? currentIdentity.deviceId : '';
+    },
+    getUserId: function () {
+      return (currentIdentity && currentIdentity.userId) || pendingUserId || '';
+    },
+    // Same id on Statsig userID and Amplitude user_id. Call this when a
+    // real account id exists; until then both SDKs stay anonymous and join
+    // on the shared stable ID / device ID. Safe to call before consent —
+    // the id is held and applied when tracking actually starts.
+    setUserId: applyUserId
+  };
 
   window.aqConsent = {
     state: readChoice,
