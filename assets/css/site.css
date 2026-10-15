@@ -112,7 +112,8 @@ nav.main a:hover{background:#eef4f2}
 .whatido-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:48px;align-items:center}
 .photo-frame img{width:100%;aspect-ratio:4/3.3;object-fit:cover;border:6px solid #fff;outline:1px solid #e6e6e6}
 .green-card{background:var(--green-mid);color:#fff;padding:44px 46px}
-.script-h{font-family:var(--script);line-height:1;margin:0}
+/* Use the wordmark's regular script; default bold headings crowd its strokes. */
+.script-h{font-family:var(--script);font-weight:400;line-height:1;margin:0}
 .green-card .script-h{font-size:56px;text-align:center;margin-bottom:22px}
 .green-card p{font-size:15px;line-height:1.75;margin:0 0 16px}
 .green-card p:last-child{margin-bottom:0}
