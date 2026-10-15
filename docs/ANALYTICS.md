@@ -540,29 +540,19 @@ nothing. Target the visible form.
 
 ### Likes
 
-Both non-control post pages have a like button and both non-control blog
-indexes show a tally on each card; the control design has neither. This is a
-static site with nowhere to POST a count to, so a like is remembered in the
-visitor's own browser under **`aq_likes_v1`** (`{"<slug>":"<ISO date>"}`) and
-nothing is shared between visitors.
+Every post shows a like count, a heart button, and sharing controls at the
+end of the article, in all three designs. The blog cards also show published counts.
+The like is remembered in this browser under **`aq_likes_v1`**
+(`{"<slug>":"<ISO date>"}`). Pressing again removes the local like. With
+JavaScript disabled, published counts and the LinkedIn link remain
+available. The Share button opens a popup containing Copy link and Share on
+LinkedIn. The popup closes with its close button, Escape, or a click outside.
+Copy link uses the canonical post URL; preview query parameters are never
+included. Copy confirmation appears inside the popup.
 
-**No `post_liked` has ever been logged, and that is the experiment, not the
-button.** The bar is built as `ft-only` (`LIKE_BAR` in `tools/build.py`), so
-only a visitor served the fresh-take or raices arm can see it. The retired
-`homepage_fresh_take` experiment had been `assignment_stopped`, which is why
-the button had no live traffic at the time of this check. The replacement
-`homepage_three_designs` experiment keeps the same behavior; nothing in
-`likes.js` needs changing when assignment starts.
-
-Until then the only way to reach the button is to pin the layout in Labs, so
-those presses log with `labs_pinned: true` and the weekly export filters them
-out rather than publishing development likes as reader likes.
-
-**So read the card tally for what it is.** It counts what that browser has
-liked — 1 or 0 per post, not a total across visitors. A visitor who has liked
-nothing sees 0 everywhere. `tally()` in `assets/js/likes.js` is the single
-place that number comes from; give it a real source and the cards, the markup
-and the styling all stay as they are.
+`post_liked` and `post_unliked` events go to Amplitude only when its
+consent-gated SDK is loaded. Declining measurement still allows a local like.
+Labs-pinned presses carry `labs_pinned: true` and are excluded from exports.
 
 ### The numbers on the blog index
 
@@ -571,10 +561,13 @@ The totals on the cards come from **`content/likes.json`** — a file of
 because nothing has been counted yet.
 
 **A GitHub Action keeps them up to date** —
-`.github/workflows/refresh-likes.yml`, every Monday morning and on demand
-from the Actions tab. It reads the counts from Amplitude, writes
-`content/likes.json`, rebuilds the site and commits; Pages redeploys from
-that commit. Nothing to do by hand once it's switched on.
+`.github/workflows/refresh-likes.yml`, every Monday morning, on pushes to
+`main`, and on demand from the Actions tab. It reads the counts from Amplitude,
+writes `content/likes.json` in the runner, rebuilds the site, and deploys the
+public files directly to GitHub Pages. It does not commit generated totals
+back to protected `main`; the repository copy is a fallback for local builds.
+Direct deployment avoids the branch rule that requires pull requests and the
+fact that bot commits do not trigger Pages builds.
 
 ### Switching it on
 
@@ -591,10 +584,16 @@ Both come from Amplitude → Settings → Projects → *AQ Career Site* → API 
 **The secret key is not like the client key elsewhere in this document.** It's
 a server credential that can read the whole project, and this repo is public.
 It goes in a GitHub secret and nowhere else — never in `site.json`, never in
-a file here, never in a commit. Until both secrets exist the job skips itself
-each week with a notice rather than failing.
+a file here, never in a commit. If either secret is missing, the job leaves
+the checked-in totals as they are, logs a notice, and still deploys the site.
+
+After merging the workflow, set **Settings → Pages → Build and deployment
+→ Source → GitHub Actions** once. **Refresh like counts** publishes normal pushes to
+`main` and weekly refreshes. Its artifact contains only
+public site files, preserving `CNAME` for the custom domain.
 
 Then **Actions → Refresh like counts → Run workflow** to try it immediately.
+Wait for its deployment step to finish before checking the published totals.
 
 ### What it counts
 
@@ -615,9 +614,8 @@ be counted. Expect the published figure to sit below reality by roughly
 whatever share of visitors decline.
 
 Presses made while a Labs layout was pinned are filtered out, with
-`labs_pinned is not true` on both queries. The like button ships on the
-non-control post pages only, so pinning is how anyone working on those
-layouts reaches it, and their presses are development rather than readers.
+`labs_pinned is not true` on both queries. Pinned layouts are used for development, so those presses are excluded
+regardless of which design is shown.
 `is not` keeps events where the property is unset, which is every real visitor —
 checked against the project on 2026-09-21, where 5 `element_clicked` split
 into 4 unset and 1 pinned.

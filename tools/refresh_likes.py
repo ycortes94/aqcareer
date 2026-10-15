@@ -4,7 +4,7 @@
     AMPLITUDE_API_KEY=... AMPLITUDE_SECRET_KEY=... python3 tools/refresh_likes.py
 
 Normally nobody runs this by hand — .github/workflows/refresh-likes.yml runs
-it weekly, rebuilds the site and commits the result. See docs/ANALYTICS.md.
+it weekly and on pushes, rebuilds the site and deploys the result. See docs/ANALYTICS.md.
 
 What it counts: unique users who fired `post_liked` for each post, minus the
 unique users who fired `post_unliked`, over as long a period as Amplitude will
@@ -51,10 +51,8 @@ PROPERTY = "post"      # the event property carrying the slug
 # cannot predate the button.
 MAX_DAYS = 1080
 
-# Presses made while a Labs layout was pinned. The like button ships on the
-# fresh-take post page only, so pinning is how anyone working on the layout
-# sees it, and those presses are development rather than readers. They carry
-# labs_pinned; real visitors never set it.
+# Presses made while a Labs layout was pinned are development activity.
+# They carry labs_pinned; real visitors never set it.
 #
 # "is not" keeps events where the property is unset, which is what this needs.
 # Checked against the project on 2026-09-21: of 5 element_clicked, the

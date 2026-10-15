@@ -129,7 +129,7 @@ assets/css/raices.css            Raíces variant
 assets/js/forms.js      form submission + Turnstile
 assets/js/waitlist.js   counseling interest dialog
 assets/js/paging.js     in-place blog pagination
-assets/js/likes.js      like button on non-control post pages
+assets/js/likes.js      likes, counts and sharing on all post designs
 assets/js/labs.js       Statsig Labs panel (injected only when Labs is on)
 assets/js/analytics.js  Amplitude + Statsig loader, consent banner
 assets/img/             images
@@ -139,7 +139,7 @@ assets/files/           downloadable files (Packages and Investment PDF)
 assets/img/logo-originals/   untrimmed partner logos, kept for re-cropping
 tools/build.py          the build
 tools/refresh_likes.py  pulls like counts from Amplitude into content/likes.json
-.github/workflows/refresh-likes.yml   runs that weekly and commits the result
+.github/workflows/refresh-likes.yml   refreshes counts and deploys Pages weekly / on pushes
 tools/refresh_instagram.py   downloads and validates the latest Instagram media
 .github/workflows/refresh-instagram.yml   runs that daily and commits the result
 tools/form-endpoint.gs  the form handler (paste into Google Apps Script)
@@ -150,8 +150,10 @@ docs/ANALYTICS.md       analytics, consent, experiment, likes, Labs
 design/                 original design mockups, not part of the site
 ```
 
-Generated files are committed on purpose — GitHub Pages serves this repo
-directly, so the built HTML has to be in it.
+Generated files remain checked in for local previews. The like-count Action
+rebuilds and deploys the public site on pushes to `main` and weekly. To enable
+this publishing flow, set **Settings → Pages → Source → GitHub Actions**; see
+[the setup instructions](docs/ANALYTICS.md#switching-it-on).
 
 ## Known gaps
 
