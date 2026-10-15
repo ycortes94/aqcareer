@@ -238,12 +238,27 @@
     });
   }
 
-  loadTurnstile(function () {
-    var forms = document.querySelectorAll('form[data-form]');
-    for (var i = 0; i < forms.length; i++) {
-      wire(forms[i]);
-      if (!inClosedDialog(forms[i])) renderWidget(forms[i]);
-    }
+  // Form handling must not wait for an external spam-check script. Only
+  // start a widget for a visible form near the viewport, rather than all
+  // forms in all three homepage designs at once.
+  var formObserver = window.IntersectionObserver && new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      prepareForm(entry.target);
+      formObserver.unobserve(entry.target);
+    });
+  }, {rootMargin: '200px'});
+
+  function prepareForm(form) {
+    if (inClosedDialog(form) || !form.getClientRects().length) return;
+    loadTurnstile(function () { renderWidget(form); });
+  }
+
+  [].forEach.call(document.querySelectorAll('form[data-form]'), function (form) {
+    wire(form);
+    if (formObserver) formObserver.observe(form);
+    form.addEventListener('focusin', function () { prepareForm(form); });
+    form.addEventListener('pointerdown', function () { prepareForm(form); });
   });
 
   document.addEventListener('aq:waitlist-opened', function (ev) {

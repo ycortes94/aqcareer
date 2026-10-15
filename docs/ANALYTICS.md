@@ -243,6 +243,15 @@ post treatment. Those pages read the same `homepage_three_designs` assignment
 — but ask for it with `{ disableExposureLog: true }`. Which page is which
 comes from `data-page` on `<html>`: `home`, `blog` or `post`.
 
+To avoid a blank screen on each navigation, the inline page gate remembers the
+design actually shown in `sessionStorage` (`aq_design_navigation_v1`). Blog and
+post pages reuse it before rendering, for up to 30 minutes; the homepage still
+obtains a fresh assignment. Analytics then reports the design actually shown,
+without requesting a new exposure on editorial pages. Labs pins take priority
+and are never saved to this cache. With measurement unapproved, disabled, or
+blocked by DNT/GPC, the gate clears the cache and shows control immediately.
+If session storage is unavailable, the existing bounded fallback still applies.
+
 That is deliberate. The experiment's exposed population is people who saw the
 homepage, and it has been running on that basis; adding everyone who arrives
 straight onto a post from search, or onto the blog index from a link, would

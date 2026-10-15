@@ -16,9 +16,11 @@
 <link rel="icon" href="assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/css/site.css?v=3edf5d06">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="assets/css/fresh-take.css?v=95a53560">
 <link rel="stylesheet" href="assets/css/raices.css?v=86ed6bb2">
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="feed.xml">
@@ -38,6 +40,15 @@
 (function(){
   var h=document.documentElement;
   if(!h.classList.contains('home-exp')) return;
+  var cfg={"has_keys": true, "respect_dnt": true, "consent_required": true}, cacheKey='aq_design_navigation_v1';
+  var canMeasure=false;
+  try{
+    var choice=JSON.parse(localStorage.getItem('aq_consent_v1')||'null');
+    var optedOut=cfg.respect_dnt&&(navigator.globalPrivacyControl===true||
+      navigator.doNotTrack==='1'||window.doNotTrack==='1'||navigator.msDoNotTrack==='1');
+    canMeasure=cfg.has_keys&&!optedOut&&(!cfg.consent_required||(choice&&choice.state==='granted'));
+    if(!canMeasure) sessionStorage.removeItem(cacheKey);
+  }catch(e){}
   var done=false,t;
   function reveal(d){
     if(done) return; done=true; clearTimeout(t);
@@ -50,6 +61,11 @@
        reveal has happened and would log an exposure for a variant the page
        can no longer show. */
     window.__aqRevealed=d;
+    /* Keep the design actually seen for the next blog/article navigation.
+       No identity or experiment exposure is stored here. */
+    if(canMeasure&&!(labs&&labs.design)){
+      try{sessionStorage.setItem(cacheKey,JSON.stringify({design:d,at:Date.now()}));}catch(e){}
+    }
   }
   /* Labs: a layout pinned for development. Resolved here, inline, before
      anything else loads, so the pinned layout paints first time with no
@@ -80,7 +96,21 @@
   }catch(e){}
   window.__aqLabs=labs;
   if(labs&&labs.design) reveal(labs.design);
-  else t=setTimeout(function(){reveal('control');},2000);
+  else if(!canMeasure) reveal('control');
+  else {
+    /* The homepage still obtains a fresh assignment. Editorial pages can
+       paint the design just seen without waiting for an SDK/network roundtrip.
+       Expire it after 30 minutes, and ignore malformed or future entries. */
+    if(h.getAttribute('data-page')!=='home'){
+      try{
+        var cached=JSON.parse(sessionStorage.getItem(cacheKey)||'null');
+        var age=cached&&Date.now()-cached.at;
+        if(cached&&age>=0&&age<1800000&&
+          /^(control|fresh_take|raices)$/.test(cached.design)) reveal(cached.design);
+      }catch(e){}
+    }
+    if(!done) t=setTimeout(function(){reveal('control');},2000);
+  }
   window.__aqReveal=reveal;
   /* Fetch the panel only when Labs is actually on. An ordinary visit carries
      no reference to it and downloads none of it, so the switch is not just
@@ -146,7 +176,7 @@
 
   <section class="whatido wrap">
     <div class="whatido-grid">
-      <div class="photo-frame"><img src="assets/img/whatido.jpg" alt="Alina Quintana in conversation with a client" width="864" height="720"></div>
+      <div class="photo-frame"><img loading="lazy" decoding="async" src="assets/img/whatido.jpg" alt="Alina Quintana in conversation with a client" width="864" height="720"></div>
       <div class="green-card">
         <h2 class="script-h">about Alina</h2>
         <p>I'm Alina Quintana, a National Certified Counselor and Certified Career Counselor based in Sacramento, California.</p>
@@ -159,14 +189,14 @@
   <section class="partners wrap">
     <h2 class="script-h">Those I build with</h2>
     <div class="logos">
-      <img src="assets/img/trim-logo-kplaunch.png" alt="KP Launch">
-      <img src="assets/img/trim-logo-compton.png" alt="Compton College">
-      <img src="assets/img/trim-logo-ccda.png" alt="California Career Development Association">
-      <img src="assets/img/trim-logo-crc.png" alt="Cosumnes River College">
-      <img src="assets/img/trim-logo-ucdavis.png" alt="UC Davis Internship and Career Center">
-      <img src="assets/img/trim-logo-trio.png" alt="TRiO">
-      <img src="assets/img/trim-logo-sacstate.png" alt="Sacramento State Career Center">
-      <img src="assets/img/trim-logo-cccdc.png" alt="Capital City Career Development Consortium">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-kplaunch.png" alt="KP Launch">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-compton.png" alt="Compton College">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-ccda.png" alt="California Career Development Association">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-crc.png" alt="Cosumnes River College">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-ucdavis.png" alt="UC Davis Internship and Career Center">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-trio.png" alt="TRiO">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-sacstate.png" alt="Sacramento State Career Center">
+      <img loading="lazy" decoding="async" src="assets/img/trim-logo-cccdc.png" alt="Capital City Career Development Consortium">
     </div>
   </section>
 
@@ -411,7 +441,7 @@
 
   <section class="pad wrap" id="ft-about">
     <div class="about-grid">
-      <img src="assets/img/whatido.jpg" alt="Alina working with a client">
+      <img loading="lazy" decoding="async" src="assets/img/whatido.jpg" alt="Alina working with a client">
       <div class="about-body">
         <h2>About Alina</h2>
         <p>I'm Alina Quintana, a National Certified Counselor and Certified Career Counselor based in Sacramento, California.</p>
@@ -481,14 +511,14 @@
     <div class="wrap">
       <p class="eyebrow">Those I build with</p>
       <div class="plogos">
-        <img src="assets/img/trim-logo-kplaunch.png" alt="KP Launch">
-        <img src="assets/img/trim-logo-compton.png" alt="Compton College">
-        <img src="assets/img/trim-logo-ccda.png" alt="California Career Development Association">
-        <img src="assets/img/trim-logo-crc.png" alt="Cosumnes River College">
-        <img src="assets/img/trim-logo-ucdavis.png" alt="UC Davis Internship and Career Center">
-        <img src="assets/img/trim-logo-trio.png" alt="TRiO">
-        <img src="assets/img/trim-logo-sacstate.png" alt="Sacramento State Career Center">
-        <img src="assets/img/trim-logo-cccdc.png" alt="CCCDC">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-kplaunch.png" alt="KP Launch">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-compton.png" alt="Compton College">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-ccda.png" alt="California Career Development Association">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-crc.png" alt="Cosumnes River College">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-ucdavis.png" alt="UC Davis Internship and Career Center">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-trio.png" alt="TRiO">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-sacstate.png" alt="Sacramento State Career Center">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-cccdc.png" alt="CCCDC">
       </div>
     </div>
   </section>
@@ -702,10 +732,10 @@
     <div class="wrap">
       <p class="eyebrow">Who I've worked with</p>
       <div class="rz-logo-row">
-        <img src="assets/img/trim-logo-kplaunch.png" alt="KP Launch">
-        <img src="assets/img/trim-logo-compton.png" alt="Compton College">
-        <img src="assets/img/trim-logo-ucdavis.png" alt="UC Davis Internship and Career Center">
-        <img src="assets/img/trim-logo-sacstate.png" alt="Sacramento State Career Center">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-kplaunch.png" alt="KP Launch">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-compton.png" alt="Compton College">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-ucdavis.png" alt="UC Davis Internship and Career Center">
+        <img loading="lazy" decoding="async" src="assets/img/trim-logo-sacstate.png" alt="Sacramento State Career Center">
       </div>
     </div>
   </section>
@@ -745,7 +775,7 @@
   <section class="rz-about pad" id="rz-about">
     <div class="wrap rz-about-grid">
       <figure class="rz-about-img">
-        <img src="assets/img/whatido.jpg" alt="Alina working with a client" width="864" height="720">
+        <img loading="lazy" decoding="async" src="assets/img/whatido.jpg" alt="Alina working with a client" width="864" height="720">
       </figure>
       <div class="rz-about-copy">
         <p class="eyebrow">A little about me</p>
@@ -934,8 +964,9 @@
 
 </div>
 
+<script defer src="assets/js/navigation.js?v=f423e1db"></script>
 <script>window.__AQ_ANALYTICS__={"amplitude_api_key": "c5e82bc4883f012f7e98907b216ed194", "statsig_client_key": "client-FdErL4xDGbZ6mxpfuf6QrPFnrutQ4ca1Z5m0zKXOXtE", "session_replay": {"enabled": true, "sample_rate": 1, "mask_forms": true}, "respect_dnt": true, "consent": {"required": true, "policy_url": "/privacy/"}};</script>
-<script src="assets/js/analytics.js?v=b6d2ffea"></script>
+<script defer src="assets/js/analytics.js?v=b6d2ffea"></script>
 <script>
 /* Every carousel on the page, not just the first: the homepage carries both
    experiment layouts in one document, so each arm has its own and each needs
@@ -966,58 +997,9 @@
     show(0);
   });
 })();
-</script><script>
-/* Section tracking for each editorial homepage arm. data-section-prefix on
-   the layout keeps one copy of this logic working for both ft-* and rz-*
-   anchors while the control keeps its own plain nav. */
-(function(){
-  var LINE=0.4;
-  [].forEach.call(document.querySelectorAll('[data-section-prefix]'),function(layout){
-    var nav=layout.querySelector('.hdr nav');
-    var prefix=layout.getAttribute('data-section-prefix');
-    if(!nav||!prefix) return;
-    var marks=[].slice.call(nav.querySelectorAll('a[href*="#'+prefix+'"]')).map(function(a){
-      return {link:a,section:document.getElementById(a.getAttribute('href').split('#')[1])};
-    }).filter(function(m){return m.section});
-    if(!marks.length) return;
-
-    var queued=false,tail;
-    function paint(){
-      queued=false;
-      if(!nav.getClientRects().length) return;
-      var line=window.innerHeight*LINE,cur=null,best=-Infinity;
-      marks.forEach(function(m){
-        var top=m.section.getBoundingClientRect().top;
-        if(top<=line&&top>best){best=top;cur=m}
-      });
-      marks.forEach(function(m){
-        if(m===cur) m.link.setAttribute('aria-current','location');
-        else if(m.link.getAttribute('aria-current')==='location') m.link.removeAttribute('aria-current');
-      });
-    }
-    function schedule(){
-      if(!queued){queued=true;requestAnimationFrame(paint)}
-      clearTimeout(tail);tail=setTimeout(paint,120);
-    }
-    if(window.IntersectionObserver){
-      var io=new IntersectionObserver(schedule,{
-        rootMargin:(-LINE*100)+'% 0px '+(-(1-LINE)*100)+'% 0px'
-      });
-      marks.forEach(function(m){io.observe(m.section)});
-    }
-    addEventListener('scroll',schedule,{passive:true});
-    addEventListener('resize',schedule);
-    addEventListener('load',schedule);
-    if(window.MutationObserver){
-      new MutationObserver(schedule).observe(document.documentElement,
-        {attributes:true,attributeFilter:['class','data-home-design']});
-    }
-    schedule();
-  });
-})();
 </script>
-<script src="assets/js/forms.js?v=6dcf5771"></script>
-<script src="assets/js/waitlist.js?v=c780f81c"></script>
-<script src="assets/js/instagram.js?v=40c993ba"></script>
+<script defer src="assets/js/forms.js?v=e0f9c5b9"></script>
+<script defer src="assets/js/waitlist.js?v=c780f81c"></script>
+<script defer src="assets/js/instagram.js?v=40c993ba"></script>
 </body>
 </html>
