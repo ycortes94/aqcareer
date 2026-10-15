@@ -1,30 +1,12 @@
-/* Post likes for aqcareer.com.
- *
- * Shipped with the fresh-take post page only; the control post page has no
- * like bar. The button is hidden in the markup and revealed here, so it is
- * never a dead control for a visitor without working JavaScript.
- *
- * What a like is, exactly: this site is static — GitHub Pages serves files
- * and there is nothing to POST a count to. So a like is remembered in the
- * visitor's own browser, in localStorage, and nothing is shared between
- * visitors. Pressing the button also logs post_liked, which is where the
- * real numbers come from: exported from Amplitude into content/likes.json,
- * committed, and rendered onto the blog index cards by the build. Those
- * totals are therefore as fresh as the last export and deploy.
- *
- * A live, always-accurate count would need somewhere to store a per-post
- * tally and an endpoint to read and increment it. That's a service to build
- * and look after, and this repo doesn't have one.
- *
- * Like state is deliberately kept out of the consent gate: it is this
- * browser's own record of what it liked, stored locally, never sent
- * anywhere. The *event* about it is gated, because logging one needs an SDK
- * that only loads once measurement is accepted.
+/* Likes and sharing for every blog design. Published totals come from
+ * content/likes.json via the weekly Amplitude export. Local state provides
+ * immediate feedback; analytics still requires measurement consent.
  */
 (function () {
   'use strict';
 
   var KEY = 'aq_likes_v1';
+  var memory = null;
 
   var LABEL = { off: 'Like this post', on: 'Liked' };
 
@@ -36,27 +18,25 @@
      blocked site data). A like still works for the pageview in that case —
      it just won't be there on the next one. */
   function read() {
+    if (memory !== null) return memory;
     try {
       var raw = window.localStorage.getItem(KEY);
       var val = raw ? JSON.parse(raw) : null;
-      return (val && typeof val === 'object') ? val : {};
+      return (val && typeof val === 'object' && !Array.isArray(val)) ? val : {};
     } catch (err) {
       return {};
     }
   }
 
   function write(map) {
+    memory = map;
     try {
       window.localStorage.setItem(KEY, JSON.stringify(map));
     } catch (err) {}
   }
 
   function log(name) {
-    /* Labs has pinned a design for development (see assets/js/labs.js), which
-       is the only way to see this button at all until the experiment hands
-       the fresh-take arm to somebody. So the event is logged, stamped
-       labs_pinned, and tools/refresh_likes.py filters those out before they
-       can reach the published totals. Mirrors logEvent() in analytics.js. */
+    // Exclude development presses made with a Labs layout pinned.
     var labs = window.__aqLabs;
     var pinned = !!(labs && labs.design);
 
@@ -89,19 +69,8 @@
     btn.classList.add('is-beating');
   }
 
-  /* ---------- the blog index ----------
-     A tally on each card. The published total is rendered by the build from
-     content/likes.json — numbers exported from Amplitude by hand, because a
-     static site has no server keeping a live one — and arrives in
-     data-likes. All this adds is the visitor's own like on top, so the
-     number moves when they press the button rather than sitting still until
-     the next export.
-
-     That means a like can be counted twice for one visitor: once here, and
-     again in the next export once their event is in it. Off by one on their
-     own screen only, and the alternative is a button that appears to do
-     nothing. */
-
+  // The local like is added to the last published total for immediate feedback.
+  // It may overlap with the next export for this browser only.
   function published(el) {
     var n = parseInt(el.getAttribute('data-likes'), 10);
     return isNaN(n) || n < 0 ? 0 : n;
@@ -118,13 +87,40 @@
       var out = el.querySelector('.n');
       if (out) out.textContent = n;
       el.classList.toggle('is-liked', liked);
+      var word = el.querySelector('[data-like-word]');
+      if (word) word.textContent = n === 1 ? 'like' : 'likes';
       el.setAttribute('aria-label',
         (liked ? 'You liked this post. ' : '') + n + (n === 1 ? ' like' : ' likes'));
     }
   }
 
+  function wireSharing() {
+    var popup = document.querySelector('.post-share-popup');
+    var copy = document.querySelector('[data-copy-link]');
+    var status = document.querySelector('[data-share-status]');
+    var canonical = document.querySelector('link[rel="canonical"]');
+    var url = canonical ? canonical.href : window.location.href.split(/[?#]/)[0];
+    if (popup) {
+      popup.addEventListener('beforetoggle', function (event) {
+        if (event.newState === 'open') status.textContent = '';
+      });
+    }
+    if (copy) {
+      copy.hidden = false;
+      copy.addEventListener('click', async function () {
+        try {
+          await navigator.clipboard.writeText(url);
+          status.textContent = 'Link copied!';
+        } catch (err) {
+          status.textContent = 'Copy this link: ' + url;
+        }
+      });
+    }
+  }
+
   function wire() {
     paintCards();
+    wireSharing();
     /* The blog index swaps a page of cards in without a reload — see
        assets/js/paging.js. The new ones carry the published total with this
        visitor's own like missing, so repaint when it says so. */
@@ -137,7 +133,7 @@
 
     var liked = !!read()[id];
     paint(btn, liked);
-    bar.hidden = false;
+    btn.hidden = false;
 
     btn.addEventListener('click', function () {
       liked = !liked;
@@ -145,6 +141,7 @@
       if (liked) map[id] = new Date().toISOString(); else delete map[id];
       write(map);
       paint(btn, liked);
+      paintCards();
       if (liked) beat(btn);
       log(liked ? 'post_liked' : 'post_unliked');
     });
