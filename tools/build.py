@@ -14,6 +14,7 @@ import json
 import os
 import re
 import struct
+import urllib.parse
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 T = os.path.join(ROOT, "templates")
@@ -291,17 +292,26 @@ HEART_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4l-1.3
              '14.7 4 16.2 4 18.9 4 21 6.2 21 8.9c0 3.3-3 6-7.7 10.3L12 20.4z" '
              'stroke-linejoin="round"/></svg>')
 
-# The like bar, at the foot of the fresh-take post page. .ft-only keeps it out
-# of the control design, which the experiment leaves exactly as it was; hidden
-# keeps it out of the page until likes.js can make it work. Which post was
-# liked comes from data-post on <html>, so the button carries no slug of its
-# own. See assets/js/likes.js for what a like actually is here.
-LIKE_BAR = f"""  <div class="ft-only ft-like" data-like-bar hidden>
-    <button class="ft-like-btn" type="button" data-like aria-pressed="false">
-      {HEART_SVG}
-      <span class="ft-like-label">Like this post</span>
+def post_actions(post, counts):
+    """Shared controls in every design; counts and share links work without JS."""
+    url = f'{SITE}/post/{post["slug"]}/'
+    encoded_url = urllib.parse.quote(url, safe="")
+    return f"""  <div class="ft-like post-actions post" data-like-bar>
+    <span class="post-like-total" aria-live="polite">{like_count(post["slug"], counts)}</span>
+    <button class="ft-like-btn" type="button" data-like aria-pressed="false" hidden>
+      {HEART_SVG}<span class="ft-like-label">Like this post</span>
     </button>
-    <p class="ft-like-note">Kept in this browser. No account, nothing shared.</p>
+    <button class="post-share-btn" type="button" data-share popovertarget="post-share-popup" aria-haspopup="dialog">Share</button>
+    <div class="post-share-popup" id="post-share-popup" popover role="dialog" aria-labelledby="post-share-title">
+      <div class="post-share-heading">
+        <h2 id="post-share-title">Share this post</h2>
+        <button class="post-share-close" type="button" popovertarget="post-share-popup" popovertargetaction="hide" aria-label="Close share options">&times;</button>
+      </div>
+      <button class="post-share-btn" type="button" data-copy-link hidden autofocus>Copy link</button>
+      <a class="post-share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url={encoded_url}" target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
+      <p class="post-share-status" data-share-status role="status"></p>
+    </div>
+    <p class="ft-like-note">Tap the heart to like. Published totals refresh weekly; your like appears immediately in this browser.</p>
   </div>
 """
 
@@ -321,7 +331,7 @@ def subscribe_block(privacy_class):
     The same list and the same endpoint as the homepage hero's form, because
     there is only one list: a reader who got to the bottom of the posts is the
     one worth asking, and sending them back to the homepage to do it loses
-    them. Not .ft-only like the like bar — this is the same offer in both
+    them. This is the same offer in all
     designs, so it ships as one block that fresh-take.css restyles, the way
     the cards above it already are.
 
@@ -431,8 +441,10 @@ def like_count(slug, counts):
     The number is rendered by the build, so it is there with no JavaScript
     at all; likes.js only adds this visitor's own like on top of it."""
     n = counts.get(slug, 0)
-    return (f'<span class="ft-only ft-card-likes" data-like-count="{slug}" '
-            f'data-likes="{n}">{HEART_SVG}<span class="n">{n}</span></span>')
+    word = "like" if n == 1 else "likes"
+    return (f'<span class="ft-card-likes" data-like-count="{slug}" '
+            f'data-likes="{n}" aria-label="{n} {word}">{HEART_SVG}'
+            f'<span class="n">{n}</span> <span data-like-word>{word}</span></span>')
 
 
 def testimonial_slides(style):
@@ -822,11 +834,11 @@ def build():
             f'    <div class="byline">by {html.escape(p["author"])}</div>\n'
             '  </div>\n' + cover +
             f'  <div class="post-body post">\n{body}  </div>\n'
+            + post_actions(p, counts) +
             '  </article>\n'
             # Straight after the article, so the <noscript> fallback lays the
             # signup out where a Subscribe button in the body points.
-            + memo_dialog("amp-block" if mask_forms else "")
-            + LIKE_BAR +
+            + memo_dialog("amp-block" if mask_forms else "") +
             f'  <nav class="post-nav post">{"".join(links)}</nav>\n'
             f'  <script type="application/ld+json">{ld}</script>\n')
         # The post page carries every design, like the homepage — but with one

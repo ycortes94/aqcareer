@@ -385,8 +385,7 @@ html[data-home-design="raices"] .blog-page-number[aria-current="page"]{
 }
 html[data-home-design="raices"] .blog-page-gap{color:var(--rz-muted)}
 
-/* The like tally. Prefixed for the same reason .ft-like is: it has to
-   out-specify the display:block that .ft-only reveals it with. */
+/* Design-specific like tally styling. */
 html[data-home-design="raices"] .ft-card-likes{
   display:inline-flex;align-items:center;gap:5px;flex:none;letter-spacing:.04em
 }

@@ -408,8 +408,7 @@ html[data-home-design="fresh_take"] .blog-page-number[aria-current="page"]{
 }
 html[data-home-design="fresh_take"] .blog-page-gap{color:var(--ft-muted)}
 
-/* The like tally. Prefixed for the same reason .ft-like is: it has to
-   out-specify the display:block that .ft-only reveals it with. */
+/* Design-specific like tally styling. */
 html[data-home-design="fresh_take"] .ft-card-likes{
   display:inline-flex;align-items:center;gap:5px;flex:none;letter-spacing:.04em
 }
@@ -641,7 +640,7 @@ html[data-home-design="fresh_take"] .memo-dialog .form-status.is-error{color:#8a
    Hidden until likes.js takes over, so the control is never dead: without
    JavaScript there is nothing to click, the same way the footer's tracking
    choice stays out of the markup's way until it can do something. */
-/* Prefixed to out-specify the .ft-only display:block that reveals it. */
+/* Design-specific spacing for the shared post actions. */
 html[data-home-design="fresh_take"] .ft-like{
   max-width:720px;margin:0 auto;padding:26px 24px 4px;
   display:flex;align-items:center;gap:16px;flex-wrap:wrap
