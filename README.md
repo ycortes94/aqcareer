@@ -43,6 +43,18 @@ python3 tools/build.py
 
 Then commit and push.
 
+Check loading and navigation changes after rebuilding:
+
+```bash
+node tools/test_navigation_gate.cjs
+node tools/test_site_interactions.cjs
+```
+
+`assets/js/navigation.js` updates the header selection on clicks and scrolling
+for all three homepage designs. Fonts load without blocking page rendering;
+below-the-fold homepage images load lazily. Form handlers start immediately,
+while spam-check widgets load only for forms near the viewport or in use.
+
 ### Adding a blog post
 
 **1.** Copy the template and rename it to the URL you want:

@@ -16,7 +16,8 @@
 <link rel="icon" href="{{base}}assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="{{base}}assets/css/site.css?v={{css_v}}">
 {{extra_css}}
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="{{base}}feed.xml">
@@ -36,6 +37,15 @@
 (function(){
   var h=document.documentElement;
   if(!h.classList.contains('home-exp')) return;
+  var cfg={{design_config}}, cacheKey='aq_design_navigation_v1';
+  var canMeasure=false;
+  try{
+    var choice=JSON.parse(localStorage.getItem('aq_consent_v1')||'null');
+    var optedOut=cfg.respect_dnt&&(navigator.globalPrivacyControl===true||
+      navigator.doNotTrack==='1'||window.doNotTrack==='1'||navigator.msDoNotTrack==='1');
+    canMeasure=cfg.has_keys&&!optedOut&&(!cfg.consent_required||(choice&&choice.state==='granted'));
+    if(!canMeasure) sessionStorage.removeItem(cacheKey);
+  }catch(e){}
   var done=false,t;
   function reveal(d){
     if(done) return; done=true; clearTimeout(t);
@@ -48,6 +58,11 @@
        reveal has happened and would log an exposure for a variant the page
        can no longer show. */
     window.__aqRevealed=d;
+    /* Keep the design actually seen for the next blog/article navigation.
+       No identity or experiment exposure is stored here. */
+    if(canMeasure&&!(labs&&labs.design)){
+      try{sessionStorage.setItem(cacheKey,JSON.stringify({design:d,at:Date.now()}));}catch(e){}
+    }
   }
   /* Labs: a layout pinned for development. Resolved here, inline, before
      anything else loads, so the pinned layout paints first time with no
@@ -78,7 +93,21 @@
   }catch(e){}
   window.__aqLabs=labs;
   if(labs&&labs.design) reveal(labs.design);
-  else t=setTimeout(function(){reveal('control');},2000);
+  else if(!canMeasure) reveal('control');
+  else {
+    /* The homepage still obtains a fresh assignment. Editorial pages can
+       paint the design just seen without waiting for an SDK/network roundtrip.
+       Expire it after 30 minutes, and ignore malformed or future entries. */
+    if(h.getAttribute('data-page')!=='home'){
+      try{
+        var cached=JSON.parse(sessionStorage.getItem(cacheKey)||'null');
+        var age=cached&&Date.now()-cached.at;
+        if(cached&&age>=0&&age<1800000&&
+          /^(control|fresh_take|raices)$/.test(cached.design)) reveal(cached.design);
+      }catch(e){}
+    }
+    if(!done) t=setTimeout(function(){reveal('control');},2000);
+  }
   window.__aqReveal=reveal;
   /* Fetch the panel only when Labs is actually on. An ordinary visit carries
      no reference to it and downloads none of it, so the switch is not just
@@ -152,6 +181,7 @@
 </script>
 {{layout_close}}
 {{variant_layout}}
+<script defer src="{{base}}assets/js/navigation.js?v={{navigation_v}}"></script>
 {{analytics}}
 {{extra_js}}
 </body>

@@ -47,12 +47,16 @@ LIKES_V = asset_v("assets/js/likes.js")
 WAITLIST_V = asset_v("assets/js/waitlist.js")
 PAGING_V = asset_v("assets/js/paging.js")
 IG_V = asset_v("assets/js/instagram.js")
+NAVIGATION_V = asset_v("assets/js/navigation.js")
 
 # Fraunces is the variant's heading face and is only fetched by pages that
 # ship the fresh-take layout.
 FT_HEAD = (
     '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,'
-    'wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet">\n'
+    'wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet" '
+    'media="print" onload="this.media=\'all\'">\n'
+    '<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,'
+    'wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet"></noscript>\n'
     '<link rel="stylesheet" href="{base}assets/css/fresh-take.css?v={v}">'
 )
 RZ_HEAD = '<link rel="stylesheet" href="{base}assets/css/raices.css?v={v}">'
@@ -66,7 +70,7 @@ def analytics_snippet(base):
         return ""
     blob = json.dumps(cfg, ensure_ascii=False).replace("</", "<\\/")
     return (f'<script>window.__AQ_ANALYTICS__={blob};</script>\n'
-            f'<script src="{base}assets/js/analytics.js?v={AN_V}"></script>')
+            f'<script defer src="{base}assets/js/analytics.js?v={AN_V}"></script>')
 
 
 def read(p):
@@ -123,6 +127,7 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
          ogimage=None, cur_home="", cur_blog="", extra_js="",
          html_attrs="", extra_css="", layout_open="", layout_close="",
          variant_layout="", chrome_top="", extra_head=""):
+    analytics_cfg = CFG.get("analytics") or {}
     return fill(
         read(os.path.join(T, "base.html")),
         content=content, title=html.escape(title, quote=True),
@@ -135,7 +140,13 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         labs_src=f"{base}assets/js/labs.js?v={LABS_V}",
         form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
         turnstile_sitekey=html.escape(CFG.get("turnstile_site_key", ""), quote=True),
-        css_v=CSS_V, analytics=analytics_snippet(base),
+        css_v=CSS_V, navigation_v=NAVIGATION_V, analytics=analytics_snippet(base),
+        design_config=json.dumps({
+            "has_keys": bool(analytics_cfg.get("amplitude_api_key")
+                             or analytics_cfg.get("statsig_client_key")),
+            "respect_dnt": bool(analytics_cfg.get("respect_dnt")),
+            "consent_required": (analytics_cfg.get("consent") or {}).get("required") is not False,
+        }),
         html_attrs=html_attrs, extra_css=extra_css,
         extra_head=extra_head,
         layout_open=layout_open, layout_close=layout_close,
@@ -527,58 +538,6 @@ CAROUSEL_JS = """<script>
 })();
 </script>"""
 
-SECTION_SPY_JS = """<script>
-/* Section tracking for each editorial homepage arm. data-section-prefix on
-   the layout keeps one copy of this logic working for both ft-* and rz-*
-   anchors while the control keeps its own plain nav. */
-(function(){
-  var LINE=0.4;
-  [].forEach.call(document.querySelectorAll('[data-section-prefix]'),function(layout){
-    var nav=layout.querySelector('.hdr nav');
-    var prefix=layout.getAttribute('data-section-prefix');
-    if(!nav||!prefix) return;
-    var marks=[].slice.call(nav.querySelectorAll('a[href*="#'+prefix+'"]')).map(function(a){
-      return {link:a,section:document.getElementById(a.getAttribute('href').split('#')[1])};
-    }).filter(function(m){return m.section});
-    if(!marks.length) return;
-
-    var queued=false,tail;
-    function paint(){
-      queued=false;
-      if(!nav.getClientRects().length) return;
-      var line=window.innerHeight*LINE,cur=null,best=-Infinity;
-      marks.forEach(function(m){
-        var top=m.section.getBoundingClientRect().top;
-        if(top<=line&&top>best){best=top;cur=m}
-      });
-      marks.forEach(function(m){
-        if(m===cur) m.link.setAttribute('aria-current','location');
-        else if(m.link.getAttribute('aria-current')==='location') m.link.removeAttribute('aria-current');
-      });
-    }
-    function schedule(){
-      if(!queued){queued=true;requestAnimationFrame(paint)}
-      clearTimeout(tail);tail=setTimeout(paint,120);
-    }
-    if(window.IntersectionObserver){
-      var io=new IntersectionObserver(schedule,{
-        rootMargin:(-LINE*100)+'% 0px '+(-(1-LINE)*100)+'% 0px'
-      });
-      marks.forEach(function(m){io.observe(m.section)});
-    }
-    addEventListener('scroll',schedule,{passive:true});
-    addEventListener('resize',schedule);
-    addEventListener('load',schedule);
-    if(window.MutationObserver){
-      new MutationObserver(schedule).observe(document.documentElement,
-        {attributes:true,attributeFilter:['class','data-home-design']});
-    }
-    schedule();
-  });
-})();
-</script>"""
-
-
 # Anything that has to be on every page has to be in BOTH chromes: the
 # control one in base.html and the fresh-take one in the partials. Adding a
 # site-wide feature to one of them is a silent bug — whichever group a
@@ -676,10 +635,10 @@ def build():
         variant_layout=variant + "\n" + raices,
         # No tag for labs.js on purpose: the inline gate in base.html injects
         # it, and only for a browser that has Labs switched on.
-        extra_js=CAROUSEL_JS + SECTION_SPY_JS +
-        f'\n<script src="assets/js/forms.js?v={JS_V}"></script>'
-        f'\n<script src="assets/js/waitlist.js?v={WAITLIST_V}"></script>'
-        f'\n<script src="assets/js/instagram.js?v={IG_V}"></script>')))
+        extra_js=CAROUSEL_JS +
+        f'\n<script defer src="assets/js/forms.js?v={JS_V}"></script>'
+        f'\n<script defer src="assets/js/waitlist.js?v={WAITLIST_V}"></script>'
+        f'\n<script defer src="assets/js/instagram.js?v={IG_V}"></script>')))
 
     # ---------- blog index ----------
     # Six posts per page keeps the index useful as the archive grows. The
@@ -824,9 +783,9 @@ def build():
             # only where there is a second page to reach, so a one-page
             # archive ships nothing it cannot use.
             extra_js=(
-                f'<script src="{base}assets/js/forms.js?v={JS_V}"></script>\n'
-                f'<script src="{base}assets/js/likes.js?v={LIKES_V}"></script>'
-                + (f'\n<script src="{base}assets/js/paging.js?v={PAGING_V}">'
+                f'<script defer src="{base}assets/js/forms.js?v={JS_V}"></script>\n'
+                f'<script defer src="{base}assets/js/likes.js?v={LIKES_V}"></script>'
+                + (f'\n<script defer src="{base}assets/js/paging.js?v={PAGING_V}">'
                    '</script>' if page_count > 1 else "")))))
         blog_pages.append(canonical)
 
@@ -889,9 +848,9 @@ def build():
             # the other so its form posts in place rather than leaving the
             # page. Same pair the homepage loads for the interest list.
             extra_js=(
-                f'<script src="../../assets/js/forms.js?v={JS_V}"></script>\n'
-                f'<script src="../../assets/js/waitlist.js?v={WAITLIST_V}"></script>\n'
-                f'<script src="../../assets/js/likes.js?v={LIKES_V}"></script>'))))
+                f'<script defer src="../../assets/js/forms.js?v={JS_V}"></script>\n'
+                f'<script defer src="../../assets/js/waitlist.js?v={WAITLIST_V}"></script>\n'
+                f'<script defer src="../../assets/js/likes.js?v={LIKES_V}"></script>'))))
 
     # ---------- privacy ----------
     pv = CFG.get("privacy") or {}
