@@ -798,3 +798,16 @@ and reload.
 
 Events should appear in Amplitude within a minute or two. In Amplitude,
 Session Replay sits alongside the event stream for the same user.
+
+## Script integrity
+
+The three versioned SDK bundles in `assets/js/analytics.js` have SHA-384
+Subresource Integrity values. The browser checks the decoded response before
+execution, and the loader rejects unknown URLs. `node tools/test_script_integrity.cjs`
+fetches and verifies the pinned bytes; the optional browser suite also confirms
+modified bytes cannot execute. The Turnstile loader follows Cloudflare's
+dynamic-loader requirements and is intentionally handled separately.
+
+Review every SDK update before changing both URL and hash. Re-run the replay
+privacy checks documented above as well as the security and advisory checks.
+See `docs/SECURITY.md` for the generated CSP and supported network destinations.

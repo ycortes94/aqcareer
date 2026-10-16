@@ -26,12 +26,19 @@ function recipient() {
   return to;
 }
 
-// Only accept submissions that say they came from the real site.
+// This body field is only a consistency check, not authentication.
+// Turnstile hostname/action verification below is mandatory.
 var ALLOWED_ORIGINS = [
   'https://www.aqcareer.com',
-  'https://aqcareer.com',
-  'https://ycortes94.github.io'
+  'https://aqcareer.com'
 ];
+
+var TURNSTILE_HOSTS = ['www.aqcareer.com', 'aqcareer.com'];
+var TURNSTILE_ACTION = 'aq_form';
+var FORM_HANDLER_VERSION = '2026-10-16-security-1';
+var CONSENT_VERSION = '2026-10-07';
+var INQUIRY_TYPES = ['Curriculum contract', 'Workshop', 'Speaking',
+  'Partnership or other project', 'Individual counseling question'];
 
 // Caps so one POST cannot dump a novel into Gmail or the sheet.
 var LIMITS = {
@@ -60,9 +67,8 @@ function doPost(e) {
       return ok({ ok: true, skipped: 'honeypot' });
     }
 
-    // Reject submissions that didn't come from the site. Origin is omitted
-    // when JavaScript is off (the HTML form has no origin field), so a
-    // missing value is allowed; a forged one is not.
+    // Optional consistency check. An attacker can omit or forge this field;
+    // it must never substitute for the token verification below.
     var origin = String(p.origin || '');
     if (origin && ALLOWED_ORIGINS.indexOf(origin) === -1) {
       return ok({ ok: false, error: 'bad_origin' });
@@ -70,9 +76,17 @@ function doPost(e) {
 
     // Spreadsheet column: waitlist, memo, or contact. Older pages still
     // post "newsletter"; that is the same list as memo.
-    var kind = p.form === 'contact' || p.form === 'waitlist'
-      ? p.form : 'memo';
-    var email = clip_(p.email, LIMITS.email).toLowerCase();
+    var kind = p.form === 'newsletter' ? 'memo' : p.form;
+    if (['contact', 'waitlist', 'memo'].indexOf(kind) === -1) {
+      return ok({ ok: false, error: 'invalid_form' });
+    }
+    if (kind !== 'contact' && p.consent !== 'yes') {
+      return ok({ ok: false, error: 'consent_required' });
+    }
+    var email = String(p.email || '').trim().toLowerCase();
+    if (email.length > LIMITS.email) {
+      return ok({ ok: false, error: 'invalid_email' });
+    }
 
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return ok({ ok: false, error: 'invalid_email' });
@@ -82,6 +96,9 @@ function doPost(e) {
     var last = clip_(p.last_name, LIMITS.name);
     var organization = clip_(p.organization, LIMITS.organization);
     var inquiryType = clip_(p.inquiry_type, LIMITS.inquiryType);
+    if (kind === 'contact' && INQUIRY_TYPES.indexOf(inquiryType) === -1) {
+      return ok({ ok: false, error: 'invalid_inquiry' });
+    }
     var rawMessage = String(p.message || '');
     if (rawMessage.length > LIMITS.message) {
       return ok({ ok: false, error: 'too_long' });
@@ -89,7 +106,7 @@ function doPost(e) {
     var message = rawMessage.replace(/\0/g, '').trim();
 
     // JS adds loaded_at (ms since the page opened). Instant POSTs are bots.
-    // No-JS visitors omit it, so a missing value is allowed.
+    // Optional hint only. A forged timestamp never bypasses Turnstile.
     var timing = timingError_(p.loaded_at);
     if (timing) {
       return ok({ ok: false, error: timing });
@@ -134,7 +151,7 @@ function doPost(e) {
         '',
         'Name:     ' + waitlistName,
         'Email:    ' + email,
-        'Consent:  ' + (p.consent ? 'yes, checked the box' : 'not checked'),
+        'Consent:  ' + (p.consent === 'yes' ? 'yes, checked the box' : 'not checked'),
         'Sent:     ' + new Date().toLocaleString('en-US',
                          { timeZone: 'America/Los_Angeles' }),
         '',
@@ -147,7 +164,7 @@ function doPost(e) {
         'Someone subscribed to the Career Disruptor Memo.',
         '',
         'Email:    ' + email,
-        'Consent:  ' + (p.consent ? 'yes, checked the box' : 'not checked'),
+        'Consent:  ' + (p.consent === 'yes' ? 'yes, checked the box' : 'not checked'),
         'Sent:     ' + new Date().toLocaleString('en-US',
                          { timeZone: 'America/Los_Angeles' }),
         '',
@@ -190,8 +207,11 @@ function clip_(value, max) {
 
 function turnstileOk_(token) {
   var secret = PropertiesService.getScriptProperties().getProperty('TURNSTILE_SECRET');
-  if (!secret) return true;
-  if (!token) return false;
+  if (!secret) {
+    console.error('TURNSTILE_SECRET is missing; rejecting submission.');
+    return false;
+  }
+  if (typeof token !== 'string' || !token || token.length > 2048) return false;
   try {
     var resp = UrlFetchApp.fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
       method: 'post',
@@ -201,8 +221,11 @@ function turnstileOk_(token) {
       },
       muteHttpExceptions: true
     });
+    if (resp.getResponseCode() !== 200) return false;
     var body = JSON.parse(resp.getContentText() || '{}');
-    return !!(body && body.success);
+    return !!(body && body.success === true &&
+      TURNSTILE_HOSTS.indexOf(body.hostname) !== -1 &&
+      body.action === TURNSTILE_ACTION);
   } catch (err) {
     console.error('turnstile: ' + err);
     return false;
@@ -224,21 +247,45 @@ function timingError_(loadedAt) {
   return null;
 }
 
-// Cheap throttle in Apps Script's shared cache. Not a firewall: it stops
-// a script from mailing Alina 200 times in a minute. Cache is best-effort.
+// Durable fixed UTC-hour counters, serialized across all web-app executions.
+// No raw email addresses are stored in the limiter. The map is bounded by
+// sitePerHour and replaced on rollover, so Script Properties cannot grow forever.
 function rateLimited_(email) {
-  var cache = CacheService.getScriptCache();
-  var hour = 3600;
-  var globalKey = 'aq_rate_global';
-  var emailKey = 'aq_rate_' + email;
-  var global = parseInt(cache.get(globalKey) || '0', 10);
-  var perEmail = parseInt(cache.get(emailKey) || '0', 10);
-  if (global >= LIMITS.sitePerHour || perEmail >= LIMITS.perEmailPerHour) {
-    return true;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(3000)) return true; // fail closed under contention
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var window = Math.floor(Date.now() / 3600000);
+    var raw = props.getProperty('AQ_RATE_WINDOW');
+    var state = raw ? JSON.parse(raw) : null;
+    if (!state || state.window !== window) {
+      state = { window: window, total: 0, emails: {} };
+    }
+    if (!Number.isInteger(state.total) || state.total < 0 ||
+        !state.emails || typeof state.emails !== 'object') {
+      throw new Error('Invalid rate-limit state');
+    }
+    var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, email,
+      Utilities.Charset.UTF_8).map(function (b) {
+        return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
+      }).join('');
+    var count = state.emails[digest] || 0;
+    if (!Number.isInteger(count) || count < 0) throw new Error('Invalid email counter');
+    if (state.total >= LIMITS.sitePerHour || count >= LIMITS.perEmailPerHour) return true;
+    state.total++;
+    state.emails[digest] = count + 1;
+    props.setProperty('AQ_RATE_WINDOW', JSON.stringify(state));
+    return false;
+  } finally {
+    lock.releaseLock();
   }
-  cache.put(globalKey, String(global + 1), hour);
-  cache.put(emailKey, String(perEmail + 1), hour);
-  return false;
+}
+
+// Sheets treats a leading '=' as a formula. An apostrophe forces literal
+// text; also cover common spreadsheet formula prefixes for safe CSV exports.
+function sheetText_(value) {
+  var text = String(value || '');
+  return /^[\s]*[=+@-]/.test(text) ? "'" + text : text;
 }
 
 // Keep the original SHEET_ID, and optionally add comma-separated SHEET_IDS.
@@ -258,12 +305,14 @@ function log_(kind, email, p) {
   sheetIds_().forEach(function (id) {
     try {
       SpreadsheetApp.openById(id).getSheets()[0].appendRow([
-      new Date(), kind, email,
-      clip_(p.first_name, LIMITS.name), clip_(p.last_name, LIMITS.name),
-      String(p.message || '').replace(/\0/g, '').slice(0, LIMITS.message),
-      p.consent ? 'yes' : '',
-      clip_(p.organization, LIMITS.organization),
-      clip_(p.inquiry_type, LIMITS.inquiryType)
+      new Date(), kind, sheetText_(email),
+      sheetText_(clip_(p.first_name, LIMITS.name)),
+      sheetText_(clip_(p.last_name, LIMITS.name)),
+      sheetText_(String(p.message || '').replace(/\0/g, '').slice(0, LIMITS.message)),
+      p.consent === 'yes' ? 'yes' : '',
+      sheetText_(clip_(p.organization, LIMITS.organization)),
+      sheetText_(clip_(p.inquiry_type, LIMITS.inquiryType)),
+      kind === 'memo' || kind === 'waitlist' ? CONSENT_VERSION : ''
       ]);
       saved++;
     } catch (err) {
@@ -293,6 +342,6 @@ function ok(obj) {
 // Visiting the URL in a browser should not look broken.
 function doGet() {
   return ContentService
-    .createTextOutput('This endpoint accepts form submissions from aqcareer.com.')
+    .createTextOutput('aqcareer.com form handler ' + FORM_HANDLER_VERSION)
     .setMimeType(ContentService.MimeType.TEXT);
 }
