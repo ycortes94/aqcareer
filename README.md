@@ -8,10 +8,12 @@ Hosted on GitHub Pages at
 Pushing to `main` redeploys it, usually within a minute. The custom domain
 is not pointed here yet — see [Domain](#domain).
 
-The homepage ships three designs. Statsig assigns consenting visitors to
-`control`, `fresh_take`, or `raices` via the `homepage_three_designs`
-experiment. Visitors who decline measurement always see control. Preview
-any arm with Labs — see [docs/ANALYTICS.md](docs/ANALYTICS.md#statsig-labs-switching-layouts-by-hand).
+The homepage experiment compares `control` and `fresh_take` at 50% each.
+It remains in setup until started in Statsig, using the existing
+`homepage_three_designs` experiment ID. Raíces was removed from the experiment;
+its layout remains available for preview through Labs. Visitors who decline
+measurement always see control. See
+[docs/ANALYTICS.md](docs/ANALYTICS.md#statsig-labs-switching-layouts-by-hand).
 
 ## Editing
 

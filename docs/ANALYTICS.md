@@ -218,10 +218,12 @@ captured.
 
 ### Effect on the homepage design experiment
 
-The active configuration is `homepage_three_designs`: `control` (34%),
-`fresh_take` (33%), and `raices` (33%). It was created in **setup** state;
-deploy the matching site code before starting assignment. The retired
-two-group `homepage_fresh_take` experiment remains stopped as historical data.
+The current configuration is **Homepage - Control vs Fresh Take**, retaining
+the `homepage_three_designs` ID used by the site: `control` (50%) and
+`fresh_take` (50%). Raíces was removed before launch on October 15, 2026;
+its site layout remains available through Labs for preview only. The experiment
+is still in **setup** state and has not started assignment. The retired
+`homepage_fresh_take` experiment remains stopped as historical data.
 
 A visitor who hasn't accepted never loads Statsig, so they can't be bucketed
 and always see the **control** homepage. That means the `homepage_three_designs`
