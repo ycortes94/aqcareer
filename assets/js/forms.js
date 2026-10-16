@@ -7,8 +7,8 @@
  * button opens. The endpoint URL is injected by the build from site.json
  * (form_endpoint).
  *
- * Progressive enhancement: without JavaScript the forms still submit
- * normally to the same endpoint, they just leave the page to do it.
+ * JavaScript is required for mandatory Turnstile verification. Without it,
+ * the server rejects submissions; the page offers a direct contact link.
  */
 (function () {
   'use strict';
@@ -25,6 +25,8 @@
     memo: 'Thank you — you’re on the list for the first memo.',
     waitlist: 'Thank you — you’re on the career counseling interest list.',
     contact: 'Thank you — your message is on its way. Alina will be in touch.',
+    consent_required: 'Please confirm that you want to receive these emails.',
+    invalid_inquiry: 'Please choose one of the listed inquiry types.',
     invalid_email: 'That email address doesn’t look right. Mind checking it?',
     rate_limited: 'That was sent a few times already. Please wait a bit and try again, or reach Alina on ' +
                   '<a href="https://www.linkedin.com/in/alina-quintana/">LinkedIn</a>.',
@@ -126,7 +128,7 @@
     if (!slot || !SITEKEY || !window.turnstile) return;
     if (slot.getAttribute('data-widget-id')) return;
     try {
-      var id = window.turnstile.render(slot, { sitekey: SITEKEY, theme: 'auto' });
+      var id = window.turnstile.render(slot, { sitekey: SITEKEY, theme: 'auto', action: 'aq_form' });
       slot.setAttribute('data-widget-id', id);
       widgets.push({ form: form, id: id, slot: slot });
     } catch (err) {}
@@ -216,6 +218,10 @@
                 : (kind === 'waitlist' ? 'waitlist_joined' : 'newsletter_subscribed');
               log(successEvent);
             }
+          } else if (result && result.error === 'consent_required') {
+            say(form, MESSAGES.consent_required, 'error');
+          } else if (result && result.error === 'invalid_inquiry') {
+            say(form, MESSAGES.invalid_inquiry, 'error');
           } else if (result && result.error === 'invalid_email') {
             say(form, MESSAGES.invalid_email, 'error');
           } else if (result && result.error === 'rate_limited') {

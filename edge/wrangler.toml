@@ -1,0 +1,9 @@
+name = "aqcareer-security-headers"
+main = "security-worker.mjs"
+compatibility_date = "2026-10-16"
+workers_dev = false
+# Enable only after the domain uses Cloudflare proxied DNS and staging checks pass.
+# routes = [
+#   { pattern = "www.aqcareer.com/*", zone_name = "aqcareer.com" },
+#   { pattern = "aqcareer.com/*", zone_name = "aqcareer.com" }
+# ]

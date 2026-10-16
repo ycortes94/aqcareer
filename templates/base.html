@@ -16,14 +16,15 @@
 <link rel="icon" href="{{base}}assets/img/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet" media="print" data-async-font>
 <noscript><link href="https://fonts.googleapis.com/css2?family=Mr+De+Haviland&family=Mulish:wght@200..800&family=Lato:wght@300;400&display=swap" rel="stylesheet"></noscript>
 <link rel="stylesheet" href="{{base}}assets/css/site.css?v={{css_v}}">
 {{extra_css}}
+{{resource_hints}}
 <link rel="alternate" type="application/rss+xml" title="AQ Career Consulting — POV Blog" href="{{base}}feed.xml">
 <noscript><style>html.exp-pending body{visibility:visible!important}
-/* No script to open it, so the interest list is laid out in the page
-   instead — the form still posts on its own. See assets/js/waitlist.js. */
+/* Keep the interest-list content visible without JavaScript. Submitting
+   still requires the Turnstile check; the alternate contact link is above. */
 .waitlist-dialog{display:block;position:static;margin:0 auto 56px;width:min(680px,calc(100% - 48px));max-height:none}
 .waitlist-close{display:none}</style></noscript>
 <script>
@@ -35,6 +36,13 @@
    experiment is homepage_three_designs, and post pages follow whatever it
    assigned rather than running an experiment of their own. */
 (function(){
+  /* Keep remote font CSS off the rendering path without inline event
+     handlers, which the security policy deliberately forbids. */
+  [].forEach.call(document.querySelectorAll('link[data-async-font]'),function(link){
+    function apply(){ link.media='all'; }
+    link.addEventListener('load',apply,{once:true});
+    if(link.sheet) apply(); // also handle a stylesheet already in cache
+  });
   var h=document.documentElement;
   if(!h.classList.contains('home-exp')) return;
   var cfg={{design_config}}, cacheKey='aq_design_navigation_v1';
@@ -121,6 +129,7 @@
 </script>
 </head>
 <body>
+<noscript><p class="wrap">The forms need JavaScript for the spam check. You can <a href="https://www.linkedin.com/in/alina-quintana/">contact Alina on LinkedIn</a>.</p></noscript>
 {{layout_open}}
 <a class="skip" href="#main">Skip to content</a>
 {{chrome_top}}

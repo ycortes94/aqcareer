@@ -23,7 +23,7 @@ function run(options = {}) {
     removeItem(k) { if (blocked) throw Error('blocked'); map.delete(k); }
   });
   const ctx = {
-    document: {documentElement: {
+    document: {querySelectorAll:()=>[],documentElement: {
       classList: {contains:k=>classes.has(k), remove:k=>classes.delete(k)},
       setAttribute:(k,v)=>{attrs[k]=v;}, getAttribute:k=>attrs[k]
     }, createElement:()=>({}), head:{appendChild:()=>{}}},

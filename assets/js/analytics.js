@@ -60,6 +60,12 @@
     statsig: 'https://cdn.jsdelivr.net/npm/@statsig/js-client@3.33.5/build/statsig-js-client.min.js'
   };
 
+  // Hashes of the decoded, versioned responses; see tools/test_script_integrity.cjs.
+  var INTEGRITY = {};
+  INTEGRITY[SRC.amplitude] = 'sha384-4BtYo/lm70jo6GgF8r0j+rHp+8VJgbWmKNFbsxfuyySI3vA0p7PsvD4dt0aQyh/R';
+  INTEGRITY[SRC.replay] = 'sha384-fDBGhU3cbeaModrmyxMZzeb5OT8eKkFhljS//u0vGiLh9kQwSUeQEBcRvCrLgeDA';
+  INTEGRITY[SRC.statsig] = 'sha384-7qruGDfkOFQkUBVMV2NVuQW0wVZ5vvvFzTt5iGPZVO4bXwb+4DqbsRa40UXMJqP9';
+
   /* Events Statsig needs for homepage_three_designs Pulse. Everything else is
      Amplitude-only so the Statsig → Amplitude integration cannot inflate
      charts when it forwards product events. Keep this list in sync with the
@@ -118,6 +124,8 @@
   function load(src) {
     return new Promise(function (resolve, reject) {
       var s = document.createElement('script');
+      if (!INTEGRITY[src]) { reject(new Error('unreviewed analytics script')); return; }
+      s.integrity = INTEGRITY[src];
       s.src = src;
       s.async = true;
       s.crossOrigin = 'anonymous';

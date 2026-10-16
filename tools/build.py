@@ -55,7 +55,7 @@ NAVIGATION_V = asset_v("assets/js/navigation.js")
 FT_HEAD = (
     '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,'
     'wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet" '
-    'media="print" onload="this.media=\'all\'">\n'
+    'media="print" data-async-font>\n'
     '<noscript><link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,'
     'wght@0,9..144,300..700;1,9..144,300..600&display=swap" rel="stylesheet"></noscript>\n'
     '<link rel="stylesheet" href="{base}assets/css/fresh-take.css?v={v}">'
@@ -127,8 +127,16 @@ def editorial_chrome(base, cur_blog=""):
 def page(*, content, title, desc, canonical, base, ogtype="website",
          ogimage=None, cur_home="", cur_blog="", extra_js="",
          html_attrs="", extra_css="", layout_open="", layout_close="",
-         variant_layout="", chrome_top="", extra_head=""):
+         variant_layout="", chrome_top="", extra_head="", critical_image=""):
     analytics_cfg = CFG.get("analytics") or {}
+    analytics_html = analytics_snippet(base)
+    # CSP can delay speculative discovery past the inline head gate. Expose
+    # existing deferred script URLs early; the browser reuses the same fetch.
+    deferred = [f"{base}assets/js/navigation.js?v={NAVIGATION_V}"]
+    deferred += re.findall(r'<script defer src="([^"<>]+)"', analytics_html + extra_js)
+    script_hints = "\n".join(
+        f'<link rel="preload" as="script" href="{html.escape(src, quote=True)}" fetchpriority="low">'
+        for src in dict.fromkeys(deferred))
     return fill(
         read(os.path.join(T, "base.html")),
         content=content, title=html.escape(title, quote=True),
@@ -141,7 +149,7 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         labs_src=f"{base}assets/js/labs.js?v={LABS_V}",
         form_endpoint=html.escape(CFG.get("form_endpoint", ""), quote=True),
         turnstile_sitekey=html.escape(CFG.get("turnstile_site_key", ""), quote=True),
-        css_v=CSS_V, navigation_v=NAVIGATION_V, analytics=analytics_snippet(base),
+        css_v=CSS_V, navigation_v=NAVIGATION_V, analytics=analytics_html,
         design_config=json.dumps({
             "has_keys": bool(analytics_cfg.get("amplitude_api_key")
                              or analytics_cfg.get("statsig_client_key")),
@@ -150,6 +158,8 @@ def page(*, content, title, desc, canonical, base, ogtype="website",
         }),
         html_attrs=html_attrs, extra_css=extra_css,
         extra_head=extra_head,
+        resource_hints=(f'<link rel="preload" as="image" href="{html.escape(critical_image, quote=True)}" fetchpriority="high">\n'
+                        if critical_image else '') + script_hints,
         layout_open=layout_open, layout_close=layout_close,
         variant_layout=variant_layout, chrome_top=chrome_top,
     )
@@ -638,6 +648,7 @@ def build():
         content=home,
         title="Career Programs & Counseling | AQ Career Consulting",
         desc=CFG["description"], canonical=SITE + "/", base="",
+        critical_image="assets/img/headshot.webp",
         cur_home=' aria-current="page"',
         html_attrs=' class="home-exp exp-pending" data-page="home"',
         extra_css=FT_HEAD.format(base="", v=FT_CSS_V) + "\n" +
@@ -933,6 +944,9 @@ def build():
 
     made.append(write("robots.txt",
         f"User-agent: *\nAllow: /\nSitemap: {SITE}/sitemap.xml\n"))
+
+    from security_policy import protect_pages
+    protect_pages(ROOT, made)
 
     print(f"built {len(made)} files  ({len(posts)} posts)")
     for m in made:

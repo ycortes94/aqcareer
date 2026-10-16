@@ -1,0 +1,13 @@
+{
+  "version": "0.13.0",
+  "platforms": {
+    "darwin-arm64": {
+      "url": "https://files.pythonhosted.org/packages/9e/d4/d42eabbd9b61a965e0a262e06bf8452744593e7a3110a5c4273c4e917729/uv-0.13.0-py3-none-macosx_11_0_arm64.whl",
+      "sha256": "a5f93ae362b751737cecef0bbc0294624be68a843ff9b32d86e6862a26101630"
+    },
+    "linux-x86_64": {
+      "url": "https://files.pythonhosted.org/packages/c3/75/1901383808ba0d421f32060ba0e9884169b685a722e1af5d87fdd4225ba6/uv-0.13.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "52c7da0fd9056d9551124777ec77de53f0df7017daf8f98a19e947b7837416ed"
+    }
+  }
+}
