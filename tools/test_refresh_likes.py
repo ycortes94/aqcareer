@@ -11,17 +11,27 @@ import refresh_likes as likes
 
 
 class SavedChartLikes(unittest.TestCase):
-    def test_actual_csv_export_through_http_json_wrapper(self):
-        source = (Path(__file__).parent / "fixtures" / "likes-chart.csv").read_text()
+    def test_csv_export_through_http_json_wrapper(self):
+        # Real export layout, entirely synthetic names and counts.
+        source = '''"\tExample chart"
+
+"\tFormula","\tUNIQUES(A)-UNIQUES(B);UNIQUES(A);UNIQUES(B)"
+"\tA:","\tpost_liked","\tpost","\tlabs_pinned is not ""true"""
+"\tB:","\tpost_unliked","\tpost","\tlabs_pinned is not ""true"""
+
+"\tFormula","\tpost","\tpost","\t2023-11-01 to 2026-10-01"
+"\tFormula A: UNIQUES(A)-UNIQUES(B)","\texample-post-a","\t","0.0"
+"\tFormula B: UNIQUES(A)","\texample-post-a","\t","3"
+"\tFormula C: UNIQUES(B)","\t","\texample-post-a","3"
+"\tFormula A: UNIQUES(A)-UNIQUES(B)","\texample-post-b","\t","5.0"
+"\tFormula B: UNIQUES(A)","\texample-post-b","\t","5"
+'''
         response = contextlib.closing(io.BytesIO(json.dumps({"data": source}).encode()))
         with patch.object(likes.urllib.request, "urlopen", return_value=response):
             payload = likes.fetch("https://amplitude.com/api/3/chart/pojjnh8i/csv",
                                   "test", "test")
         result = likes.counts_from(payload)
-        self.assertEqual(len(result), 5)
-        self.assertEqual(sum(result.values()), 4)
-        self.assertEqual(result["the-career-questions-we-were-afraid-to-ask-out-loud-so-we-asked-google"], 0)
-        self.assertEqual(result["three-years-as-a-certified-counselor-my-thoughts-and-what-s-next"], 1)
+        self.assertEqual(result, {"example-post-a": 0, "example-post-b": 5})
 
     def test_csv_rejects_time_series_and_bad_counts(self):
         header = 'Formula,post,post,2023-11-01 to 2026-10-01\n'
