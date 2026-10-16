@@ -599,15 +599,25 @@ Wait for its deployment step to finish before checking the published totals.
 
 ### What it counts
 
-Unique users who fired `post_liked` for each post, minus the unique users who
-fired `post_unliked`, from the first post's date to today — the Dashboard
-REST API's event segmentation endpoint, grouped by the `post` event property.
+The refresh reads the saved **AQ Career — Published net likes by post** chart
+in the **AQ Career Site** project. Its ID and URL are in
+`tools/likes-chart.json`. It uses Amplitude's
+[saved-chart REST endpoint](https://amplitude.com/docs/apis/analytics/dashboard-rest#get-results-from-an-existing-chart),
+so the chart's saved formula, filters, grouping, and date range control the
+published counts. There are no separate hardcoded segmentation queries.
 
-With one limit: that endpoint answers **36 months** of monthly counts and
-refuses a wider range with a 400, and the blog is older than that, so the
-start is moved forward to fit. The run says so when it does. Nothing is lost
-today — the like button shipped in September 2026 — but a like older than
-36 months would eventually fall out of the total.
+The chart includes `UNIQUES(A)-UNIQUES(B);UNIQUES(A);UNIQUES(B)`, where A is `post_liked`
+and B is `post_unliked`, both grouped by event property `post` and excluding
+`labs_pinned: true`. The chart uses 35 complete months plus the current month, within Amplitude's
+36-month limit. Likes older than that range eventually fall out of the count.
+
+The script subtracts the **overall** component counts for each post, treating
+an absent component as zero. This keeps posts with likes and no unlikes. It
+checks matching net values, never sums monthly unique-user values, and clamps
+negative net counts to zero. Malformed exports,
+multiple values for a post, and non-integer counts fail the refresh before
+writing the file. Keep these three formulas and group each event by `post` only when editing
+the source chart (no additional user-property breakdown). Changing it changes the next scheduled refresh.
 
 Uniques rather than event totals, so one person pressing the button twice is
 one like. And the number is a **floor, not a census**: a visitor who declined
@@ -630,8 +640,10 @@ into 4 unset and 1 pinned.
 AMPLITUDE_API_KEY=... AMPLITUDE_SECRET_KEY=... python3 tools/refresh_likes.py
 ```
 
-`--dry-run` prints what would change and writes nothing; `--start YYYYMMDD`
-narrows the period. Then `python3 tools/build.py`, commit, push. Editing
+`--dry-run` prints what would change and writes nothing. Change the date range
+in the saved chart; `--start` and `AMPLITUDE_START` are rejected so the script
+cannot silently diverge from the chart. `--from PATH` accepts a saved JSON
+response for offline checks. Then `python3 tools/build.py`, commit, push. Editing
 `content/likes.json` by hand works too — the next run just overwrites it.
 
 The build refuses anything but whole numbers of 0 or more, and warns about a
@@ -649,9 +661,8 @@ tally and an endpoint to read and increment it, on one of the approved cloud
 providers. That's a service to build, pay for and look after, and it would
 collect something the site currently doesn't.
 
-**Likes per post are also just a chart** — `post_liked` in Amplitude or
-Statsig. That event is consent-gated like every other; the stored like itself
-is not, since it never leaves the browser.
+The saved source chart measures consented Amplitude events. The stored local
+like itself never leaves the browser when measurement is declined.
 
 ## Statsig Labs (switching layouts by hand)
 

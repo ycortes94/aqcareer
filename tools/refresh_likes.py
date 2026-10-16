@@ -6,13 +6,10 @@
 Normally nobody runs this by hand — .github/workflows/refresh-likes.yml runs
 it weekly and on pushes, rebuilds the site and deploys the result. See docs/ANALYTICS.md.
 
-What it counts: unique users who fired `post_liked` for each post, minus the
-unique users who fired `post_unliked`, over as long a period as Amplitude will
-answer for monthly counts — 36 months, see MAX_DAYS. Uniques rather
-than event totals, so one person pressing the button twice is one like.
-Presses made while a Labs layout was pinned are excluded — see NOT_PINNED.
-The figure can only ever be a floor — a visitor who declined measurement still
-gets their like, it just never reaches Amplitude to be counted.
+What it counts is defined by the saved chart in tools/likes-chart.json.
+The script reads its overall values, never sums monthly unique-user buckets,
+and clamps negative net values to zero. Edit the chart in Amplitude to change
+the measurement; its saved date range and filters apply to every refresh.
 
 Credentials come from the environment and nowhere else. The secret key grants
 read access to the entire Amplitude project, and this repo is public: it
@@ -20,17 +17,14 @@ belongs in GitHub Actions secrets, never in a file here.
 
 Options:
     --dry-run       show what would change, write nothing
-    --start YYYYMMDD    override the first day counted
     --from PATH     read a saved API response instead of calling Amplitude,
                     for checking the parsing without credentials
 """
 import base64
-import datetime as dt
 import json
 import os
 import sys
 import urllib.error
-import urllib.parse
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,31 +33,15 @@ LIKES = os.path.join(ROOT, "content", "likes.json")
 
 REGIONS = {"us": "https://amplitude.com", "eu": "https://analytics.eu.amplitude.com"}
 
-LIKED = "post_liked"
-UNLIKED = "post_unliked"
-PROPERTY = "post"      # the event property carrying the slug
+CHART_CONFIG = os.path.join(ROOT, "tools", "likes-chart.json")
 
-# How far back a monthly query may reach. Amplitude answers 36 months of
-# monthly counts and refuses a wider range outright, with a 400 — and the blog
-# is older than that now, so the first post's date no longer fits. A little
-# inside the limit, counted in days, to stay clear of how long months are.
-# Nothing real is lost: the like button shipped in September 2026, and a like
-# cannot predate the button.
-MAX_DAYS = 1080
 
-# Presses made while a Labs layout was pinned are development activity.
-# They carry labs_pinned; real visitors never set it.
-#
-# "is not" keeps events where the property is unset, which is what this needs.
-# Checked against the project on 2026-09-21: of 5 element_clicked, the
-# unfiltered count was 5, "is not true" gave 4 and "is true" gave 1.
-PINNED_PROPERTY = "labs_pinned"
-NOT_PINNED = {
-    "subprop_type": "event",
-    "subprop_key": PINNED_PROPERTY,
-    "subprop_op": "is not",
-    "subprop_value": ["true"],
-}
+def chart_url(base):
+    with open(CHART_CONFIG, encoding="utf-8") as f:
+        chart_id = json.load(f)["chart_id"]
+    if not isinstance(chart_id, str) or not chart_id.isalnum():
+        fail("tools/likes-chart.json must contain an alphanumeric chart_id")
+    return f"{base}/api/3/chart/{chart_id}/csv"
 
 
 def fail(msg):
@@ -73,39 +51,6 @@ def fail(msg):
 def slugs():
     with open(POSTS, encoding="utf-8") as f:
         return [p["slug"] for p in json.load(f)]
-
-
-def within_window(start, end):
-    """The start date Amplitude will actually answer for, given end.
-
-    Asking further back than MAX_DAYS is refused rather than trimmed, so the
-    range has to be trimmed here or the whole run fails."""
-    first = dt.datetime.strptime(start, "%Y%m%d").date()
-    floor = end - dt.timedelta(days=MAX_DAYS)
-    if first >= floor:
-        return start
-    print(f"  note: {start} is further back than Amplitude answers for "
-          f"monthly counts; reading from {floor:%Y%m%d}")
-    return floor.strftime("%Y%m%d")
-
-
-def query_url(event, start, end, base):
-    """A segmentation query for one event, grouped by the post property."""
-    spec = {"event_type": event,
-            "group_by": [{"type": "event", "value": PROPERTY}],
-            "filters": [NOT_PINNED]}
-    params = {
-        "e": json.dumps(spec, separators=(",", ":")),
-        "start": start,
-        "end": end,
-        "m": "uniques",
-        # Monthly buckets: the daily interval is capped at 365 days of data,
-        # and the number this reads — seriesCollapsed — covers the whole range
-        # either way.
-        "i": 30,
-        "limit": 1000,
-    }
-    return f"{base}/api/2/events/segmentation?" + urllib.parse.urlencode(params)
 
 
 def fetch(url, api_key, secret_key):
@@ -144,26 +89,64 @@ def label_slug(label):
 
 
 def counts_from(payload):
-    """{slug: uniques} out of one segmentation response.
+    """Read whole-range counts from the saved chart, never monthly sums.
 
-    seriesCollapsed holds one figure per group for the whole range, which is
-    the number wanted here — summing the per-interval series would count a
-    visitor once per month they happened to be active."""
-    data = (payload or {}).get("data") or {}
-    labels = data.get("seriesLabels") or []
-    collapsed = data.get("seriesCollapsed") or []
-    out = {}
-    for i, label in enumerate(labels):
-        slug = label_slug(label)
-        # Events logged before the property existed, or from a page that
-        # didn't set it, come back grouped under "(none)".
+    Component formulas retain posts with no matching unlike group. Prefer
+    seriesMeta (the chart query format); legacy exports also carry formula
+    names in seriesLabels. A single net-only export remains readable.
+    """
+    data = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(data, dict):
+        fail("saved chart returned no data object; existing counts preserved")
+    collapsed = data.get("seriesCollapsed")
+    metadata = data.get("seriesMeta")
+    labels = data.get("seriesLabels")
+    if not isinstance(collapsed, list):
+        fail("saved chart must return seriesCollapsed overall counts")
+    use_meta = isinstance(metadata, list) and len(metadata) == len(collapsed)
+    if not use_meta and (not isinstance(labels, list) or len(labels) != len(collapsed)):
+        fail("saved chart must return matching labels or metadata for overall counts")
+    buckets = {"net": {}, "liked": {}, "unliked": {}}
+    for i, points in enumerate(collapsed):
+        if use_meta:
+            meta = metadata[i]
+            if not isinstance(meta, dict) or meta.get("segmentIndex", 0) != 0:
+                fail("saved chart must use one All Users segment")
+            groups = meta.get("eventGroupBys") or [meta.get("eventGroupBy", "")]
+            if len(groups) != 1:
+                fail("saved chart must group each event by post only")
+            slug = label_slug(groups)
+            formula = meta.get("formula", "").replace(" ", "").upper()
+        else:
+            slug = label_slug(labels[i])
+            label = str(labels[i]).replace(" ", "").upper()
+            formula = next((f for f in ("UNIQUES(A)-UNIQUES(B)", "UNIQUES(A)", "UNIQUES(B)")
+                            if f in label), "UNIQUES(A)-UNIQUES(B)")
+        kind = {"UNIQUES(A)-UNIQUES(B)": "net", "UNIQUES(A)": "liked",
+                "UNIQUES(B)": "unliked"}.get(formula)
+        if kind is None:
+            fail(f"unexpected saved chart formula {formula!r}")
         if not slug or slug == "(none)":
             continue
+        if slug in buckets[kind]:
+            fail(f"saved chart has duplicate {kind} series for {slug!r}")
         try:
-            out[slug] = int(collapsed[i][0]["value"])
-        except (IndexError, KeyError, TypeError, ValueError):
-            continue
-    return out
+            if len(points) != 1:
+                fail("saved chart must return one overall value per series")
+            value = points[0]["value"]
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not float(value).is_integer():
+                fail(f"saved chart returned a non-integer count for {slug!r}")
+            buckets[kind][slug] = int(value)
+        except (IndexError, KeyError, TypeError, ValueError, OverflowError):
+            fail(f"saved chart returned an invalid overall count for {slug!r}")
+    if buckets["liked"] or buckets["unliked"]:
+        result = {slug: buckets["liked"].get(slug, 0) - buckets["unliked"].get(slug, 0)
+                  for slug in buckets["liked"].keys() | buckets["unliked"].keys()}
+        for slug, value in buckets["net"].items():
+            if result.get(slug) != value:
+                fail(f"saved chart net and component counts disagree for {slug!r}")
+        return result
+    return buckets["net"]
 
 
 def net_likes(liked, unliked, known):
@@ -172,6 +155,8 @@ def net_likes(liked, unliked, known):
     Never negative: unlikes can outnumber likes for a post whose likes
     predate a change to what's counted, and a negative like count on a page
     would be nonsense."""
+    if (liked or unliked) and not (set(liked) | set(unliked)) & set(known):
+        fail("saved chart has no recognized post slugs; existing counts preserved")
     out = {}
     for slug in known:
         n = liked.get(slug, 0) - unliked.get(slug, 0)
@@ -193,6 +178,8 @@ def read_current():
 
 def main(argv):
     dry_run = "--dry-run" in argv
+    if "--start" in argv or os.environ.get("AMPLITUDE_START", "").strip():
+        fail("set the date range in the saved Amplitude chart; --start / AMPLITUDE_START are no longer used")
     known = slugs()
 
     if "--from" in argv:
@@ -212,28 +199,9 @@ def main(argv):
             fail(f"AMPLITUDE_REGION should be us or eu, not {region!r}")
         base = REGIONS[region]
 
-        end = dt.date.today()
-        start = os.environ.get("AMPLITUDE_START", "").strip()
-        if "--start" in argv:
-            start = argv[argv.index("--start") + 1]
-        if not start:
-            # The whole life of the blog. Nothing was logged before the first
-            # post existed, so a wide range costs nothing but is never short.
-            start = min(p for p in _dates()).strftime("%Y%m%d")
-        try:
-            dt.datetime.strptime(start, "%Y%m%d")
-        except ValueError:
-            fail(f"start date should be YYYYMMDD, not {start!r}")
-        start = within_window(start, end)
-
-        print(f"reading {LIKED} / {UNLIKED} from {start} to "
-              f"{end.strftime('%Y%m%d')}")
-        liked = counts_from(fetch(query_url(LIKED, start, end.strftime("%Y%m%d"),
-                                            base), api_key, secret_key))
-        unliked = counts_from(fetch(query_url(UNLIKED, start,
-                                              end.strftime("%Y%m%d"), base),
-                                    api_key, secret_key))
-        fresh = net_likes(liked, unliked, known)
+        url = chart_url(base)
+        print(f"reading saved Amplitude chart: {url}")
+        fresh = net_likes(counts_from(fetch(url, api_key, secret_key)), {}, known)
 
     current = read_current()
     changed = {s: (current.get(s), n) for s, n in fresh.items()
@@ -255,15 +223,6 @@ def main(argv):
         f.write("\n")
     print(f"wrote {LIKES} — now run tools/build.py")
     return 0
-
-
-def _dates():
-    with open(POSTS, encoding="utf-8") as f:
-        for p in json.load(f):
-            try:
-                yield dt.date.fromisoformat(p["date"])
-            except (ValueError, KeyError):
-                continue
 
 
 if __name__ == "__main__":
