@@ -58,8 +58,8 @@ a Google Sheet, copy the long ID out of its URL, and add a second property
 `SHEET_ID` with that value.
 
 To save to a second account as well, create a Sheet in that account with the
-same nine columns (Sent, Form, Email, First name, Last name, Message, Consent,
-Organization, Inquiry type). Share it with the account running the script as
+same ten columns (Sent, Form, Email, First name, Last name, Message, Consent,
+Organization, Inquiry type, Consent policy version). Share it with the account running the script as
 an **Editor**. Keep `SHEET_ID` and add `SHEET_IDS` containing the additional
 spreadsheet ID, or several IDs separated by commas. IDs are deduplicated.
 Deploy the updated `tools/form-endpoint.gs` as a new version of the existing
@@ -130,16 +130,25 @@ decide what to drop:
   success it would get for a real submission, so it doesn't retry, but no
   email is sent. The reply carries `skipped: "honeypot"`, which tells the
   page not to log a conversion event for it.
-- The script checks the submission came from the site's own domain (when
-  JavaScript sent an `origin`).
+- A submitted `origin` is checked for consistency, but can be forged or omitted.
+  The mandatory Turnstile hostname/action checks provide the bot-token binding.
 - JavaScript also sends `loaded_at`. A POST that arrives in under two seconds
-  is treated as a bot. Visitors without JavaScript skip this check.
+  is treated as a bot. Timing is a hint, not proof that a sender is human.
 - Fields are length-capped (email 254, names 80, message 4000).
-- Rate limits: 3 submissions per email per hour, and 20 across the whole
-  site per hour. Extra attempts get a polite error, not an email.
+- Rate limits: 3 submissions per email and 20 across the whole site per fixed
+  UTC clock hour. Counters live in Script Properties under `AQ_RATE_WINDOW`
+  and are updated under a script lock. Only email hashes are stored in that
+  bounded record; it is replaced in the next hour. Lock/storage failure rejects
+  the submission. These limits protect quotas but a determined sender with
+  valid tokens can still exhaust the shared site allowance.
 - **Cloudflare Turnstile** issues a one-time token in the browser. The
   script asks Cloudflare whether that token is real before it sends any
-  email. Direct POSTs to the `/exec` URL without a token are dropped.
+  email. Direct POSTs to the `/exec` URL without a token are rejected.
+  A missing `TURNSTILE_SECRET` also rejects submissions. Successful tokens must
+  carry hostname `www.aqcareer.com` or `aqcareer.com` and action `aq_form`.
+- Memo and waitlist submissions require the exact consent value `yes` on the
+  server; the policy version is stored in the tenth spreadsheet column.
+- Spreadsheet formula prefixes are escaped to store visitor values as text.
 - Free Apps Script accounts can send roughly 100 emails a day. These limits
   sit well below that.
 
@@ -162,3 +171,27 @@ no rebuild, no redeploy needed.
 4. Re-deploying after editing the code creates a *new* URL unless you choose
    **Manage deployments** → edit the existing one. If you create a new URL,
    update `site.json` to match.
+
+## Security release activation
+
+Deploy the matching frontend and Apps Script together: the frontend now sends
+Turnstile action `aq_form`, and the backend requires it. A mismatched release
+will reject forms. In a separate test deployment, verify both destinations,
+consent rejection and formula text handling before updating production.
+
+1. Confirm `RECIPIENT`, `TURNSTILE_SECRET`, `SHEET_ID` / `SHEET_IDS` and the
+   widget's hostname allowlist. Never paste those secrets into GitHub.
+2. Append the **Consent policy version** column to every destination Sheet.
+   Manually send harmless `=1+1` to a test Sheet through the test handler and
+   confirm it displays literally and has no formula.
+3. Deploy this file as a new version of the existing Apps Script web app.
+   Its GET response identifies `2026-10-16-security-1`. Record the Apps Script
+   deployment/version ID and corresponding Git commit privately.
+4. Publish the matching static site, then send one labeled inquiry and signup
+   and verify delivery in each configured destination. Do not subscribe the
+   test address to the live mailing list. The regression suite sends no mail.
+5. Enable email ownership confirmation in the actual mailing platform before
+   activating subscribers; this form handler only records signup requests.
+
+JavaScript is required for Turnstile; without it, the server rejects the form.
+The pages provide LinkedIn as an alternate contact route.

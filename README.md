@@ -196,3 +196,11 @@ When cutting over, in this order:
 4. Keep the `/blog` and `/post/<slug>` paths unchanged — they're already
    indexed by search engines and linked from social profiles.
    `/blog/page/<n>/` is new; it does not replace those URLs.
+
+## Security and tests
+
+Run `sh tools/check.sh` for the build and offline security/site regression suite.
+See [docs/SECURITY.md](docs/SECURITY.md) for online integrity/advisory checks,
+locked image-tool dependencies and required hosting/account configuration.
+The security headers Worker requires separate activation; updating Apps Script
+requires deploying a new version as described in [docs/FORMS.md](docs/FORMS.md).

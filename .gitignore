@@ -19,3 +19,8 @@ id_rsa.pub
 *.pfx
 google-credentials.json
 service-account*.json
+
+# Local build environment and pinned tool bootstrap.
+.venv/
+.tools/
+_site/

@@ -26,7 +26,7 @@ try:
     from PIL import Image, ImageOps
 except ImportError:
     raise SystemExit(
-        "Pillow is required: python3 -m pip install Pillow"
+        "Pillow is required: run .tools/uv sync --frozen, then .tools/uv run --frozen"
     )
 
 

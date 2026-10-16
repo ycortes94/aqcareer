@@ -1,0 +1,141 @@
+{
+  "baselineCommit": "8ff35d1239e7158f3d36c1fe0705bfdc3138a1c1",
+  "compression": "gzip level 9, mtime 0",
+  "files": [
+    {
+      "path": "index.html",
+      "baselineGzipBytes": 15646,
+      "maxGzipBytes": 17146
+    },
+    {
+      "path": "404.html",
+      "baselineGzipBytes": 4934,
+      "maxGzipBytes": 6434
+    },
+    {
+      "path": "privacy/index.html",
+      "baselineGzipBytes": 7540,
+      "maxGzipBytes": 9040
+    },
+    {
+      "path": "blog/index.html",
+      "baselineGzipBytes": 8488,
+      "maxGzipBytes": 9988
+    },
+    {
+      "path": "blog/page/2/index.html",
+      "baselineGzipBytes": 8227,
+      "maxGzipBytes": 9727
+    },
+    {
+      "path": "post/10-tips-for-career-alignment-as-a-nbcc-fellow/index.html",
+      "baselineGzipBytes": 11366,
+      "maxGzipBytes": 12866
+    },
+    {
+      "path": "post/a-million-miles-away-2023-a-cinematic-journey-of-inspiration-for-career-development/index.html",
+      "baselineGzipBytes": 9644,
+      "maxGzipBytes": 11144
+    },
+    {
+      "path": "post/an-open-letter-on-the-uncomfortable-pivot-on-motherhood-values-and-knowing-when-to-step-back/index.html",
+      "baselineGzipBytes": 9242,
+      "maxGzipBytes": 10742
+    },
+    {
+      "path": "post/chicano-frankenstein-a-riveting-sci-fi-novel-of-love-family-and-politics/index.html",
+      "baselineGzipBytes": 9419,
+      "maxGzipBytes": 10919
+    },
+    {
+      "path": "post/mental-health-in-the-digital-age-betterhelp-s-ethical-breach-and-what-it-means-for-us/index.html",
+      "baselineGzipBytes": 9362,
+      "maxGzipBytes": 10862
+    },
+    {
+      "path": "post/the-art-of-calculated-risk-guiding-clients-towards-confidence-and-success/index.html",
+      "baselineGzipBytes": 9247,
+      "maxGzipBytes": 10747
+    },
+    {
+      "path": "post/the-career-questions-we-were-afraid-to-ask-out-loud-so-we-asked-google/index.html",
+      "baselineGzipBytes": 10503,
+      "maxGzipBytes": 12003
+    },
+    {
+      "path": "post/the-challenge-of-raising-a-girl-with-dreams-bigger-than-mine/index.html",
+      "baselineGzipBytes": 10416,
+      "maxGzipBytes": 11916
+    },
+    {
+      "path": "post/the-changing-landscape-of-work-a-career-counselor-explores-the-careers-are-dying-trend-on-tiktok/index.html",
+      "baselineGzipBytes": 9041,
+      "maxGzipBytes": 10541
+    },
+    {
+      "path": "post/three-years-as-a-certified-counselor-my-thoughts-and-what-s-next/index.html",
+      "baselineGzipBytes": 9296,
+      "maxGzipBytes": 10796
+    },
+    {
+      "path": "post/tools-for-achieving-upward-social-mobility-for-low-income-families/index.html",
+      "baselineGzipBytes": 8526,
+      "maxGzipBytes": 10026
+    },
+    {
+      "path": "assets/js/analytics.js",
+      "baselineGzipBytes": 13506,
+      "maxGzipBytes": 14018
+    },
+    {
+      "path": "assets/js/forms.js",
+      "baselineGzipBytes": 3827,
+      "maxGzipBytes": 4339
+    },
+    {
+      "path": "assets/js/instagram.js",
+      "baselineGzipBytes": 787,
+      "maxGzipBytes": 1299
+    },
+    {
+      "path": "assets/js/labs.js",
+      "baselineGzipBytes": 4467,
+      "maxGzipBytes": 4979
+    },
+    {
+      "path": "assets/js/likes.js",
+      "baselineGzipBytes": 2027,
+      "maxGzipBytes": 2539
+    },
+    {
+      "path": "assets/js/navigation.js",
+      "baselineGzipBytes": 1547,
+      "maxGzipBytes": 2059
+    },
+    {
+      "path": "assets/js/paging.js",
+      "baselineGzipBytes": 3109,
+      "maxGzipBytes": 3621
+    },
+    {
+      "path": "assets/js/waitlist.js",
+      "baselineGzipBytes": 2693,
+      "maxGzipBytes": 3205
+    },
+    {
+      "path": "assets/css/fresh-take.css",
+      "baselineGzipBytes": 8560,
+      "maxGzipBytes": 8816
+    },
+    {
+      "path": "assets/css/raices.css",
+      "baselineGzipBytes": 7442,
+      "maxGzipBytes": 7698
+    },
+    {
+      "path": "assets/css/site.css",
+      "baselineGzipBytes": 8210,
+      "maxGzipBytes": 8466
+    }
+  ]
+}

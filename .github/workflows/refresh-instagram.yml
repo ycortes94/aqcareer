@@ -1,35 +1,31 @@
-# Download the six latest Instagram posts, rebuild, and commit the result.
-#
-# Add a long-lived Instagram User token as INSTAGRAM_ACCESS_TOKEN under
-# Settings -> Secrets and variables -> Actions. The account must be an
-# Instagram Business or Creator account and the token needs
-# instagram_business_basic. See docs/INSTAGRAM.md.
-#
-# Media is copied into the repository because Instagram CDN links expire.
-# Until the secret is set, this workflow exits successfully without changing
-# the current hand-copied grid.
-
+# Generate content without repository-write access. Only the publishing job
+# receives a write token, and that job never executes downloaded Python deps.
 name: Refresh Instagram grid
-
 on:
   schedule:
-    # Daily at 07:35 UTC. Running daily also refreshes the 60-day token.
     - cron: "35 7 * * *"
   workflow_dispatch:
-
 permissions:
-  contents: write
-
+  contents: read
 concurrency:
   group: refresh-instagram
   cancel-in-progress: false
-
 jobs:
-  refresh:
+  generate:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.creds.outputs.ready }}
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
       - name: Check for credentials
         id: creds
         env:
@@ -39,34 +35,62 @@ jobs:
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::INSTAGRAM_ACCESS_TOKEN is not set, so the Instagram grid was left unchanged. See docs/INSTAGRAM.md."
+            echo "::notice::INSTAGRAM_ACCESS_TOKEN is not set; keeping the current grid."
           fi
-
-      - name: Install image tools
+      - name: Install verified image tools
         if: steps.creds.outputs.ready == 'true'
-        run: python3 -m pip install --disable-pip-version-check Pillow==11.3.0
-
+        run: |
+          python3 tools/bootstrap_uv.py
+          .tools/uv lock --check
+          .tools/uv sync --frozen
+          .tools/uv run --frozen python tools/test_instagram_processing.py
+          python3 tools/check_dependencies.py
       - name: Download the latest posts
         if: steps.creds.outputs.ready == 'true'
         env:
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           INSTAGRAM_API_VERSION: v26.0
-        run: python3 tools/refresh_instagram.py --refresh-token
-
-      - name: Rebuild the site
+        run: .tools/uv run --frozen python tools/refresh_instagram.py --refresh-token
+      - name: Rebuild and check
         if: steps.creds.outputs.ready == 'true'
-        run: python3 tools/build.py
-
-      - name: Commit if anything changed
+        run: sh tools/check.sh
+      - name: Stage generated content only
         if: steps.creds.outputs.ready == 'true'
         run: |
-          if git diff --quiet; then
-            echo "nothing changed"
-            exit 0
-          fi
+          mkdir -p _changes/assets/img _changes/content
+          cp -R assets/img/instagram _changes/assets/img/
+          cp content/instagram.json _changes/content/
+          cp -R blog post privacy _changes/
+          cp index.html 404.html feed.xml robots.txt sitemap.xml _changes/
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: steps.creds.outputs.ready == 'true'
+        with:
+          name: instagram-content
+          path: _changes/
+          retention-days: 1
+  publish:
+    needs: generate
+    if: needs.generate.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.2.2
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: instagram-content
+          path: _changes
+      - name: Publish generated content
+        run: |
+          cp -R _changes/assets/img/instagram/. assets/img/instagram/
+          cp _changes/content/instagram.json content/instagram.json
+          cp -R _changes/blog/. blog/
+          cp -R _changes/post/. post/
+          cp -R _changes/privacy/. privacy/
+          cp _changes/index.html _changes/404.html _changes/feed.xml _changes/robots.txt _changes/sitemap.xml .
+          git add assets/img/instagram content/instagram.json blog post privacy index.html 404.html feed.xml robots.txt sitemap.xml
+          if git diff --cached --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Refresh Instagram grid" \
-                     -m "Generated by .github/workflows/refresh-instagram.yml."
+          git commit -m "Refresh Instagram grid"
           git push
