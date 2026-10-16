@@ -97,7 +97,10 @@ def counts_from(payload):
     """
     data = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(data, dict):
-        fail("saved chart returned no data object; existing counts preserved")
+        # Log structure only: never include response values or credentials.
+        shape = ({str(key): type(value).__name__ for key, value in payload.items()}
+                 if isinstance(payload, dict) else type(payload).__name__)
+        fail(f"saved chart returned no data object (response fields: {shape}); existing counts preserved")
     collapsed = data.get("seriesCollapsed")
     metadata = data.get("seriesMeta")
     labels = data.get("seriesLabels")
