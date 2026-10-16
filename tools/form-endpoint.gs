@@ -156,18 +156,27 @@ function doPost(e) {
       ].join('\n');
     }
 
-    MailApp.sendEmail({
-      to: recipient(),
-      subject: subject,
-      body: body,
-      replyTo: email,      // so replying goes to the visitor, not to herself
-      name: 'aqcareer.com forms'
-    });
+    // Save independently before emailing: a full Gmail account must not
+    // prevent the other account's spreadsheet from receiving a submission.
+    var saved = log_(kind, email, p);
+    var emailed = false;
+    try {
+      MailApp.sendEmail({
+        to: recipient(),
+        subject: subject,
+        body: body,
+        replyTo: email,      // so replying goes to the visitor, not to herself
+        name: 'aqcareer.com forms'
+      });
+      emailed = true;
+    } catch (mailError) {
+      console.error('Email delivery failed: ' + mailError);
+    }
 
-    // Keep a running log as a backup, in case an email is ever missed.
-    log_(kind, email, p);
-
-    return ok({ ok: true });
+    // A real submission must reach at least one destination before the
+    // visitor sees success. Individual failures remain in Executions logs.
+    return ok({ ok: emailed || saved > 0,
+      error: emailed || saved > 0 ? null : 'server_error' });
 
   } catch (err) {
     console.error(err);
@@ -232,23 +241,47 @@ function rateLimited_(email) {
   return false;
 }
 
-// Appends each submission to a Google Sheet, if one is linked.
-// Optional: set a SHEET_ID script property to turn this on.
+// Keep the original SHEET_ID, and optionally add comma-separated SHEET_IDS.
+// The deploying Google account must have edit access to each destination.
+function sheetIds_() {
+  var props = PropertiesService.getScriptProperties();
+  var ids = [props.getProperty('SHEET_ID') || '',
+    props.getProperty('SHEET_IDS') || ''].join(',').split(',');
+  return ids.map(function (id) { return id.trim(); }).filter(function (id, i, all) {
+    return id && all.indexOf(id) === i;
+  });
+}
+
+// Try every spreadsheet even when an earlier destination is unavailable.
 function log_(kind, email, p) {
-  try {
-    var id = PropertiesService.getScriptProperties().getProperty('SHEET_ID');
-    if (!id) return;
-    SpreadsheetApp.openById(id).getSheets()[0].appendRow([
+  var saved = 0;
+  sheetIds_().forEach(function (id) {
+    try {
+      SpreadsheetApp.openById(id).getSheets()[0].appendRow([
       new Date(), kind, email,
       clip_(p.first_name, LIMITS.name), clip_(p.last_name, LIMITS.name),
       String(p.message || '').replace(/\0/g, '').slice(0, LIMITS.message),
       p.consent ? 'yes' : '',
       clip_(p.organization, LIMITS.organization),
       clip_(p.inquiry_type, LIMITS.inquiryType)
-    ]);
-  } catch (err) {
-    console.error('log failed: ' + err);   // never block the email on this
-  }
+      ]);
+      saved++;
+    } catch (err) {
+      console.error('Spreadsheet delivery failed (' + id + '): ' + err);
+    }
+  });
+  return saved;
+}
+
+// Run manually in the editor to verify both destinations without sending
+// email or changing the public form's spam checks. Leaves labeled test rows.
+function testSpreadsheetDelivery() {
+  var saved = log_('test', 'test@example.com', {
+    first_name: 'AQ Career', last_name: 'Connection test',
+    message: 'Connection test — not a customer submission.'
+  });
+  console.log('Saved test row to ' + saved + ' of ' + sheetIds_().length + ' spreadsheets.');
+  if (!saved) throw new Error('No spreadsheet accepted the test row.');
 }
 
 function ok(obj) {

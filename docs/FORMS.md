@@ -57,6 +57,19 @@ and lives in `site.json`; the secret must never go in this repository.
 a Google Sheet, copy the long ID out of its URL, and add a second property
 `SHEET_ID` with that value.
 
+To save to a second account as well, create a Sheet in that account with the
+same nine columns (Sent, Form, Email, First name, Last name, Message, Consent,
+Organization, Inquiry type). Share it with the account running the script as
+an **Editor**. Keep `SHEET_ID` and add `SHEET_IDS` containing the additional
+spreadsheet ID, or several IDs separated by commas. IDs are deduplicated.
+Deploy the updated `tools/form-endpoint.gs` as a new version of the existing
+web app. Each Sheet is attempted independently, before email, so a full
+account cannot stop the other Sheet receiving submissions. Run
+`testSpreadsheetDelivery` in the script editor to append labeled test rows
+without emailing anyone. Inspect its execution log and each Sheet afterward.
+The form reports success only if at least one Sheet or the email succeeds;
+individual destination errors are recorded in Apps Script Executions.
+
 **4. Deploy it**
 
 **Deploy** → **New deployment** → gear icon → **Web app**, then set:
