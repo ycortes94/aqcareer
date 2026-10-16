@@ -21,8 +21,12 @@ Options:
                     for checking the parsing without credentials
 """
 import base64
+import csv
+from decimal import Decimal, InvalidOperation
+import io
 import json
 import os
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -88,6 +92,49 @@ def label_slug(label):
     return str(label).strip()
 
 
+def csv_chart_data(source):
+    """Normalize Amplitude's JSON-wrapped CSV bar-chart export.
+
+    Each event contributes a post column; only the column belonging to a
+    formula's event is populated. The final column is the overall range.
+    Reject time-series exports rather than accidentally summing uniques.
+    """
+    rows = [[cell.strip().lstrip("\ufeff") for cell in row]
+            for row in csv.reader(io.StringIO(source))]
+    header_index = next((i for i, row in enumerate(rows)
+                         if row and row[0] == "Formula" and "post" in row[1:]), None)
+    if header_index is None:
+        fail("saved chart CSV has no Formula/post breakdown header")
+    header = rows[header_index]
+    post_columns = [i for i, name in enumerate(header) if name == "post"]
+    value_columns = [i for i in range(1, len(header)) if i not in post_columns]
+    if len(value_columns) != 1 or not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}", header[value_columns[0]]):
+        fail("saved chart CSV must contain one overall date-range column; use a bar chart")
+    metadata, collapsed = [], []
+    for row in rows[header_index + 1:]:
+        if not row or not any(row):
+            continue
+        if len(row) != len(header):
+            fail("saved chart CSV has a malformed data row")
+        formula = re.fullmatch(r"Formula [A-Z]:\s*(.+)", row[0])
+        if formula is None:
+            fail("saved chart CSV has an unrecognized formula row")
+        posts = {row[i] for i in post_columns if row[i]}
+        if len(posts) != 1:
+            fail("saved chart CSV must identify exactly one post per series")
+        try:
+            value = Decimal(row[value_columns[0]])
+            if not value.is_finite() or value != value.to_integral_value():
+                raise ValueError
+        except (InvalidOperation, ValueError):
+            fail("saved chart CSV has an invalid overall count")
+        metadata.append({"segmentIndex": 0, "eventGroupBys": [posts.pop()],
+                         "formula": formula.group(1)})
+        collapsed.append([{"value": int(value)}])
+    return {"seriesMeta": metadata, "seriesCollapsed": collapsed}
+
+
 def counts_from(payload):
     """Read whole-range counts from the saved chart, never monthly sums.
 
@@ -96,6 +143,8 @@ def counts_from(payload):
     names in seriesLabels. A single net-only export remains readable.
     """
     data = payload.get("data") if isinstance(payload, dict) else None
+    if isinstance(data, str):
+        data = csv_chart_data(data)
     if not isinstance(data, dict):
         # Log structure only: never include response values or credentials.
         shape = ({str(key): type(value).__name__ for key, value in payload.items()}

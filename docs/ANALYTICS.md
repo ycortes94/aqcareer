@@ -605,6 +605,9 @@ in the **AQ Career Site** project. Its ID and URL are in
 [saved-chart REST endpoint](https://amplitude.com/docs/apis/analytics/dashboard-rest#get-results-from-an-existing-chart),
 so the chart's saved formula, filters, grouping, and date range control the
 published counts. There are no separate hardcoded segmentation queries.
+For this chart the endpoint returns JSON whose `data` field contains CSV text.
+The script parses its Formula/post columns and single overall date-range
+column. A monthly time-series CSV is rejected rather than summing unique users.
 
 The chart includes `UNIQUES(A)-UNIQUES(B);UNIQUES(A);UNIQUES(B)`, where A is `post_liked`
 and B is `post_unliked`, both grouped by event property `post` and excluding

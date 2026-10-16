@@ -11,6 +11,31 @@ import refresh_likes as likes
 
 
 class SavedChartLikes(unittest.TestCase):
+    def test_actual_csv_export_through_http_json_wrapper(self):
+        source = (Path(__file__).parent / "fixtures" / "likes-chart.csv").read_text()
+        response = contextlib.closing(io.BytesIO(json.dumps({"data": source}).encode()))
+        with patch.object(likes.urllib.request, "urlopen", return_value=response):
+            payload = likes.fetch("https://amplitude.com/api/3/chart/pojjnh8i/csv",
+                                  "test", "test")
+        result = likes.counts_from(payload)
+        self.assertEqual(len(result), 5)
+        self.assertEqual(sum(result.values()), 4)
+        self.assertEqual(result["the-career-questions-we-were-afraid-to-ask-out-loud-so-we-asked-google"], 0)
+        self.assertEqual(result["three-years-as-a-certified-counselor-my-thoughts-and-what-s-next"], 1)
+
+    def test_csv_rejects_time_series_and_bad_counts(self):
+        header = 'Formula,post,post,2023-11-01 to 2026-10-01\n'
+        valid_row = 'Formula B: UNIQUES(A),post-a,,2\n'
+        cases = ["not a chart", header + valid_row.replace(',2', ',NaN'),
+                 header + valid_row.replace(',2', ',1.5'),
+                 header + valid_row.replace(',2', ',true'),
+                 header + valid_row.replace('post-a,,', 'post-a,post-b,'),
+                 header + valid_row.rstrip() + ',3\n',
+                 'Formula,post,2026-09-01,2026-10-01\nFormula B: UNIQUES(A),post-a,2,3\n']
+        for source in cases:
+            with self.subTest(source=source), self.assertRaises(SystemExit):
+                likes.counts_from({"data": source})
+
     def test_components_keep_posts_with_no_unlikes(self):
         # seriesMeta and seriesCollapsed shape observed in the live chart.
         entries = [("post-a", "UNIQUES(A)-UNIQUES(B)", 0),
