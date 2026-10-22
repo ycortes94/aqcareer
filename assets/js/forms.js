@@ -15,6 +15,25 @@
 
   var ENDPOINT = document.documentElement.getAttribute('data-form-endpoint') || '';
   var SITEKEY = document.documentElement.getAttribute('data-turnstile-sitekey') || '';
+  // Public action supplied by Kit's HTML embed; no API credential is needed.
+  var KIT_ACTION = 'https://app.kit.com/forms/10080050/subscriptions';
+
+  function continueNewsletter(email) {
+    var signup = document.createElement('form');
+    signup.method = 'post';
+    signup.action = KIT_ACTION;
+    signup.hidden = true;
+    signup.className = 'amp-block';
+    var address = document.createElement('input');
+    address.type = 'hidden';
+    address.name = 'email_address';
+    address.value = email;
+    signup.appendChild(address);
+    document.body.appendChild(signup);
+    // Native form navigation uses Kit's own response/confirmation page.
+    // Only the newsletter email is sent, after the existing server checks.
+    HTMLFormElement.prototype.submit.call(signup);
+  }
 
   // Require https so submissions are never sent in the clear. Plain http is
   // allowed on localhost only, for testing against a local stub.
@@ -207,6 +226,12 @@
         .then(function (response) { return response.json(); })
         .then(function (result) {
           if (result && result.ok) {
+            if (kind === 'memo' && !result.skipped) {
+              say(form, 'Opening Kit to finish your subscription…', null);
+              log('newsletter_signup_requested');
+              continueNewsletter(data.get('email'));
+              return;
+            }
             form.reset();
             say(form, MESSAGES[kind], 'ok');
             // A honeypot hit answers ok so the bot doesn't retry, and sets

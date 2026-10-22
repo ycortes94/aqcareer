@@ -1,5 +1,20 @@
 # Connecting the forms
 
+## Newsletter delivery through Kit
+
+The Career Disruptor Memo uses Kit form `10080050` (Career Disruptor Memo —
+Website). After the existing Apps Script spam/consent checks and backup delivery
+succeed, the browser posts only `email_address` to Kit's public HTML form action.
+Kit then displays its response and emails a confirmation link. Send confirmation
+email is enabled and Auto-confirm new subscribers is disabled. Contact and
+counseling-interest submissions continue to use Google only.
+
+`newsletter_signup_requested` records the handoff, not confirmation or delivery.
+Use Kit's subscriber status to verify a completed opt-in. Do not manually add
+the emailed signup request as an already-confirmed subscriber. The CSP allows
+form navigation to `https://app.kit.com`; no Kit API key is stored on the site.
+
+
 Five forms need somewhere to send submissions — three on the home page:
 
 - the **Career Disruptor Memo** signup
