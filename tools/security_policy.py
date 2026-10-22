@@ -38,7 +38,7 @@ def protect_pages(root, made):
         'https://script.google.com https://script.googleusercontent.com https://challenges.cloudflare.com',
         'frame-src https://challenges.cloudflare.com',
         "worker-src 'self' blob:",
-        "form-action https://script.google.com https://script.googleusercontent.com",
+        "form-action https://script.google.com https://script.googleusercontent.com https://app.kit.com",
         'upgrade-insecure-requests',
     ])
     for path, text in zip(pages, texts):
