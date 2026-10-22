@@ -35,10 +35,10 @@ def protect_pages(root, made):
         "img-src 'self' data: https://*.amplitude.com",
         "media-src 'self'",
         "connect-src 'self' https://*.amplitude.com https://*.statsig.com https://*.statsigapi.net https://statsigapi.net https://prodregistryv2.org https://featureassets.org https://api.statsigcdn.com https://cloudflare-dns.com "
-        'https://script.google.com https://script.googleusercontent.com https://challenges.cloudflare.com',
+        'https://script.google.com https://script.googleusercontent.com https://challenges.cloudflare.com https://app.kit.com',
         'frame-src https://challenges.cloudflare.com',
         "worker-src 'self' blob:",
-        "form-action https://script.google.com https://script.googleusercontent.com https://app.kit.com",
+        "form-action https://script.google.com https://script.googleusercontent.com",
         'upgrade-insecure-requests',
     ])
     for path, text in zip(pages, texts):
