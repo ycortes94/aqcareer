@@ -19,20 +19,18 @@
   var KIT_ACTION = 'https://app.kit.com/forms/10080050/subscriptions';
 
   function continueNewsletter(email) {
-    var signup = document.createElement('form');
-    signup.method = 'post';
-    signup.action = KIT_ACTION;
-    signup.hidden = true;
-    signup.className = 'amp-block';
-    var address = document.createElement('input');
-    address.type = 'hidden';
-    address.name = 'email_address';
-    address.value = email;
-    signup.appendChild(address);
-    document.body.appendChild(signup);
-    // Native form navigation uses Kit's own response/confirmation page.
-    // Only the newsletter email is sent, after the existing server checks.
-    HTMLFormElement.prototype.submit.call(signup);
+    var body = new URLSearchParams();
+    body.set('email_address', email);
+    // Kit's embed requests JSON from this same public form action.
+    // Keep the visitor here, and only show success after Kit accepts it.
+    return fetch(KIT_ACTION, {
+      method: 'POST', body: body, headers: { Accept: 'application/json' }
+    }).then(function (response) {
+      if (!response.ok) throw new Error('Kit request failed');
+      return response.json();
+    }).then(function (result) {
+      if (!result || result.status !== 'success') throw new Error('Kit did not accept signup');
+    });
   }
 
   // Require https so submissions are never sent in the clear. Plain http is
@@ -41,7 +39,7 @@
                    /^http:\/\/(127\.0\.0\.1|localhost)([:/]|$)/.test(ENDPOINT);
 
   var MESSAGES = {
-    memo: 'Thank you — you’re on the list for the first memo.',
+    memo: 'Check your email to confirm your subscription to the Career Disruptor Memo.',
     waitlist: 'Thank you — you’re on the career counseling interest list.',
     contact: 'Thank you — your message is on its way. Alina will be in touch.',
     consent_required: 'Please confirm that you want to receive these emails.',
@@ -227,10 +225,11 @@
         .then(function (result) {
           if (result && result.ok) {
             if (kind === 'memo' && !result.skipped) {
-              say(form, 'Opening Kit to finish your subscription…', null);
-              log('newsletter_signup_requested');
-              continueNewsletter(data.get('email'));
-              return;
+              return continueNewsletter(data.get('email')).then(function () {
+                form.reset();
+                say(form, MESSAGES.memo, 'ok');
+                log('newsletter_signup_requested');
+              });
             }
             form.reset();
             say(form, MESSAGES[kind], 'ok');

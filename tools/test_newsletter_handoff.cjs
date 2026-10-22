@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const code = fs.readFileSync('assets/js/forms.js', 'utf8');
 
-async function run(kind, result) {
+async function run(kind, result, kit = {status: 'success'}, kitOk = true) {
   const handlers = {}, posted = [], requests = [];
   const status = {setAttribute() {}, classList: {toggle() {}}};
   const button = {textContent: 'Subscribe'};
@@ -17,7 +17,7 @@ async function run(kind, result) {
     Date, URLSearchParams,
     FormData: function () { return new Map([['email', 'test@example.com'], ['consent', 'yes'], ['message', 'private']]); },
     HTMLFormElement: {prototype: {submit() {posted.push(this);}}},
-    fetch: async (url, options) => {requests.push({url, options}); return {json: async () => result};},
+    fetch: async (url, options) => {requests.push({url, options}); return {ok: kitOk, json: async () => url.includes('app.kit.com') ? kit : result};},
     document: {
       documentElement: {getAttribute: k => k === 'data-form-endpoint' ? 'https://script.google.com/example' : ''},
       querySelectorAll: () => [form], addEventListener() {},
@@ -35,20 +35,24 @@ async function run(kind, result) {
 }
 (async () => {
   const memo = await run('memo', {ok: true});
-  assert.equal(memo.requests.length, 1, 'existing server validation happens first');
-  assert.equal(memo.posted.length, 1);
-  const target = memo.posted[0];
-  assert.equal(target.action, 'https://app.kit.com/forms/10080050/subscriptions');
-  assert.equal(target.method, 'post');
-  assert.equal(target.className, 'amp-block');
-  assert.equal(target.children.length, 1, 'only the newsletter email goes to Kit');
-  assert.equal(target.children[0].name, 'email_address');
-  assert.equal(target.children[0].value, 'test@example.com');
+  assert.equal(memo.requests.length, 2, 'server validation then Kit');
+  assert.equal(memo.requests[0].url, 'https://script.google.com/example');
+  assert.equal(memo.posted.length, 0, 'never navigate using a native form');
+  const target = memo.requests[1];
+  assert.equal(target.url, 'https://app.kit.com/forms/10080050/subscriptions');
+  assert.equal(target.options.method, 'POST');
+  assert.equal(target.options.headers.Accept, 'application/json');
+  assert.equal(target.options.body.toString(), 'email_address=test%40example.com');
+  assert.match(memo.status.innerHTML, /Check your email to confirm/);
+  for (const [response, ok] of [[{status:'error'},true], [{status:'quarantined'},true], [{status:'success'},false]]) {
+    const failed = await run('memo', {ok:true}, response, ok);
+    assert.match(failed.status.innerHTML, /Something went wrong/);
+  }
   for (const result of [{ok:false,error:'bot'}, {ok:false,error:'consent_required'}, {ok:true,skipped:'honeypot'}]) {
-    assert.equal((await run('memo', result)).posted.length, 0);
+    assert.equal((await run('memo', result)).requests.length, 1);
   }
   for (const kind of ['contact', 'waitlist']) {
-    assert.equal((await run(kind, {ok:true})).posted.length, 0);
+    assert.equal((await run(kind, {ok:true})).requests.length, 1);
   }
   console.log('PASS newsletter: server validation, email-only Kit handoff, rejected/bot submissions blocked, contact and waitlist unchanged');
 })().catch(error => {console.error(error); process.exitCode = 1;});
