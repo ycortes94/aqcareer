@@ -26,8 +26,9 @@ python3 tools/bootstrap_uv.py
 
 The bootstrap verifies the pinned uv wheel's SHA-256 before extracting its
 executable. `uv.lock` locks Pillow and its artifact hashes; resolution excludes
-releases younger than seven days. Pillow 12.3.0 is required because upstream
-security advisories affect older releases. Do not downgrade solely to remain
+releases younger than seven days. Pillow 13.0.0 and uv 0.13.4 are pinned to address the advisories checked
+on October 21, 2026. The lock configuration records a per-package age exception
+for the Pillow security update. Do not downgrade solely to remain
 one version behind. Update the uv bootstrap manifest deliberately from PyPI.
 
 Online release checks fail closed on CDN/advisory lookup failures:
@@ -65,8 +66,35 @@ use non-blocking stylesheet links activated by a hash-authorized load listener. 
 layouts/SDK behavior. Network destinations are limited to the site's actual
 providers, including Statsig's SDK fallback hosts.
 
-GitHub Pages does **not** read arbitrary `_headers` files. HSTS, framing
-protection, nosniff and Permissions-Policy require a hosting/proxy change.
+### Current choice: GitHub Pages with GoDaddy DNS
+
+Keep GitHub Pages hosting and GoDaddy authoritative DNS. No Netlify deployment
+or additional hosting subscription is required for this branch. The existing
+page-level CSP restricts scripts, connections, forms and embedded content;
+`upgrade-insecure-requests` upgrades insecure resource URLs. The referrer meta
+policy limits information sent to other sites. These controls already ship
+with every generated page; they are not newly added by this audit follow-up.
+
+They are partial protections, not replacements for all response headers:
+
+- HTTPS enforcement and CSP resource upgrades do not replace HSTS's protection
+  of future top-level visits.
+- `frame-src` controls what this site embeds, not who can embed this site.
+  `frame-ancestors` and X-Frame-Options cannot be enforced through meta tags.
+- `nosniff` and a document-wide Permissions-Policy require response headers.
+
+Do not add unsupported meta tags or JavaScript frame-busting and report those
+as equivalent protection. The remaining headers are deferred hardening for
+this informational site, not a completed audit item. Reassess if the site adds
+accounts, payments or other sensitive interactions.
+
+References: [MDN frame-ancestors](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/frame-ancestors)
+and [MDN Referrer-Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Referrer-Policy).
+
+### Optional future proxy (not part of this release)
+
+GitHub Pages does **not** read arbitrary `_headers` files. Adding the remaining
+headers requires a host or proxy capable of setting response headers.
 `edge/security-worker.mjs` is ready to route in front of Pages and is tested
 locally, but is not activated by merging this branch:
 
