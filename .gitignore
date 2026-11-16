@@ -24,3 +24,9 @@ service-account*.json
 .venv/
 .tools/
 _site/
+
+# Published Drive snapshots are versioned on codex/blog-content, not main.
+content/drive-posts/
+assets/img/blog/drive/
+_blog-pending.json
+_blog-base.txt
