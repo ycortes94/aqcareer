@@ -44,10 +44,14 @@ GitHub can disable scheduled workflows in inactive public repositories after
    project and enable **Google Drive API** and **Google Docs API**. No paid
    compute service or hosting plan is used.
 2. Create a dedicated service account, e.g. `aqcareer-blog-publisher`. It needs
-   no project-level IAM roles or domain-wide delegation. Give its email Editor
-   access to **only** the [AQ Career Blog Posts folder](https://drive.google.com/drive/u/1/folders/1QYAWVbHdrbunDzy3lP1EzihxZ2zVDJGY).
-   The account needs read access for documents and permission to move them
-   between Ready to Publish and Published.
+   no project-level IAM roles or domain-wide delegation. Give its email Viewer
+   access to the [AQ Career Blog Posts folder](https://drive.google.com/drive/u/1/folders/1QYAWVbHdrbunDzy3lP1EzihxZ2zVDJGY),
+   then Editor access on **only Ready to Publish and Published**. Drafts in
+   Edits remain read-only. Google Drive's Editor role allows changing and
+   removing items inside those two publishing folders; it is needed to move
+   successful documents from the queue into Published. The renderer requests
+   suggestions inline to reject unresolved suggestions, which also requires
+   Editor access on queued documents.
 3. Store the service account JSON as the GitHub Actions secret
    `GOOGLE_BLOG_SERVICE_ACCOUNT_JSON` in `ycortes94/aqcareer`. Keep the JSON out
    of chat, Git, and shared Drive folders. The importer requires a service
