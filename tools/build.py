@@ -12,9 +12,11 @@ import hashlib
 import html
 import json
 import os
+from pathlib import Path
 import re
 import struct
 import urllib.parse
+from drive_blog import published_posts
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 T = os.path.join(ROOT, "templates")
@@ -599,8 +601,12 @@ def check_chrome():
 def build():
     check_chrome()
     posts = json.load(open(os.path.join(C, "posts.json"), encoding="utf-8"))
+    posts += published_posts(Path(ROOT))
+    if len({p["slug"] for p in posts}) != len(posts):
+        raise ValueError("Duplicate article URL in local and Google Drive posts")
     for p in posts:
-        p["body"] = read(os.path.join(C, "posts", p["slug"] + ".html"))
+        if "body" not in p:
+            p["body"] = read(os.path.join(C, "posts", p["slug"] + ".html"))
         p["excerpt"] = excerpt(p["body"])
         # Derived, not hand-maintained: a stale "words" in posts.json would
         # only ever show a wrong reading time.
@@ -836,7 +842,7 @@ def build():
             "author": {"@type": "Person", "name": p["author"]},
             "image": (SITE + p["cover"]) if p["cover"] else None,
             "mainEntityOfPage": f'{SITE}/post/{p["slug"]}/',
-        }, ensure_ascii=False)
+        }, ensure_ascii=False).replace("<", "\\u003c")
         content = (
             '  <article>\n'
             '  <div class="post-head post">\n'

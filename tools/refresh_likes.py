@@ -26,10 +26,12 @@ from decimal import Decimal, InvalidOperation
 import io
 import json
 import os
+from pathlib import Path
 import re
 import sys
 import urllib.error
 import urllib.request
+from drive_blog import published_posts
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS = os.path.join(ROOT, "content", "posts.json")
@@ -54,7 +56,8 @@ def fail(msg):
 
 def slugs():
     with open(POSTS, encoding="utf-8") as f:
-        return [p["slug"] for p in json.load(f)]
+        posts = json.load(f)
+    return [p["slug"] for p in posts + published_posts(Path(ROOT))]
 
 
 def fetch(url, api_key, secret_key):
