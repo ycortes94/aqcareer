@@ -33,8 +33,11 @@ are not preserved. Avoid tables, drawings, floating images, footnotes, chips,
 and multiple document tabs. Resolve suggested edits before publishing.
 
 Future dates stay queued until that date in America/Los_Angeles. The scheduled
-job runs at minutes 7 and 37 each hour; GitHub may delay scheduled runs. For an
+blog check runs once a day at 16:07 UTC (8:07 a.m. Pacific Standard Time /
+9:07 a.m. Pacific Daylight Time); GitHub may delay scheduled runs. For an
 immediate run, use GitHub Actions → **Publish site and blog** → **Run workflow**.
+Main-branch updates also check for approved posts. The weekly likes-only
+schedule does not import new posts.
 GitHub can disable scheduled workflows in inactive public repositories after
 60 days. Check Actions if automatic publishing stops; a manual run is available.
 

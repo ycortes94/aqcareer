@@ -10,7 +10,8 @@ on:
     # 06:20 UTC each Monday. Off the hour on purpose: scheduled jobs queue
     # heavily on the hour and can be dropped.
     - cron: "20 6 * * 1"
-    - cron: "7,37 * * * *"
+    # Daily blog check: 08:07 PST / 09:07 PDT.
+    - cron: "7 16 * * *"
   workflow_dispatch:
 
 permissions:
@@ -24,7 +25,7 @@ concurrency:
 
 jobs:
   refresh:
-    if: github.ref == 'refs/heads/main' && (github.event.schedule != '7,37 * * * *' || vars.BLOG_PUBLISHING_ENABLED == 'true')
+    if: github.ref == 'refs/heads/main' && (github.event.schedule != '7 16 * * *' || vars.BLOG_PUBLISHING_ENABLED == 'true')
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -49,7 +50,7 @@ jobs:
 
       - name: Import articles approved in Google Drive
         id: blog
-        if: vars.BLOG_PUBLISHING_ENABLED == 'true'
+        if: vars.BLOG_PUBLISHING_ENABLED == 'true' && (github.event_name != 'schedule' || github.event.schedule == '7 16 * * *')
         env:
           GOOGLE_BLOG_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_BLOG_SERVICE_ACCOUNT_JSON }}
         run: .tools/uv run --frozen python tools/drive_blog.py sync
@@ -60,7 +61,7 @@ jobs:
           AMPLITUDE_API_KEY: ${{ secrets.AMPLITUDE_API_KEY }}
           AMPLITUDE_SECRET_KEY: ${{ secrets.AMPLITUDE_SECRET_KEY }}
         run: |
-          if [ "${{ github.event.schedule }}" != '7,37 * * * *' ] && [ -n "$AMPLITUDE_API_KEY" ] && [ -n "$AMPLITUDE_SECRET_KEY" ]; then
+          if [ "${{ github.event.schedule }}" != '7 16 * * *' ] && [ -n "$AMPLITUDE_API_KEY" ] && [ -n "$AMPLITUDE_SECRET_KEY" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
@@ -78,11 +79,11 @@ jobs:
         run: python3 tools/refresh_likes.py
 
       - name: Rebuild the site
-        if: github.event.schedule != '7,37 * * * *' || steps.blog.outputs.pending == 'true'
+        if: github.event.schedule != '7 16 * * *' || steps.blog.outputs.pending == 'true'
         run: python3 tools/build.py
 
       - name: Run security and site checks before publishing
-        if: github.event.schedule != '7,37 * * * *' || steps.blog.outputs.pending == 'true'
+        if: github.event.schedule != '7 16 * * *' || steps.blog.outputs.pending == 'true'
         run: |
           sh tools/check.sh
           node tools/test_script_integrity.cjs
@@ -93,24 +94,24 @@ jobs:
         run: python3 tools/drive_blog.py save
 
       - name: Configure GitHub Pages
-        if: github.event.schedule != '7,37 * * * *' || steps.blog.outputs.pending == 'true'
+        if: github.event.schedule != '7 16 * * *' || steps.blog.outputs.pending == 'true'
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
       - name: Stage public files
-        if: github.event.schedule != '7,37 * * * *' || steps.blog.outputs.pending == 'true'
+        if: github.event.schedule != '7 16 * * *' || steps.blog.outputs.pending == 'true'
         run: |
           mkdir -p _site
           cp -R assets blog post privacy _site/
           cp index.html 404.html CNAME .nojekyll feed.xml robots.txt sitemap.xml _site/
 
       - name: Upload site
-        if: github.event.schedule != '7,37 * * * *' || steps.blog.outputs.pending == 'true'
+        if: github.event.schedule != '7 16 * * *' || steps.blog.outputs.pending == 'true'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: _site
 
       - name: Deploy to GitHub Pages
-        if: github.event.schedule != '7,37 * * * *' || steps.blog.outputs.pending == 'true'
+        if: github.event.schedule != '7 16 * * *' || steps.blog.outputs.pending == 'true'
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
 
