@@ -1,9 +1,11 @@
 """Verify generated pages permit their scripts and exclude inline handlers."""
 import base64
 import hashlib
+import json
 from html.parser import HTMLParser
 from pathlib import Path
 import unittest
+from drive_blog import published_posts
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -31,7 +33,12 @@ class SecurityPolicy(unittest.TestCase):
     def test_generated_pages(self):
         paths = [ROOT / 'index.html', ROOT / '404.html', ROOT / 'privacy/index.html']
         paths += list((ROOT / 'blog').rglob('index.html')) + list((ROOT / 'post').rglob('index.html'))
-        self.assertEqual(len(paths), 16)
+        # Publishing adds article and pagination pages; check required pages
+        # against the current content instead of a fixed historical count.
+        posts = json.loads((ROOT / 'content/posts.json').read_text()) + published_posts(ROOT)
+        required = {ROOT / 'blog/index.html'}
+        required.update(ROOT / 'post' / post['slug'] / 'index.html' for post in posts)
+        self.assertTrue(required.issubset(paths), f'Missing generated pages: {required - set(paths)}')
         for path in paths:
             with self.subTest(page=str(path.relative_to(ROOT))):
                 page = Page(path.read_text())
