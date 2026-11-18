@@ -3,7 +3,7 @@
 set -eu
 python3 tools/build.py
 python3 tools/test_refresh_likes.py
-python3 tools/test_drive_blog.py
+.tools/uv run --frozen python tools/test_drive_blog.py
 node tools/test_form_endpoint.cjs
 node tools/test_site_interactions.cjs
 node tools/test_newsletter_handoff.cjs
