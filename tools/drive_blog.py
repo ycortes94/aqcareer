@@ -16,7 +16,7 @@ import re
 import subprocess
 import tempfile
 import unicodedata
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -236,15 +236,21 @@ def download_image(uri):
     import requests
     from PIL import Image, ImageOps
     # Image content URIs are short-lived Google URLs. Never attach an API token,
-    # follow a redirect to another host or store these signed URLs in the repo.
+    # follow a redirect outside Google or store these signed URLs in the repo.
     for _ in range(4):
         parsed = urlparse(uri)
         host = parsed.hostname or ""
-        if parsed.scheme != "https" or parsed.username or parsed.password or parsed.port not in (None, 443) or not host.endswith(".googleusercontent.com"):
-            raise ValueError("Image is not served by Google; insert it directly in the document.")
+        trusted_host = any(host == domain or host.endswith("." + domain)
+                           for domain in ("googleusercontent.com", "google.com"))
+        if parsed.scheme != "https" or parsed.username or parsed.password or parsed.port not in (None, 443) or not trusted_host:
+            # Report only the hostname, never a signed path or query string.
+            raise ValueError(f"Unsupported article image host ({host or 'missing hostname'}); insert the image directly in Google Docs.")
         with requests.get(uri, timeout=30, stream=True, allow_redirects=False) as response:
             if response.status_code in (301, 302, 303, 307, 308):
-                uri = response.headers.get("Location", "")
+                location = response.headers.get("Location")
+                if not location:
+                    raise ValueError("Article image redirect has no destination.")
+                uri = urljoin(uri, location)
                 continue
             if response.status_code != 200:
                 raise ValueError("Could not download an article image.")
