@@ -2,12 +2,13 @@
 import copy
 import datetime as dt
 import json
+import io
 from pathlib import Path
 import tempfile
 import unittest
 import shutil
 import subprocess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import drive_blog
 from drive_blog import (STORE, acknowledge, parse_document, published_posts,
@@ -60,6 +61,50 @@ class BlogTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         write_json(self.root / "content/posts.json", [])
+
+    def image_response(self, status=200, location=None):
+        from PIL import Image
+        data = io.BytesIO()
+        Image.new("RGB", (2, 2)).save(data, format="PNG")
+        response = MagicMock()
+        response.__enter__.return_value = response
+        response.status_code = status
+        response.headers = {"Location": location} if location else {}
+        response.iter_content.return_value = [data.getvalue()]
+        return response
+
+    def test_google_image_hosts_and_relative_redirects(self):
+        from PIL import Image
+        for host in ("lh3.googleusercontent.com", "googleusercontent.com", "docs.google.com"):
+            with self.subTest(host=host), patch("requests.get", side_effect=[
+                self.image_response(302, "/image?token=private"), self.image_response()
+            ]) as get:
+                result = drive_blog.download_image(f"https://{host}/original")
+                self.assertEqual(Image.open(io.BytesIO(result)).format, "JPEG")
+                self.assertEqual(get.call_args.args[0], f"https://{host}/image?token=private")
+                self.assertFalse(get.call_args.kwargs["allow_redirects"])
+                self.assertNotIn("headers", get.call_args.kwargs)
+
+    def test_image_redirects_cannot_escape_google(self):
+        for destination in ("https://google.com.evil.example/image?secret=private",
+                            "https://evilgoogleusercontent.com/image", "https://127.0.0.1/image",
+                            "http://docs.google.com/image", "https://docs.google.com:444/image",
+                            "https://user:password@docs.google.com/image", "//evil.example/image"):
+            with self.subTest(destination=destination), patch("requests.get", return_value=
+                    self.image_response(302, destination)) as get:
+                with self.assertRaises(ValueError) as error:
+                    drive_blog.download_image("https://lh3.googleusercontent.com/image")
+                self.assertEqual(get.call_count, 1)
+                self.assertNotIn("private", str(error.exception))
+                self.assertNotIn("password", str(error.exception))
+
+    def test_image_redirect_limits_and_missing_destination(self):
+        for location, message, calls in ((None, "no destination", 1), ("/loop", "Too many redirects", 4)):
+            with self.subTest(location=location), patch("requests.get", side_effect=[
+                    self.image_response(302, location) for _ in range(4)]) as get:
+                with self.assertRaisesRegex(ValueError, message):
+                    drive_blog.download_image("https://docs.google.com/image")
+                self.assertEqual(get.call_count, calls)
 
     def test_only_article_body_is_rendered(self):
         post, body, tab = parse_document(document())
