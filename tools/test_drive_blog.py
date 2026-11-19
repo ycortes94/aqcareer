@@ -41,7 +41,7 @@ class FakeDrive:
         self.moves = []
 
     def ready(self, folder):
-        return copy.deepcopy(self.items)
+        return copy.deepcopy(self.items) if folder in self.meta["parents"] else []
 
     def document(self, file_id):
         return copy.deepcopy(self.doc)
@@ -190,6 +190,43 @@ class BlogTests(unittest.TestCase):
         acknowledge(api, CONFIG, self.root)
         acknowledge(api, CONFIG, self.root)
         self.assertEqual(len(api.moves), 1)
+
+    def test_published_revision_preserves_url_and_retries_deployment(self):
+        api = FakeDrive()
+        sync(api, CONFIG, self.root, dt.date(2026, 11, 16))
+        acknowledge(api, CONFIG, self.root)
+        api.doc = document(title="Corrected title", body=[paragraph("Corrected article.")])
+        api.items[0]["modifiedTime"] = api.meta["modifiedTime"] = "version-2"
+        self.assertEqual(sync(api, CONFIG, self.root, dt.date(2026, 11, 16)), (1, 1))
+        post = published_posts(self.root)[0]
+        self.assertEqual(post["slug"], "an-article")
+        self.assertEqual(post["title"], "Corrected title")
+        self.assertEqual(post["body"], "<p>Corrected article.</p>\n")
+        self.assertEqual(post["source_modified"], "version-2")
+        # Simulate saved snapshots followed by a failed deployment: the next
+        # sync must still request deployment without fetching unchanged Docs.
+        with patch.object(api, "document", side_effect=AssertionError("Unchanged document fetched")):
+            self.assertEqual(sync(api, CONFIG, self.root, dt.date(2026, 11, 16)), (0, 1))
+        acknowledge(api, CONFIG, self.root)
+        self.assertEqual(len(api.moves), 1)
+        self.assertEqual(api.meta["parents"], ["published"])
+
+    def test_published_folder_does_not_approve_new_articles(self):
+        api = FakeDrive()
+        api.meta["parents"] = ["published"]
+        self.assertEqual(sync(api, CONFIG, self.root, dt.date(2026, 11, 16)), (0, 0))
+        self.assertEqual(published_posts(self.root), [])
+
+    def test_published_revision_changed_during_import_keeps_previous_snapshot(self):
+        api = FakeDrive()
+        sync(api, CONFIG, self.root, dt.date(2026, 11, 16))
+        acknowledge(api, CONFIG, self.root)
+        original = published_posts(self.root)
+        api.items[0]["modifiedTime"] = "version-2"
+        api.meta["modifiedTime"] = "version-3"
+        with self.assertRaisesRegex(ValueError, "changed during import"):
+            sync(api, CONFIG, self.root, dt.date(2026, 11, 16))
+        self.assertEqual(published_posts(self.root), original)
 
     def test_like_refresh_recognizes_drive_articles(self):
         import refresh_likes
