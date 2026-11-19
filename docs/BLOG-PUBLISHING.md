@@ -29,7 +29,9 @@ a deliberate removal of its saved snapshot from the content branch.
 
 Supported: paragraphs, headings, bold, italic, strikethrough, web/email links,
 bulleted and numbered lists, nested lists, and inline images. The first article
-image is also the cover; it remains in the article at its insertion point.
+image is used as the blog thumbnail and the cover above the article. Its first
+inline occurrence is omitted from the article body so it appears only once on
+the post page. Other article images stay in place.
 Add alt text through Google Docs' image options. Images are saved on the site,
 resized to fit 1800 × 1800 and converted to JPEG. Transparent/animated images
 are not preserved. Avoid tables, drawings, floating images, footnotes, chips,

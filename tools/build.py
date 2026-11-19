@@ -279,6 +279,15 @@ def cover_block(cover):
 IMG_TAG = re.compile(r'<img\b[^>]*?src="(/assets/[^"]+)"[^>]*?>', re.I)
 
 
+def without_cover_image(body, cover):
+    """Promote the first matching inline image to the article's cover."""
+    for match in IMG_TAG.finditer(body):
+        if html.unescape(match.group(1)) == cover:
+            body = body[:match.start()] + body[match.end():]
+            return re.sub(r'<p>\s*</p>\s*', '', body)
+    return body
+
+
 def size_body_images(body):
     """Stamp every image in a post body with its real pixel dimensions.
 
@@ -824,7 +833,10 @@ def build():
     post_chrome_top, post_chrome_bottom = \
         editorial_chrome("../../", ' aria-current="page"')
     for n, p in enumerate(posts):
-        body = size_body_images(p["body"]) \
+        body = p["body"]
+        if "source_modified" in p:
+            body = without_cover_image(body, p["cover"])
+        body = size_body_images(body) \
             .replace('src="/assets/', 'src="../../assets/')
         cover = cover_block(p["cover"])
         nxt = posts[n - 1] if n > 0 else None

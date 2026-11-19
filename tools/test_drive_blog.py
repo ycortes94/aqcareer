@@ -264,6 +264,12 @@ class BlogTests(unittest.TestCase):
                         ignore=shutil.ignore_patterns("drive-posts"))
         write_json(self.root / "content/posts.json", [])
         sync(FakeDrive(document(title='A <new> article')), CONFIG, self.root, dt.date(2026, 11, 16))
+        snapshot_path = self.root / STORE / f"{DOC_ID}.json"
+        snapshot = drive_blog.read_json(snapshot_path)
+        snapshot["cover"] = "/assets/img/blog/drive/cover.jpg"
+        snapshot["body"] += ('<p><img src="/assets/img/blog/drive/cover.jpg" alt="Cover"></p>\n'
+                             '<p>Keep this text.<img src="/assets/img/blog/drive/detail.jpg" alt="Detail"></p>\n')
+        write_json(snapshot_path, snapshot)
         with patch.object(build, "ROOT", str(self.root)), patch.object(build, "C", str(self.root / "content")):
             build.build()
         article = (self.root / "post/a-new-article/index.html").read_text()
@@ -271,6 +277,11 @@ class BlogTests(unittest.TestCase):
         self.assertIn("A &lt;new&gt; article", article)
         self.assertIn("A \\u003cnew> article", article)
         self.assertNotIn("Private drafting instructions", article)
+        self.assertEqual(article.count('<img src="../../assets/img/blog/drive/cover.jpg"'), 1)
+        self.assertEqual(article.count('<img src="../../assets/img/blog/drive/detail.jpg"'), 1)
+        self.assertIn("Keep this text.", article)
+        self.assertIn('src="../assets/img/blog/drive/cover.jpg"',
+                      (self.root / "blog/index.html").read_text())
         for path in ("blog/index.html", "feed.xml", "sitemap.xml"):
             self.assertIn("a-new-article", (self.root / path).read_text())
 
