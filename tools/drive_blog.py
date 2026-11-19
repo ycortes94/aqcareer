@@ -296,17 +296,26 @@ def sync(api, config, root=ROOT, today=None, image_fetch=download_image):
             raise ValueError("Duplicate post URL in saved content.")
         slugs[post["slug"]] = doc_id
     updates, images, pending = {}, {}, []
-    for item in api.ready(config["ready_folder_id"]):
+    queue = {item["id"]: (item, config["ready_folder_id"])
+             for item in api.ready(config["ready_folder_id"])}
+    for item in api.ready(config["published_folder_id"]):
+        # Published is an update source only; new articles still require approval
+        # through Ready to Publish. Deduplicate documents moved between listings.
+        if item["id"] in old:
+            queue[item["id"]] = (item, config["published_folder_id"])
+    for item, source_folder in queue.values():
         doc_id = item["id"]
         if not ID.fullmatch(doc_id) or doc_id == config["template_document_id"]:
             raise ValueError("Keep the original template in Edits; publish a completed copy.")
         prior = old.get(doc_id)
         if prior and prior["source_modified"] == item["modifiedTime"]:
+            # Snapshots are saved before deployment. Keep saved articles pending
+            # so a failed deployment is retried even with no further Doc edits.
             pending.append(item)
             continue
         post, elements, tab = parse_document(api.document(doc_id), prior)
         if dt.date.fromisoformat(post["date"]) > today:
-            print("A future-dated post remains in Ready to Publish.")
+            print("A future-dated post remains in its current folder.")
             continue
         if post["slug"] in slugs and slugs[post["slug"]] != doc_id:
             raise ValueError("This post's URL is already in use. Enter a different Slug for the new article.")
@@ -320,7 +329,7 @@ def sync(api, config, root=ROOT, today=None, image_fetch=download_image):
 
         post["body"], post["cover"] = render_body(elements, tab, image_loader)
         check = api.metadata(doc_id)
-        if check.get("trashed") or config["ready_folder_id"] not in check.get("parents", []) or check["modifiedTime"] != item["modifiedTime"]:
+        if check.get("trashed") or source_folder not in check.get("parents", []) or check["modifiedTime"] != item["modifiedTime"]:
             raise ValueError("A queued article changed during import; it will be retried on the next run.")
         post["source_modified"] = item["modifiedTime"]
         updates[doc_id] = post

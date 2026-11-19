@@ -18,9 +18,12 @@ Google account owner: **aalinaquintana@gmail.com**.
    and images to the public website and public GitHub repository.**
 6. After a successful deployment, it moves to [Published](https://drive.google.com/drive/u/1/folders/17Nmyo-SGbckB9BzK93Y7srie4zdVYXN7).
 
-To revise an article, move the same document from Published to Edits, make
-changes, then move it back to Ready to Publish. Do not make a new copy for a
-revision. Edits and Published are never scanned for new changes. Deleting or
+To revise an article, edit the same document directly in Published. Updates
+are picked up on the next publishing run, and the article keeps its existing
+URL. Only previously imported documents are updated from Published; new posts
+must still go through Ready to Publish. For revisions that need drafting time,
+move the document to Edits, make changes, then move it back to Ready to Publish.
+Edits is never scanned. Do not make a new copy for a revision. Deleting or
 moving a document does not remove its published article; unpublishing requires
 a deliberate removal of its saved snapshot from the content branch.
 
@@ -91,7 +94,9 @@ not saved. No code is executed from the content branch.
 
 The whole import batch must validate before snapshots are written. A failed
 build or deployment leaves the current live site and Ready folder intact.
-Snapshots saved before a failed deployment are reused on retry. If a document
+Snapshots saved before a failed deployment are reused on retry. Known articles
+in Published remain eligible for deployment even when unchanged, so daily runs
+can retry a failed deployment without requiring another document edit. If a document
 changes during import, the run stops. If it changes after import, the imported
 version can still deploy, but the newer document stays queued and is not
 archived; the next run imports the revision. Avoid editing queued documents.
